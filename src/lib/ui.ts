@@ -1,0 +1,30 @@
+import type { CSSProperties } from 'react'
+
+/** CSS Module 클래스 매핑: cx('btn btn-p') → 모듈에 있는 이름은 해시된 클래스로 바꿔요. */
+export function makeCx(styles: Record<string, string>) {
+  return (...names: Array<string | false | null | undefined>) =>
+    names
+      .filter(Boolean)
+      .join(' ')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((n) => styles[n] ?? n)
+      .join(' ')
+}
+
+/** 'background:#fff;color:#000' 형태의 CSS 문자열을 React style 객체로 바꿔요. */
+export function css(text: string): CSSProperties {
+  const out: Record<string, string> = {}
+  for (const decl of text.split(';')) {
+    const i = decl.indexOf(':')
+    if (i < 0) continue
+    const prop = decl.slice(0, i).trim()
+    const value = decl.slice(i + 1).trim()
+    if (!prop) continue
+    const key = prop.startsWith('--') ? prop : prop.replace(/-([a-z])/g, (_, ch: string) => ch.toUpperCase())
+    out[key] = value
+  }
+  return out as CSSProperties
+}
+
+export const won = (n: number) => n.toLocaleString('ko-KR')

@@ -1,0 +1,153 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-soft);
+  line-height: 1.6;
+}
+.header {
+  background: #fff;
+  border-bottom: 3px solid transparent;
+  border-image: var(--brand-band) 1;
+}
+.bar {
+  padding: 14px 32px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 32px;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+.logo img {
+  display: block;
+  height: 68px;
+  width: auto;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 1.5px solid var(--gold-line);
+  border-radius: 999px;
+  color: var(--gold-dark);
+  font-size: 13px;
+  font-weight: 700;
+}
+.account {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 20px;
+}
+.accountName {
+  font-size: 14px;
+  color: var(--muted);
+}
+.shopLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 14px;
+  text-decoration: none;
+}
+.shopLink:hover {
+  color: var(--ink);
+  text-decoration: none;
+  border-color: var(--ink);
+}
+.body {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+}
+.side {
+  flex: 1 1 220px;
+  max-width: 100%;
+  border-right: 1px solid var(--line);
+  padding: 20px 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.who {
+  padding: 4px 12px 18px;
+  font-size: 13px;
+}
+.whoName {
+  opacity: 0.8;
+}
+.item {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 15px;
+  text-decoration: none;
+}
+.item:hover {
+  text-decoration: none;
+}
+.back {
+  display: block;
+  padding: 10px 12px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+.main {
+  position: relative;
+  flex: 999 1 640px;
+  min-width: 0;
+  padding: 32px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 관리자: 어두운 사이드바 */
+.admin .side {
+  background: var(--ink);
+}
+.admin .who,
+.admin .item,
+.admin .back {
+  color: #d5d5dd;
+}
+.admin .item:hover {
+  color: #fff;
+}
+.admin .itemOn,
+.admin .itemOn:hover {
+  background: #45454f;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* 판매자: 밝은 사이드바 */
+.seller .side {
+  background: #fff;
+}
+.seller .who,
+.seller .item,
+.seller .back {
+  color: #45454f;
+}
+.seller .item:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+.seller .itemOn,
+.seller .itemOn:hover {
+  background: var(--tint);
+  color: var(--gold);
+  font-weight: 700;
+}

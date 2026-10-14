@@ -1,0 +1,60 @@
+@font-face {
+  font-family: 'Pretendard';
+  src: url('/fonts/Pretendard-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --ink: #26262c;
+  --ink-hover: #45454f;
+  --muted: #5f5f6a;
+  --line: #e8e8ed;
+  --line-strong: #d5d5dd;
+  --surface: #f4f4f7;
+  --surface-soft: #fafafb;
+  --tint: #f3f1f6;
+  --gold: #8a6a2c;
+  --gold-dark: #6e5322;
+  --gold-line: #b08a4a;
+  --brand-band: linear-gradient(90deg, #f1cbd3, #edcfd8, #d9cbea, #cbd6ec, #c9a15e);
+}
+
+body {
+  margin: 0;
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--ink);
+  background: #ffffff;
+  font-size: 15px;
+  line-height: 1.55;
+  word-break: keep-all;
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--gold-dark);
+  text-decoration: underline;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
