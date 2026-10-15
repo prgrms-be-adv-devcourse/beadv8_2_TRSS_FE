@@ -5,6 +5,7 @@ import RequireActiveSeller from './components/RequireActiveSeller'
 import RequireRole from './components/RequireRole'
 import type { MemberRole } from './lib/auth'
 import ScreensPage from './pages/Screens'
+import BuyerFooterSlot from './components/BuyerFooter'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="/screens" element={<ScreensPage />} />
         <Route path="*" element={<ScreensPage />} />
       </Routes>
+      <BuyerFooterSlot />
     </>
   )
 }
