@@ -44,7 +44,9 @@ function useProductDetailView() {
   const productId = Number(idParam)
   const navigate = useNavigate()
   const location = useLocation()
-  const { loggedIn } = useAuth()
+  const { loggedIn, me } = useAuth()
+  /** 관리자는 구매할 수 없어 담기 버튼을 꺼 둬요. (TRSS-54) */
+  const isAdmin = me?.role === 'ADMIN'
 
   const loaded = useApi(() => (productId > 0 ? loadProduct(productId) : Promise.resolve(null)), [productId])
   const product = loaded.data
@@ -69,7 +71,7 @@ function useProductDetailView() {
   const soldOut = !product || product.soldOut || !option || option.soldOut
 
   const addToCart = async () => {
-    if (!product || !option || soldOut || adding) return
+    if (!product || !option || soldOut || adding || isAdmin) return
     if (!loggedIn) {
       navigate('/login', { state: { from: location.pathname } })
       return
@@ -124,7 +126,7 @@ function useProductDetailView() {
     added,
     addError,
     addLabel: soldOut ? '품절된 상품이에요' : adding ? '담는 중이에요' : '장바구니에 담기',
-    addDisabled: soldOut || adding || !!product?.example,
+    addDisabled: soldOut || adding || isAdmin || !!product?.example,
   }
   return view
 }

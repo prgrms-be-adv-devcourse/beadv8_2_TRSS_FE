@@ -42,7 +42,7 @@ function WithQuery({ page: Page }: { page: ComponentType<any> }) {
 /**
  * auth: 들어가는 데 필요한 권한
  * - 없음: 누구나
- * - 'login': 로그인한 회원 누구나
+ * - 'login': 로그인한 구매자·판매자 (관리자는 제외)
  * - 'SELLER' | 'ADMIN': 해당 role만 (App.tsx의 RequireRole이 확인해요)
  *
  * demo: 경로에 :id 가 있는 화면의 /screens 바로가기 주소
@@ -109,7 +109,13 @@ export const screens: ScreenRoute[] = [
   { path: '/seller/stock', title: '재고', auth: 'SELLER', group: '판매자', element: <SellerStockPage /> },
   { path: '/seller/orders', title: '주문 항목', auth: 'SELLER', group: '판매자', element: <SellerOrdersPage /> },
   { path: '/seller/settlements', title: '정산', auth: 'SELLER', group: '판매자', element: <SellerSettlementsPage /> },
-  { path: '/seller/info', title: '판매자 정보', auth: 'SELLER', group: '판매자', element: <SellerInfoPage /> },
+  {
+    path: '/seller/info',
+    title: '판매자 정보',
+    auth: 'SELLER',
+    group: '판매자',
+    element: <WithQuery page={SellerInfoPage} />,
+  },
   { path: '/admin/sellers', title: '판매자 심사', auth: 'ADMIN', group: '관리자', element: <AdminSellersPage /> },
   { path: '/admin/members', title: '회원', auth: 'ADMIN', group: '관리자', element: <AdminMembersPage /> },
   { path: '/admin/products', title: '상품과 카테고리', auth: 'ADMIN', group: '관리자', element: <AdminProductsPage /> },
