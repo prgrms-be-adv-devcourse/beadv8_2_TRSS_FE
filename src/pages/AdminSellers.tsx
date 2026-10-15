@@ -149,6 +149,7 @@ function useAdminSellersView() {
     totalPages,
     items,
     listError: list.error,
+    listEmpty: !list.loading && !list.error && items.length === 0,
     selectedId,
     setSelectedId,
     detail,
@@ -189,6 +190,13 @@ export default function AdminSellersPage() {
                   </tr>
                 </thead>
                 <tbody>
+                  {v.listEmpty && (
+                    <tr>
+                      <td colSpan={5} className={cx('sub')} style={{ textAlign: 'center', padding: '32px 0' }}>
+                        판매자가 없어요.
+                      </td>
+                    </tr>
+                  )}
                   {v.items.map((s) => (
                     <tr
                       key={s.sellerId}
