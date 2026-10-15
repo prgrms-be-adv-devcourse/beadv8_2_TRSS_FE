@@ -9,7 +9,7 @@ import {
   type SellerUpdateRequest,
 } from '../lib/api/member'
 import { useApi } from '../lib/useApi'
-import { makeCx } from '../lib/ui'
+import { makeCx, phone } from '../lib/ui'
 import styles from './SellerInfo.module.css'
 import SellerLayout from '../components/SellerLayout'
 
@@ -39,7 +39,7 @@ type Form = {
 
 const toForm = (s: MySeller): Form => ({
   businessName: s.businessName,
-  phoneNumber: s.phoneNumber,
+  phoneNumber: phone(s.phoneNumber),
   bankName: s.bankName,
   accountNumber: '', // 끝 4자리만 내려온다. 새로 입력했을 때만 계좌를 바꾼다.
   accountHolder: s.accountHolder,
@@ -49,7 +49,8 @@ const toForm = (s: MySeller): Form => ({
 function diff(seller: MySeller, form: Form): SellerUpdateRequest {
   const body: SellerUpdateRequest = {}
   if (form.businessName.trim() !== seller.businessName) body.businessName = form.businessName.trim()
-  if (form.phoneNumber !== seller.phoneNumber) body.phoneNumber = form.phoneNumber
+  // 백엔드는 숫자만 저장하므로 숫자끼리 비교한다
+  if (form.phoneNumber.replace(/\D/g, '') !== seller.phoneNumber) body.phoneNumber = form.phoneNumber
   const accountChanged =
     form.accountNumber !== '' || form.bankName !== seller.bankName || form.accountHolder !== seller.accountHolder
   if (accountChanged) {

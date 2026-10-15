@@ -2,7 +2,7 @@ import { useEffect, useState, type ChangeEvent, type CSSProperties } from 'react
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { ApiError, errorMessage } from '../lib/api'
 import { BANKS, applySeller, canApply, getMySeller, type MySeller, type SellerApplyRequest } from '../lib/api/member'
-import { makeCx } from '../lib/ui'
+import { makeCx, phone } from '../lib/ui'
 import styles from './SellerApply.module.css'
 import BuyerHeader from '../components/BuyerHeader'
 
@@ -51,7 +51,7 @@ const formFrom = (s: MySeller): SellerApplyRequest => ({
   ...EMPTY,
   businessName: s.businessName,
   representativeName: s.representativeName,
-  phoneNumber: s.phoneNumber,
+  phoneNumber: phone(s.phoneNumber),
   bankName: s.bankName,
   accountHolder: s.accountHolder,
 })
