@@ -188,8 +188,8 @@ export type AdminMember = {
   role: MemberRole
   status: MemberStatus
   createdAt: string
-  /** 판매자 상태. 신청 이력이 없으면 null. 백엔드에 추가 예정이라 반영 전 응답에는 없을 수 있다 */
-  sellerStatus?: SellerStatus | null
+  /** 판매자 상태. 신청 이력이 없으면 null */
+  sellerStatus: SellerStatus | null
 }
 
 /** 관리자 회원 상세 */
