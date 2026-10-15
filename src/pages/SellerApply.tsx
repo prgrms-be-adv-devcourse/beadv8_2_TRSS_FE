@@ -1,12 +1,23 @@
-import { useState, type ChangeEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { errorMessage } from '../lib/api'
-import { BANKS, applySeller, type SellerApplyRequest } from '../lib/seller'
+import { useEffect, useState, type ChangeEvent, type CSSProperties } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { ApiError, errorMessage } from '../lib/api'
+import { useAuth } from '../lib/auth'
+import { BANKS, applySeller, canApply, getMySeller, type MySeller, type SellerApplyRequest } from '../lib/seller'
 import { makeCx } from '../lib/ui'
 import styles from './SellerApply.module.css'
 import BuyerHeader from '../components/BuyerHeader'
 
 const cx = makeCx(styles)
+
+/** 로그인 화면과 같은 안내 박스 */
+const NOTICE: CSSProperties = {
+  margin: '0',
+  padding: '12px 14px',
+  borderRadius: '8px',
+  background: '#FFF1E8',
+  color: '#9A3209',
+  fontSize: '14px',
+}
 
 const EMPTY: SellerApplyRequest = {
   businessName: '',
@@ -18,12 +29,47 @@ const EMPTY: SellerApplyRequest = {
   accountHolder: '',
 }
 
+/** 내 신청 내역. 아직 불러오는 중이면 undefined, 신청한 적이 없으면(404) null */
+function useMySeller(enabled: boolean) {
+  const [seller, setSeller] = useState<MySeller | null | undefined>(undefined)
+  useEffect(() => {
+    if (!enabled) return
+    let alive = true
+    getMySeller()
+      .then((s) => alive && setSeller(s))
+      .catch((e) => alive && setSeller(e instanceof ApiError && e.status === 404 ? null : undefined))
+    return () => {
+      alive = false
+    }
+  }, [enabled])
+  return seller
+}
+
+/**
+ * 반려·철회 뒤 다시 신청할 때 쓸 첫 폼 값.
+ * 사업자번호는 비어 있고 계좌번호는 끝 4자리만 내려와서 다시 입력받는다.
+ */
+const formFrom = (s: MySeller): SellerApplyRequest => ({
+  ...EMPTY,
+  businessName: s.businessName,
+  representativeName: s.representativeName,
+  phoneNumber: s.phoneNumber,
+  bankName: s.bankName,
+  accountHolder: s.accountHolder,
+})
+
 /** 신청 폼 값과 제출. 성공하면 마이페이지로 이동해 심사 상태를 보여준다. */
 function useApplyForm() {
   const navigate = useNavigate()
+  const auth = useAuth()
+  const seller = useMySeller(auth.loggedIn)
   const [form, setForm] = useState(EMPTY)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (seller) setForm(formFrom(seller))
+  }, [seller])
 
   const bind = (key: keyof SellerApplyRequest) => ({
     value: form[key],
@@ -45,12 +91,19 @@ function useApplyForm() {
     }
   }
 
-  return { bind, submit, submitting, error }
+  // 이전에 저장한 은행이 선택지에 없으면 맨 앞에 넣어 그대로 보이게 한다.
+  const banks = seller && seller.bankName && !BANKS.includes(seller.bankName) ? [seller.bankName, ...BANKS] : BANKS
+
+  return { auth, seller, bind, submit, submitting, error, banks }
 }
 
 /** 판매자 신청 */
 export default function SellerApplyPage() {
-  const { bind, submit, submitting } = useApplyForm()
+  const { auth, seller, bind, submit, submitting, error, banks } = useApplyForm()
+  if (auth.ready && !auth.me) return <Navigate to="/login" replace />
+  // 심사 중·판매 중·이용 제한이면 신청 불가. 상태 안내는 마이페이지에 있다.
+  if (seller && !canApply(seller.status)) return <Navigate to="/mypage" replace />
+  const rejectReason = seller?.status === 'REJECTED' ? seller.reason : null
   return (
     <div className={styles.page}>
       <div>
@@ -66,6 +119,7 @@ export default function SellerApplyPage() {
           }}
         >
           <h1 style={{ margin: '0', fontSize: '26px', fontWeight: '700', letterSpacing: '-0.5px' }}>판매자 신청</h1>
+          {rejectReason && <p style={NOTICE}>반려 사유: {rejectReason}</p>}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'flex-start' }}>
             <section
               className={cx('panel')}
@@ -154,7 +208,7 @@ export default function SellerApplyPage() {
                       <option value="" disabled>
                         은행 선택
                       </option>
-                      {BANKS.map((b) => (
+                      {banks.map((b) => (
                         <option key={b} value={b}>
                           {b}
                         </option>
@@ -192,6 +246,11 @@ export default function SellerApplyPage() {
                   판매 대금은 매달 10일, 지난달 구매 확정분에서 수수료 10%를 뺀 금액이 예치금으로 들어와요.
                 </span>
               </div>
+              {error && (
+                <p role="alert" style={NOTICE}>
+                  {error}
+                </p>
+              )}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                 <Link className={cx('btn')} to="/mypage">
                   취소
