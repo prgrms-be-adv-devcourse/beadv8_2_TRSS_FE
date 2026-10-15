@@ -13,7 +13,7 @@
  * GET    /api/v1/admin/users (PageResponse) | /{userId}
  */
 
-import { api } from '.'
+import { api, type PageQuery, type PageResponse } from '.'
 
 export type SellerStatus =
   | 'PENDING'
@@ -96,3 +96,82 @@ export const BANKS = [
   '토스뱅크',
   '케이뱅크',
 ]
+
+// ── 관리자 판매자 관리 (ADMIN) ───────────────────────────
+
+/** 관리자 판매자 목록 항목. 반려·본인 철회 뒤에는 사업자번호가 비어 있다 */
+export type AdminSeller = {
+  sellerId: number
+  appliedAt: string
+  businessName: string
+  businessNumber: string | null
+  email: string
+  status: SellerStatus
+}
+
+/** 상태 이력 한 줄 (오래된 순). 스냅샷은 반려·본인 철회로 바뀐 줄에만 있다 */
+export type AdminSellerHistory = {
+  fromStatus: SellerStatus | null
+  toStatus: SellerStatus
+  reason: string | null
+  changedAt: string
+  businessName: string | null
+  businessNumber: string | null
+  representativeName: string | null
+  accountLast4: string | null
+}
+
+/** 관리자 판매자 상세. 계좌번호는 끝 4자리만 */
+export type AdminSellerDetail = {
+  sellerId: number
+  memberId: number
+  email: string
+  name: string
+  status: SellerStatus
+  businessName: string
+  businessNumber: string | null
+  representativeName: string
+  phoneNumber: string
+  bankName: string
+  accountNumber: string
+  accountHolder: string
+  appliedAt: string
+  histories: AdminSellerHistory[]
+}
+
+/** 판매자 목록. 심사 대기 먼저, 그다음 최근 신청순 고정 (sort는 무시된다) */
+export function getAdminSellers(query: PageQuery & { status?: SellerStatus } = {}) {
+  return api<PageResponse<AdminSeller>>('/api/v1/admin/sellers', { query })
+}
+
+export function getAdminSeller(sellerId: number) {
+  return api<AdminSellerDetail>(`/api/v1/admin/sellers/${sellerId}`)
+}
+
+/** 입점 승인 (PENDING만). 회원에게 판매자 권한이 생긴다 */
+export function approveSeller(sellerId: number) {
+  return api<AdminSellerDetail>(`/api/v1/admin/sellers/${sellerId}/approve`, { method: 'POST' })
+}
+
+/** 입점 반려 (PENDING만, 사유 필수) */
+export function rejectSeller(sellerId: number, reason: string) {
+  return api<AdminSellerDetail>(`/api/v1/admin/sellers/${sellerId}/reject`, { method: 'POST', body: { reason } })
+}
+
+/** 철회 승인 (WITHDRAW_REQUESTED만). 진행 중인 판매 주문이나 미정산 금액이 있으면 409 */
+export function approveSellerWithdrawal(sellerId: number) {
+  return api<AdminSellerDetail>(`/api/v1/admin/sellers/${sellerId}/withdrawal/approve`, { method: 'POST' })
+}
+
+/** 철회 거절 (WITHDRAW_REQUESTED만, 사유 필수). 다시 판매 중(APPROVED)이 된다 */
+export function rejectSellerWithdrawal(sellerId: number, reason: string) {
+  return api<AdminSellerDetail>(`/api/v1/admin/sellers/${sellerId}/withdrawal/reject`, {
+    method: 'POST',
+    body: { reason },
+  })
+}
+
+/** 제재 (APPROVED·WITHDRAW_REQUESTED, 사유 필수). 정산 보류, 재신청 불가 */
+export function sanctionSeller(sellerId: number, reason: string) {
+  return api<AdminSellerDetail>(`/api/v1/admin/sellers/${sellerId}/sanction`, { method: 'POST', body: { reason } })
+}
