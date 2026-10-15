@@ -83,6 +83,7 @@ tools/                  디자인 → React 변환 스크립트 (아래 참고)
 - `/checkout?balance=충분` · `/checkout?popup=결제 완료`
 - `/orders/1?status=구매 확정`
 - `/mypage?sellerStatus=APPROVED`
+- `/seller/info?withdrawPanel=보임`
 - `/wallet/topup-result?result=실패`
 - `/admin/settlements?retryModal=보임`
 

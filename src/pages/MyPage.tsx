@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { ApiError, api } from '../lib/api'
+import { ApiError } from '../lib/api'
 import { logout, useAuth, type MemberRole } from '../lib/auth'
+import { getMySeller, type MySeller, type SellerStatus as ApiSellerStatus } from '../lib/api/member'
 import { makeCx } from '../lib/ui'
 import styles from './MyPage.module.css'
 import BuyerHeader from '../components/BuyerHeader'
 
-export type SellerStatus =
-  '신청 전' | 'PENDING' | 'REJECTED' | 'APPROVED' | 'WITHDRAW_REQUESTED' | 'WITHDRAWN' | 'SANCTIONED'
+export type SellerStatus = '신청 전' | ApiSellerStatus
 // [칩 색, 표시 이름, 설명, 버튼 문구, 이동 경로]
 const SELLER: Record<SellerStatus, [string, string, string, string, string]> = {
   '신청 전': [
@@ -47,16 +47,13 @@ const fmtDate = (iso?: string) => {
     : `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
-/** GET /api/v1/sellers/me 에서 쓰는 값 */
-type MySeller = { status: Exclude<SellerStatus, '신청 전'>; reason: string | null }
-
 /** 내 판매자 신청 상태를 불러와요. 신청 내역이 없으면(404) '신청 전'이에요. */
 function useMySeller(enabled: boolean) {
   const [seller, setSeller] = useState<MySeller | null | undefined>(undefined)
   useEffect(() => {
     if (!enabled) return
     let alive = true
-    api<MySeller>('/api/v1/sellers/me')
+    getMySeller()
       .then((d) => alive && setSeller(d))
       .catch((e) => alive && setSeller(e instanceof ApiError && e.status === 404 ? null : undefined))
     return () => {
