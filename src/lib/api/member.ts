@@ -81,12 +81,12 @@ export function requestSellerWithdrawal(reason: string) {
 
 /** 정산 계좌 은행 선택지 */
 export const BANKS = [
-  'KB국민은행',
+  '국민은행',
   '신한은행',
   '우리은행',
   '하나은행',
-  'NH농협은행',
-  'IBK기업은행',
+  '농협은행',
+  '기업은행',
   'SC제일은행',
   '카카오뱅크',
   '토스뱅크',

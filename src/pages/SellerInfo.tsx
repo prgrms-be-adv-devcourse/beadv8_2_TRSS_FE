@@ -290,11 +290,10 @@ export default function SellerInfoPage({ withdrawPanel = '숨김' }: { withdrawP
             <section
               className={cx('panel')}
               style={{
-                padding: '24px',
+                padding: '28px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '14px',
-                maxWidth: '560px',
                 outline: '2px solid #8A6A2C',
               }}
             >
