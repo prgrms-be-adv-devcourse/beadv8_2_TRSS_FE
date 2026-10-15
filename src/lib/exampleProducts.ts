@@ -1,11 +1,11 @@
 /**
- * 백엔드에 연결되지 않았을 때 메인 화면에 보여줄 프론트 전용 예시 데이터
+ * 백엔드에 연결되지 않았을 때 상품 목록·상세 화면에 보여줄 프론트 전용 예시 데이터
  *
  * 백엔드 시드(ProductDataInit)와 일부러 다른 상품이에요. 화면에 이 상품(판매자 온결·무드랩·하루담·데일리핏)이 보이면
  * 서버 데이터가 아니라는 뜻이고, "팔레트 시드 상점" 상품이 보이면 서버에 제대로 연결된 거예요.
  */
 import { ApiError, type PageResponse } from './api'
-import type { CategoryNode, ProductSearchQuery, ProductSummary } from './api/product'
+import type { CategoryNode, ProductDetail, ProductSearchQuery, ProductSummary } from './api/product'
 
 /** 서버에 닿지 못한 오류인지. 요청 자체가 실패했거나, 백엔드 형식("404-CODE")이 아닌 응답(프록시 오류 등)이면 true */
 export function isServerUnreachable(e: unknown) {
@@ -87,5 +87,29 @@ export function searchExampleProducts({
     size,
     totalElements: items.length,
     totalPages: Math.ceil(items.length / size),
+  }
+}
+
+/** GET /api/v1/products/{productId} 와 같은 모양의 예시 상세. 없는 ID면 null(404와 같음)이에요. */
+export function getExampleProduct(productId: number): ProductDetail | null {
+  const p = EXAMPLE_PRODUCTS.find((x) => x.productId === productId)
+  if (!p) return null
+  const group = EXAMPLE_CATEGORIES.find((g) => g.children.some((c) => c.categoryId === p.categoryId))!
+  const category = group.children.find((c) => c.categoryId === p.categoryId)!
+  return {
+    productId: p.productId,
+    name: p.name,
+    description: `${p.name} 예시 상품이에요.\n백엔드에 연결되면 판매자가 등록한 설명이 여기에 보여요.`,
+    price: p.price,
+    parentCategoryId: group.categoryId,
+    parentCategoryName: group.name,
+    categoryId: category.categoryId,
+    categoryName: category.name,
+    sellerId: p.sellerId,
+    businessName: p.businessName,
+    thumbnailUrl: null,
+    imageUrls: [],
+    soldOut: p.soldOut,
+    options: [{ optionId: p.productId * 10, name: '기본', soldOut: p.soldOut, remainingStock: p.remainingStock }],
   }
 }
