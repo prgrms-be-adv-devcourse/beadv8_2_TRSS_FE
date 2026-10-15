@@ -13,6 +13,7 @@
  * GET    /api/v1/admin/users (PageResponse) | /{userId}
  */
 
+import type { MemberRole } from '../auth'
 import { api, type PageQuery, type PageResponse } from '.'
 
 export type SellerStatus =
@@ -173,4 +174,44 @@ export function rejectSellerWithdrawal(sellerId: number, reason: string) {
 /** 제재 (APPROVED·WITHDRAW_REQUESTED, 사유 필수). 정산 보류, 재신청 불가 */
 export function sanctionSeller(sellerId: number, reason: string) {
   return api<AdminSellerDetail>(`/api/v1/admin/sellers/${sellerId}/sanction`, { method: 'POST', body: { reason } })
+}
+
+// ── 관리자 회원 조회 (ADMIN) ─────────────────────────────
+
+export type MemberStatus = 'ACTIVE' | 'DELETED' // DELETED: 탈퇴(개인정보 비식별화)
+
+/** 관리자 회원 목록 항목 */
+export type AdminMember = {
+  memberId: number
+  email: string
+  name: string
+  role: MemberRole
+  status: MemberStatus
+  createdAt: string
+  /** 판매자 상태. 신청 이력이 없으면 null. 백엔드에 추가 예정이라 반영 전 응답에는 없을 수 있다 */
+  sellerStatus?: SellerStatus | null
+}
+
+/** 관리자 회원 상세 */
+export type AdminMemberDetail = {
+  memberId: number
+  email: string
+  name: string
+  role: MemberRole
+  status: MemberStatus
+  createdAt: string
+  /** 판매자 신청 이력이 없으면 null */
+  sellerStatus: SellerStatus | null
+  wallet: { balance: number; heldAmount: number }
+  /** 최신순, 주문이 없으면 빈 목록 */
+  recentOrders: { orderId: number; status: string; totalAmount: number; orderedAt: string }[]
+}
+
+/** 회원 목록. 가입일 최신순 고정, 탈퇴 회원 포함. email은 부분 검색 */
+export function getAdminMembers(query: PageQuery & { email?: string; role?: MemberRole; status?: MemberStatus } = {}) {
+  return api<PageResponse<AdminMember>>('/api/v1/admin/users', { query })
+}
+
+export function getAdminMember(userId: number) {
+  return api<AdminMemberDetail>(`/api/v1/admin/users/${userId}`)
 }
