@@ -12,49 +12,26 @@ import {
   type SellerStatus,
 } from '../lib/api/member'
 import { useApi } from '../lib/useApi'
+import { ADMIN_SELLER_STATUS, SMALL_BTN, SMALL_BTN_ON, fmtDay } from '../lib/admin'
 import { NOTICE, makeCx, phone } from '../lib/ui'
 import styles from './AdminSellers.module.css'
 import AdminLayout from '../components/AdminLayout'
+import Pager from '../components/Pager'
 
 const cx = makeCx(styles)
 
 const PAGE_SIZE = 20
 
-// [탭 이름, 칩 색, 칩 이름]
-const STATUS: Record<SellerStatus, [string, string, string]> = {
-  PENDING: ['심사 대기', 'c-blue', '심사 대기'],
-  APPROVED: ['승인', 'c-ok', '판매 중'],
-  REJECTED: ['반려', 'c-low', '반려'],
-  WITHDRAW_REQUESTED: ['철회 요청', 'c-low', '철회 요청'],
-  WITHDRAWN: ['철회됨', 'c-mute', '철회됨'],
-  SANCTIONED: ['제재됨', 'c-low', '제재됨'],
-}
 // ALL = 상태 필터 없이 전체
 type Tab = SellerStatus | 'ALL'
 const TABS: Tab[] = ['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'WITHDRAW_REQUESTED', 'WITHDRAWN', 'SANCTIONED']
 
-const TAB: CSSProperties = { minHeight: '36px', fontSize: '13px', padding: '0 12px' }
-const TAB_ON: CSSProperties = { ...TAB, borderColor: '#26262C', background: '#26262C', color: '#fff' }
 // .btn에는 비활성 스타일이 없어 판매자 정보 화면의 꺼진 버튼과 같은 모양을 쓴다
 const OFF: CSSProperties = { color: '#83838F', cursor: 'not-allowed' }
-
-/** 2026-10-08T10:00:00 → 10.08 */
-const fmtDay = (iso: string) => {
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime())
-    ? '-'
-    : `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-}
 
 /** 1234567890 → 123-45-67890 */
 const fmtBusinessNumber = (n: string | null) =>
   n && /^\d{10}$/.test(n) ? `${n.slice(0, 3)}-${n.slice(3, 5)}-${n.slice(5)}` : (n ?? '-')
-
-/** 현재 페이지 주변 최대 5개 페이지 번호 (1부터) */
-function pageNumbers(current: number, total: number) {
-  const start = Math.max(1, Math.min(current - 2, total - 4))
-  return Array.from({ length: Math.min(5, total) }, (_, i) => start + i)
-}
 
 type Action = 'approve' | 'reject' | 'withdrawalApprove' | 'withdrawalReject' | 'sanction'
 
@@ -85,10 +62,12 @@ function useAdminSellersView() {
   const items = list.data?.items ?? []
   const totalPages = list.data?.totalPages ?? 0
 
-  // 목록이 바뀌면 선택한 판매자가 없을 때 첫 줄을 고른다
+  // 새 목록이 도착했을 때 선택한 줄이 없으면 첫 줄을 고른다.
+  // 응답 기준으로 고르므로, 페이지를 바꾼 직후 남아 있는 이전 목록으로 잘못 고르지 않는다
   useEffect(() => {
-    if (selectedId === null && items.length > 0) setSelectedId(items[0].sellerId)
-  }, [items, selectedId])
+    const first = list.data?.items[0]
+    if (first) setSelectedId((cur) => cur ?? first.sellerId)
+  }, [list.data])
 
   useEffect(() => {
     setReason('')
@@ -171,8 +150,13 @@ export default function AdminSellersPage() {
         <h1 style={{ margin: '0', fontSize: '26px', fontWeight: '700', letterSpacing: '-0.5px' }}>판매자 심사</h1>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {TABS.map((s) => (
-            <button key={s} className={cx('btn')} style={v.tab === s ? TAB_ON : TAB} onClick={() => v.changeTab(s)}>
-              {s === 'ALL' ? '전체' : STATUS[s][0]}
+            <button
+              key={s}
+              className={cx('btn')}
+              style={v.tab === s ? SMALL_BTN_ON : SMALL_BTN}
+              onClick={() => v.changeTab(s)}
+            >
+              {s === 'ALL' ? '전체' : ADMIN_SELLER_STATUS[s][0]}
             </button>
           ))}
         </div>
@@ -208,7 +192,9 @@ export default function AdminSellersPage() {
                       <td style={{ textAlign: 'left' }}>{fmtBusinessNumber(s.businessNumber)}</td>
                       <td style={{ textAlign: 'left' }}>{s.email}</td>
                       <td style={{ textAlign: 'left' }}>
-                        <span className={cx('chip', STATUS[s.status][1])}>{STATUS[s.status][2]}</span>
+                        <span className={cx('chip', ADMIN_SELLER_STATUS[s.status][1])}>
+                          {ADMIN_SELLER_STATUS[s.status][2]}
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -220,40 +206,7 @@ export default function AdminSellersPage() {
                 {v.listError}
               </p>
             )}
-            {v.totalPages > 1 && (
-              <nav
-                aria-label="페이지"
-                style={{ display: 'flex', justifyContent: 'center', gap: '4px', paddingTop: '16px' }}
-              >
-                <button
-                  className={cx('btn')}
-                  aria-label="이전 페이지"
-                  disabled={v.page <= 1}
-                  onClick={() => v.changePage(v.page - 1)}
-                >
-                  ‹
-                </button>
-                {pageNumbers(v.page, v.totalPages).map((n) => (
-                  <button
-                    key={n}
-                    className={cx('btn')}
-                    style={n === v.page ? TAB_ON : undefined}
-                    aria-current={n === v.page ? 'page' : undefined}
-                    onClick={() => v.changePage(n)}
-                  >
-                    {n}
-                  </button>
-                ))}
-                <button
-                  className={cx('btn')}
-                  aria-label="다음 페이지"
-                  disabled={v.page >= v.totalPages}
-                  onClick={() => v.changePage(v.page + 1)}
-                >
-                  ›
-                </button>
-              </nav>
-            )}
+            <Pager page={v.page} totalPages={v.totalPages} onChange={v.changePage} buttonClassName={cx('btn')} />
           </section>
           {d && (
             <aside
@@ -345,7 +298,7 @@ export default function AdminSellersPage() {
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <button
                     className={cx('btn')}
-                    style={v.can('withdrawalApprove') ? TAB : { ...TAB, ...OFF }}
+                    style={v.can('withdrawalApprove') ? SMALL_BTN : { ...SMALL_BTN, ...OFF }}
                     disabled={!v.can('withdrawalApprove')}
                     onClick={() => v.run('withdrawalApprove')}
                   >
@@ -353,7 +306,7 @@ export default function AdminSellersPage() {
                   </button>
                   <button
                     className={cx('btn')}
-                    style={v.can('withdrawalReject') ? TAB : { ...TAB, ...OFF }}
+                    style={v.can('withdrawalReject') ? SMALL_BTN : { ...SMALL_BTN, ...OFF }}
                     disabled={!v.can('withdrawalReject')}
                     onClick={() => v.run('withdrawalReject')}
                   >
@@ -362,7 +315,9 @@ export default function AdminSellersPage() {
                   <button
                     className={cx('btn')}
                     style={
-                      v.can('sanction') ? { ...TAB, borderColor: '#C2410C', color: '#A33A1F' } : { ...TAB, ...OFF }
+                      v.can('sanction')
+                        ? { ...SMALL_BTN, borderColor: '#C2410C', color: '#A33A1F' }
+                        : { ...SMALL_BTN, ...OFF }
                     }
                     disabled={!v.can('sanction')}
                     onClick={() => v.run('sanction')}
