@@ -164,10 +164,6 @@ export default function SellerInfoPage({ withdrawPanel = '숨김' }: { withdrawP
                 {fmtBusinessNumber(seller?.businessNumber ?? null)}
               </dd>
               <dt className={cx('sub')} style={{ fontSize: '15px' }}>
-                판매 카테고리
-              </dt>
-              <dd style={{ margin: '0' }}>뷰티</dd>
-              <dt className={cx('sub')} style={{ fontSize: '15px' }}>
                 승인일
               </dt>
               <dd style={{ margin: '0' }} className={cx('num')}>
