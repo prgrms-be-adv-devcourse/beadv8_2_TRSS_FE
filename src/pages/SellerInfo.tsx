@@ -145,7 +145,7 @@ export default function SellerInfoPage({ withdrawPanel = '숨김' }: { withdrawP
   const w = useWithdrawal(withdrawPanel === '보임', setSeller)
   const [chip, label] = seller ? STATUS[seller.status] : STATUS.APPROVED
   const last4 = seller?.accountNumber.slice(-4)
-  // 판매 중이고 미정산 금액이 0원일 때만 철회 요청 가능 (금액을 모르면 막아 둔다)
+  // 판매 중이고 미정산 금액이 0원일 때만 철회 요청 가능 (불러오기 전에는 막아 둔다)
   const unsettled = seller?.unsettledAmount
   const canWithdraw = seller?.status === 'APPROVED' && unsettled === 0
   return (

@@ -37,11 +37,10 @@ export type MySeller = {
   /** 가장 최근 상태 변경 사유 (반려·철회 요청·철회 거절·제재) */
   reason: string | null
   appliedAt: string
-  // 아래 두 값은 백엔드에 추가 예정이라 반영 전 응답에는 없을 수 있다
-  /** 승인일. 승인된 적이 없으면 null */
-  approvedAt?: string | null
+  /** 승인일. 승인 전·반려·재신청 뒤에는 null. 철회 요청·거절로는 바뀌지 않는다 */
+  approvedAt: string | null
   /** 아직 정산받지 않은 금액. 0이어야 철회를 요청할 수 있다 */
-  unsettledAmount?: number
+  unsettledAmount: number
 }
 
 /** 입점 신청. 번호류는 하이픈이 있어도 된다. */

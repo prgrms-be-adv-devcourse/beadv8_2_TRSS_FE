@@ -1,6 +1,7 @@
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { screens, type ScreenAuth } from './routes'
+import RequireActiveSeller from './components/RequireActiveSeller'
 import RequireRole from './components/RequireRole'
 import type { MemberRole } from './lib/auth'
 import ScreensPage from './pages/Screens'
@@ -33,11 +34,14 @@ export default function App() {
           ))}
         {(Object.keys(GUARDS) as ScreenAuth[]).map((auth) => (
           <Route key={auth} element={<RequireRole roles={GUARDS[auth]} />}>
-            {screens
-              .filter((s) => s.auth === auth)
-              .map((s) => (
-                <Route key={s.path} path={s.path} element={s.element} />
-              ))}
+            {/* 판매자 센터는 판매자 상태(판매 중)까지 확인한다 */}
+            <Route element={auth === 'SELLER' ? <RequireActiveSeller /> : <Outlet />}>
+              {screens
+                .filter((s) => s.auth === auth)
+                .map((s) => (
+                  <Route key={s.path} path={s.path} element={s.element} />
+                ))}
+            </Route>
           </Route>
         ))}
         <Route path="/screens" element={<ScreensPage />} />
