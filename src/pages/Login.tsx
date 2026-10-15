@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { login } from '../lib/auth'
 import { errorMessage } from '../lib/api'
 import { makeCx } from '../lib/ui'
@@ -10,6 +10,7 @@ const cx = makeCx(styles)
 /** 로그인 */
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -22,7 +23,9 @@ export default function LoginPage() {
     setPending(true)
     try {
       await login(email.trim(), password)
-      navigate('/', { replace: true })
+      // 로그인이 필요한 화면(RequireRole)이나 상품 상세의 장바구니 담기에서 왔으면 그 화면으로 돌아가요.
+      const from = (location.state as { from?: string } | null)?.from
+      navigate(from?.startsWith('/') ? from : '/', { replace: true })
     } catch (err) {
       setError(errorMessage(err))
     } finally {
