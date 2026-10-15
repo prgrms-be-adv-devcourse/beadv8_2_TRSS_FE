@@ -7,7 +7,8 @@ import {
   type MySeller,
   type SellerStatus,
   type SellerUpdateRequest,
-} from '../lib/seller'
+} from '../lib/api/member'
+import { useApi } from '../lib/useApi'
 import { makeCx } from '../lib/ui'
 import styles from './SellerInfo.module.css'
 import SellerLayout from '../components/SellerLayout'
@@ -61,24 +62,14 @@ function diff(seller: MySeller, form: Form): SellerUpdateRequest {
 
 /** 내 판매자 정보 조회·수정 */
 function useSellerInfo() {
-  const [seller, setSeller] = useState<MySeller | null>(null)
+  const { data: seller, setData: setSeller, error: loadError } = useApi(getMySeller)
   const [form, setForm] = useState<Form | null>(null)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
-    let alive = true
-    getMySeller()
-      .then((s) => {
-        if (!alive) return
-        setSeller(s)
-        setForm(toForm(s))
-      })
-      .catch((e) => alive && setError(errorMessage(e)))
-    return () => {
-      alive = false
-    }
-  }, [])
+    if (seller) setForm(toForm(seller))
+  }, [seller])
 
   const bind = (key: keyof Form) => ({
     value: form?.[key] ?? '',
@@ -90,14 +81,12 @@ function useSellerInfo() {
     if (!seller || !form || saving) return
     const body = diff(seller, form)
     if (Object.keys(body).length === 0) return
-    setError('')
+    setSaveError('')
     setSaving(true)
     try {
-      const next = await updateSeller(body)
-      setSeller(next)
-      setForm(toForm(next))
+      setSeller(await updateSeller(body))
     } catch (e) {
-      setError(errorMessage(e))
+      setSaveError(errorMessage(e))
     } finally {
       setSaving(false)
     }
@@ -106,7 +95,7 @@ function useSellerInfo() {
   // 저장된 은행이 선택지에 없으면 맨 앞에 넣어 그대로 보이게 한다.
   const banks = seller && !BANKS.includes(seller.bankName) ? [seller.bankName, ...BANKS] : BANKS
 
-  return { seller, bind, save, saving, error, banks }
+  return { seller, bind, save, saving, error: saveError || loadError || '', banks }
 }
 
 /** 판매자 정보 */
