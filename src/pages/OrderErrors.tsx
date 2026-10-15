@@ -998,10 +998,10 @@ export default function OrderErrorsPage() {
                       marginTop: '6px',
                     }}
                   >
-                    <Link className={cx('btn')} to="/orders/detail">
+                    <Link className={cx('btn')} to="/orders/1">
                       닫기
                     </Link>
-                    <Link className={cx('btn btn-p')} to="/orders/detail">
+                    <Link className={cx('btn btn-p')} to="/orders/1">
                       반품 요청하기
                     </Link>
                   </div>
@@ -1037,7 +1037,7 @@ export default function OrderErrorsPage() {
                       marginTop: '6px',
                     }}
                   >
-                    <Link className={cx('btn btn-p')} to="/orders/detail">
+                    <Link className={cx('btn btn-p')} to="/orders/1">
                       주문 상세 보기
                     </Link>
                   </div>
@@ -1075,7 +1075,7 @@ export default function OrderErrorsPage() {
                       marginTop: '6px',
                     }}
                   >
-                    <Link className={cx('btn btn-p')} to="/orders/detail">
+                    <Link className={cx('btn btn-p')} to="/orders/1">
                       확인
                     </Link>
                   </div>
@@ -1112,7 +1112,7 @@ export default function OrderErrorsPage() {
                       marginTop: '6px',
                     }}
                   >
-                    <Link className={cx('btn btn-p')} to="/orders/detail">
+                    <Link className={cx('btn btn-p')} to="/orders/1">
                       확인
                     </Link>
                   </div>

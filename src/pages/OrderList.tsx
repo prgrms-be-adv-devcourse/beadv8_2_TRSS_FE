@@ -88,11 +88,11 @@ export default function OrderListPage() {
               <div style={{ flex: '1 1 260px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <span className={cx('sub num')}>
                   10.09 주문{' '}
-                  <Link to="/orders/detail" style={{ color: '#5F5F6A' }}>
+                  <Link to="/orders/1" style={{ color: '#5F5F6A' }}>
                     ORD-20261009-0142
                   </Link>
                 </span>
-                <Link to="/orders/detail" style={{ color: '#26262C', fontSize: '16px', fontWeight: '500' }}>
+                <Link to="/orders/1" style={{ color: '#26262C', fontSize: '16px', fontWeight: '500' }}>
                   약산성 수분 진정 토너 300ml 외 1개
                 </Link>
                 <strong className={cx('num')} style={{ fontWeight: '700' }}>
@@ -152,11 +152,11 @@ export default function OrderListPage() {
               <div style={{ flex: '1 1 260px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <span className={cx('sub num')}>
                   10.05 주문{' '}
-                  <Link to="/orders/detail" style={{ color: '#5F5F6A' }}>
+                  <Link to="/orders/1" style={{ color: '#5F5F6A' }}>
                     ORD-20261005-0031
                   </Link>
                 </span>
-                <Link to="/orders/detail" style={{ color: '#26262C', fontSize: '16px', fontWeight: '500' }}>
+                <Link to="/orders/1" style={{ color: '#26262C', fontSize: '16px', fontWeight: '500' }}>
                   세라마이드 장벽 크림 80ml 외 1개
                 </Link>
                 <strong className={cx('num')} style={{ fontWeight: '700' }}>
@@ -178,7 +178,7 @@ export default function OrderListPage() {
               <div style={{ flex: '0 0 140px', display: 'flex', justifyContent: 'flex-end' }}>
                 <Link
                   className={cx('btn')}
-                  to="/orders/detail"
+                  to="/orders/1"
                   style={{ minHeight: '36px', fontSize: '13px', padding: '0 12px' }}
                 >
                   구매 확정하기
@@ -214,11 +214,11 @@ export default function OrderListPage() {
               <div style={{ flex: '1 1 260px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <span className={cx('sub num')}>
                   09.28 주문{' '}
-                  <Link to="/orders/detail" style={{ color: '#5F5F6A' }}>
+                  <Link to="/orders/1" style={{ color: '#5F5F6A' }}>
                     ORD-20260928-0377
                   </Link>
                 </span>
-                <Link to="/orders/detail" style={{ color: '#26262C', fontSize: '16px', fontWeight: '500' }}>
+                <Link to="/orders/1" style={{ color: '#26262C', fontSize: '16px', fontWeight: '500' }}>
                   오버핏 코튼 반팔 티셔츠
                 </Link>
                 <strong className={cx('num')} style={{ fontWeight: '700' }}>
@@ -268,11 +268,11 @@ export default function OrderListPage() {
               <div style={{ flex: '1 1 260px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <span className={cx('sub num')}>
                   09.21 주문{' '}
-                  <Link to="/orders/detail" style={{ color: '#5F5F6A' }}>
+                  <Link to="/orders/1" style={{ color: '#5F5F6A' }}>
                     ORD-20260921-0410
                   </Link>
                 </span>
-                <Link to="/orders/detail" style={{ color: '#26262C', fontSize: '16px', fontWeight: '500' }}>
+                <Link to="/orders/1" style={{ color: '#26262C', fontSize: '16px', fontWeight: '500' }}>
                   진정 마스크팩 10매
                 </Link>
                 <strong className={cx('num')} style={{ fontWeight: '700' }}>
@@ -321,11 +321,11 @@ export default function OrderListPage() {
               <div style={{ flex: '1 1 260px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <span className={cx('sub num')}>
                   09.14 주문{' '}
-                  <Link to="/orders/detail" style={{ color: '#5F5F6A' }}>
+                  <Link to="/orders/1" style={{ color: '#5F5F6A' }}>
                     ORD-20260914-0098
                   </Link>
                 </span>
-                <Link to="/orders/detail" style={{ color: '#26262C', fontSize: '16px', fontWeight: '500' }}>
+                <Link to="/orders/1" style={{ color: '#26262C', fontSize: '16px', fontWeight: '500' }}>
                   순한 아미노 클렌징폼 150ml
                 </Link>
                 <strong className={cx('num')} style={{ fontWeight: '700' }}>

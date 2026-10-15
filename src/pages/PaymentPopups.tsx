@@ -114,7 +114,7 @@ export default function PaymentPopupsPage() {
                   <Link className={cx('btn')} to="/">
                     쇼핑 계속하기
                   </Link>
-                  <Link className={cx('btn btn-p')} to="/orders/detail">
+                  <Link className={cx('btn btn-p')} to="/orders/1">
                     주문 상세 보기
                   </Link>
                 </div>

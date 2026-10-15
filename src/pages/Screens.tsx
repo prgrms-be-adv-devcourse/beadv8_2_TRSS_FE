@@ -20,7 +20,7 @@ export default function ScreensPage() {
                 .filter((s) => s.group === g)
                 .map((s) => (
                   <li key={s.path}>
-                    <Link to={s.path}>
+                    <Link to={s.demo ?? s.path}>
                       {s.title}
                       <span className={styles.path}>{s.path}</span>
                     </Link>

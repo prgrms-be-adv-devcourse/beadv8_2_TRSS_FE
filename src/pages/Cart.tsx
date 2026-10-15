@@ -157,7 +157,7 @@ export default function CartPage() {
                     <span className={cx('sub')} style={{ fontWeight: '500' }}>
                       {r.shop}
                     </span>
-                    <Link to="/product" style={{ color: '#26262C', fontSize: '15px' }}>
+                    <Link to="/product/1" style={{ color: '#26262C', fontSize: '15px' }}>
                       {r.name}
                     </Link>
                     {r.changed && (

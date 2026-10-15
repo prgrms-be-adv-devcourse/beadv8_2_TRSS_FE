@@ -286,7 +286,7 @@ export default function MainPage() {
             style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: '32px 20px' }}
           >
             {items.map((p, pIndex) => (
-              <Link className={cx('card')} to="/product" key={pIndex}>
+              <Link className={cx('card')} to="/product/1" key={pIndex}>
                 <div className={cx('tile')} style={css(`background:${p.bg}`)}>
                   <img
                     src={p.img}
