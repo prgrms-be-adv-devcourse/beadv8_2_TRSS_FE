@@ -17,7 +17,9 @@ const SUB_CATEGORIES = ['스킨케어', '메이크업', '선케어', '클렌징'
 
 /** 구매자 화면 공통 헤더 */
 export default function BuyerHeader({ active, cartCount = 3, balance = 48000, compact = false }: Props) {
-  const { ready, loggedIn } = useAuth()
+  const { ready, loggedIn, me } = useAuth()
+  // 관리자는 마이페이지 대신 관리자 페이지(첫 메뉴인 판매자 심사)로 보낸다
+  const isAdmin = me?.role === 'ADMIN'
   const current = (key: Props['active']) => (active === key ? ({ 'aria-current': 'page' } as const) : {})
   return (
     <header className={`${styles.header} ${compact ? styles.compact : ''}`}>
@@ -92,11 +94,11 @@ export default function BuyerHeader({ active, cartCount = 3, balance = 48000, co
               주문내역
             </Link>
             <Link
-              to="/mypage"
+              to={isAdmin ? '/admin/sellers' : '/mypage'}
               {...current('mypage')}
               className={`${styles.textLink} ${active === 'mypage' ? styles.textLinkOn : ''}`}
             >
-              마이페이지
+              {isAdmin ? '관리자 페이지' : '마이페이지'}
             </Link>
           </nav>
         )}
