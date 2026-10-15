@@ -1,121 +1,195 @@
-import { Link } from 'react-router-dom'
-import { makeCx, css } from '../lib/ui'
+import { Link, useSearchParams } from 'react-router-dom'
+import { makeCx, won } from '../lib/ui'
 import styles from './Main.module.css'
 import BuyerHeader from '../components/BuyerHeader'
 
-import { Fragment, useEffect, useState } from 'react'
-import { api } from '../lib/api'
-import { productImage } from '../lib/products'
+import { useEffect, useState, type FormEvent } from 'react'
+import { toPageParam } from '../lib/api'
+import {
+  getCategories,
+  searchProducts,
+  type CategoryNode,
+  type ProductSearchQuery,
+  type ProductSort,
+} from '../lib/api/product'
+import { useApi } from '../lib/useApi'
+import { categoryIcon } from '../lib/products'
+import { EXAMPLE_CATEGORIES, isServerUnreachable, searchExampleProducts } from '../lib/exampleProducts'
 
-type Group = 'b' | 'w'
-const CATEGORIES: Array<[name: string, color: string, group: Group]> = [
-  ['스킨케어', '#F5E1E6', 'b'],
-  ['메이크업', '#F5D9DE', 'b'],
-  ['선케어', '#E8E6F3', 'b'],
-  ['클렌징', '#E8E0F2', 'b'],
-  ['마스크팩', '#E4EAF2', 'b'],
-  ['바디케어', '#E4DAF0', 'b'],
-  ['상의', '#EEE3F2', 'w'],
-  ['아우터', '#E2E6EE', 'w'],
-  ['바지', '#F3D9DE', 'w'],
+const SORTS: Array<{ value: ProductSort; label: string }> = [
+  { value: 'LATEST', label: '최신순' },
+  { value: 'PRICE_ASC', label: '낮은 가격순' },
+  { value: 'PRICE_DESC', label: '높은 가격순' },
 ]
-// [판매자, 상품명, 카테고리, 가격, 재고]
-const PRODUCTS: Array<[shop: string, name: string, category: string, price: number, stock: number]> = [
-  ['온결', '약산성 수분 진정 토너 300ml', '스킨케어', 18900, 24],
-  ['무드랩', '시카 리페어 크림 50ml', '스킨케어', 27000, 3],
-  ['데일리핏', '순한 아미노 클렌징폼 150ml', '클렌징', 12500, 40],
-  ['온결', '비타민 브라이트닝 세럼 30ml', '스킨케어', 32000, 0],
-  ['하루담', '저자극 데일리 선크림 SPF50+', '선케어', 21000, 5],
-  ['무드랩', '세라마이드 장벽 크림 80ml', '스킨케어', 29500, 18],
-  ['하루담', '진정 마스크팩 10매', '마스크팩', 15900, 12],
-  ['하루담', '촉촉 커버 쿠션 21호', '메이크업', 26000, 9],
-  ['데일리핏', '오버핏 코튼 반팔 티셔츠', '상의', 24000, 2],
-  ['데일리핏', '라이트 윈드브레이커', '아우터', 59000, 14],
-]
-const SORTS = ['최신순', '낮은 가격순', '높은 가격순']
-
-/** GET /api/v1/categories 응답 노드 */
-type CategoryNode = { categoryId: number; name: string; depth: number; sortOrder: number; children: CategoryNode[] }
-type CategoryGroup = { label: string; names: string[] }
-
-/** 서버에 연결되지 않을 때 쓰는 기본 카테고리 */
-const FALLBACK_GROUPS: CategoryGroup[] = [
-  { label: '뷰티', names: CATEGORIES.filter((c) => c[2] === 'b').map((c) => c[0]) },
-  { label: '의류', names: CATEGORIES.filter((c) => c[2] === 'w').map((c) => c[0]) },
-]
-const DEFAULT_TILE = '#ECE8F2'
-
-/** 카테고리 트리를 서버에서 불러와요. 실패하면 기본 카테고리를 그대로 써요. */
-function useCategoryGroups() {
-  const [groups, setGroups] = useState<CategoryGroup[]>(FALLBACK_GROUPS)
-  useEffect(() => {
-    let alive = true
-    api<CategoryNode[]>('/api/v1/categories')
-      .then((tree) => {
-        if (!alive || !tree?.length) return
-        setGroups(tree.map((g) => ({ label: g.name, names: g.children.map((c) => c.name) })))
-      })
-      .catch(() => {
-        /* 서버가 꺼져 있으면 기본값 유지 */
-      })
-    return () => {
-      alive = false
-    }
-  }, [])
-  return groups
-}
+/** 인기 검색어 API가 없어 고정값이에요. */
+const POPULAR_KEYWORDS = ['선크림', '쿠션', '세럼', '티셔츠', '스니커즈']
+const PAGE_SIZE = 20
+/** 페이지 번호를 한 번에 몇 개까지 보여줄지 */
+const PAGE_WINDOW = 5
 
 const cx = makeCx(styles)
 
-/** 화면 상태와 화면에 그릴 값을 만들어요. */
+/** 카테고리 ID → 이름과 대분류. 대분류는 자기 자신이 대분류예요. */
+function indexCategories(tree: CategoryNode[]) {
+  const byId = new Map<number, { name: string; parentId: number; parentName: string }>()
+  for (const g of tree) {
+    byId.set(g.categoryId, { name: g.name, parentId: g.categoryId, parentName: g.name })
+    for (const c of g.children) byId.set(c.categoryId, { name: c.name, parentId: g.categoryId, parentName: g.name })
+  }
+  return byId
+}
+
+/**
+ * 화면 상태와 화면에 그릴 값을 만들어요.
+ * 검색 조건은 URL 쿼리(q, category, sort, soldOut, page)에 두어서 뒤로 가기·새로고침해도 유지돼요.
+ */
 function useMainView() {
-  const [sort, setSort] = useState(0)
-  const [hide, setHide] = useState(true)
-  const [cat, setCat] = useState('')
-  const groups = useCategoryGroups()
+  const [params, setParams] = useSearchParams()
+  const keyword = params.get('q') ?? ''
+  const categoryId = Number(params.get('category')) || undefined
+  const sort = SORTS.find((s) => s.value === params.get('sort'))?.value ?? 'LATEST'
+  const excludeSoldOut = params.get('soldOut') !== 'show'
+  const page = Math.max(1, Number(params.get('page')) || 1)
 
-  const colorOf = Object.fromEntries(CATEGORIES.map(([n, color]) => [n, color]))
-  let items = PRODUCTS.map(([shop, name, category, p, stock]) => ({
-    shop,
-    name,
-    cat: category,
-    p,
-    stock,
-    img: productImage(name),
-    bg: `radial-gradient(110% 85% at 25% 18%,#FFFFFF 0%,${colorOf[category] ?? DEFAULT_TILE} 62%)`,
-    price: p.toLocaleString('ko-KR'),
-    soldOut: stock === 0,
-    low: stock > 0 && stock <= 5,
+  /** 쿼리 일부를 바꿔요. 값이 없으면 지우고, 조건이 바뀌면 1페이지로 돌아가요. */
+  const update = (next: Record<string, string | undefined>, keepPage = false) => {
+    setParams((prev) => {
+      const p = new URLSearchParams(prev)
+      for (const [k, v] of Object.entries(next)) {
+        if (v) p.set(k, v)
+        else p.delete(k)
+      }
+      if (!keepPage) p.delete('page')
+      return p
+    })
+  }
+
+  const [input, setInput] = useState(keyword)
+  useEffect(() => setInput(keyword), [keyword])
+
+  // 백엔드에 닿지 못하면 프론트 전용 예시 데이터로 대신 보여줘요. (lib/exampleProducts.ts)
+  const categories = useApi(
+    () => getCategories().catch((e) => (isServerUnreachable(e) ? EXAMPLE_CATEGORIES : Promise.reject(e))),
+    [],
+  )
+  const products = useApi(() => {
+    const query: ProductSearchQuery = {
+      keyword: keyword || undefined,
+      categoryId,
+      sort,
+      excludeSoldOut,
+      page: toPageParam(page),
+      size: PAGE_SIZE,
+    }
+    return searchProducts(query).then(
+      (r) => ({ ...r, example: false }),
+      (e) => (isServerUnreachable(e) ? { ...searchExampleProducts(query), example: true } : Promise.reject(e)),
+    )
+  }, [keyword, categoryId, sort, excludeSoldOut, page])
+
+  const tree = categories.data ?? []
+  const categoryById = indexCategories(tree)
+  const selected = categoryId ? categoryById.get(categoryId) : undefined
+  const selectedParentId = selected?.parentId
+
+  /** 소분류가 펼쳐진 대분류. 한 번에 하나만 펼쳐요. */
+  const [openId, setOpenId] = useState<number | null>(null)
+  // 고른 카테고리의 대분류가 바뀌면(뒤로 가기·새로고침 포함) 그 대분류를 펼쳐요.
+  useEffect(() => setOpenId(selectedParentId ?? null), [selectedParentId])
+
+  const parents = tree.map((g) => ({
+    id: g.categoryId,
+    name: g.name,
+    icon: categoryIcon(g.name),
+    on: selectedParentId === g.categoryId,
+    open: openId === g.categoryId,
+    /** 펼쳐져 있으면 접고, 아니면 펼치면서 그 대분류 전체를 보여줘요. 이미 그 대분류 안을 보고 있으면 펼치기만 해요. */
+    toggle: () => {
+      if (openId === g.categoryId) return setOpenId(null)
+      setOpenId(g.categoryId)
+      if (selectedParentId !== g.categoryId) update({ category: String(g.categoryId) })
+    },
   }))
-  if (cat) items = items.filter((i) => i.cat === cat)
-  if (hide) items = items.filter((i) => !i.soldOut)
-  if (sort === 1) items = [...items].sort((a, b) => a.p - b.p)
-  if (sort === 2) items = [...items].sort((a, b) => b.p - a.p)
 
-  const chip = (name: string) => ({
-    name,
-    on: cat === name,
-    cls: cat === name ? 'sw sw-on' : 'sw',
-    pick: () => setCat(name),
-  })
-  const view = {
-    items,
-    sorts: SORTS.map((label, i) => ({
-      label,
-      on: i === sort,
-      cls: i === sort ? 'btn btn-on' : 'btn',
-      pick: () => setSort(i),
+  const openGroup = tree.find((g) => g.categoryId === openId)
+  const subs = openGroup && {
+    label: openGroup.name,
+    items: [{ categoryId: openGroup.categoryId, name: `${openGroup.name} 전체` }, ...openGroup.children].map((c) => ({
+      id: c.categoryId,
+      name: c.name,
+      icon: categoryIcon(c.categoryId === openGroup.categoryId ? openGroup.name : c.name, openGroup.name),
+      on: c.categoryId === categoryId,
+      pick: () => update({ category: String(c.categoryId) }),
     })),
-    count: items.length,
-    empty: items.length === 0,
-    title: cat || '전체 상품',
-    groups: groups.map((g) => ({ label: g.label, chips: g.names.map(chip) })),
-    allOn: !cat,
-    allCls: cat ? 'sw all' : 'sw all sw-on',
-    total: PRODUCTS.length,
-    pickAll: () => setCat(''),
-    hideSoldOut: hide,
-    toggleSold: () => setHide((h) => !h),
+  }
+
+  const result = products.data
+  const items = (result?.items ?? []).map((p) => {
+    const cat = categoryById.get(p.categoryId)
+    return {
+      id: p.productId,
+      shop: p.businessName,
+      name: p.name,
+      // 이미지 기능 전까지 thumbnailUrl이 없어서 카테고리 대표 아이콘을 보여줘요.
+      img: p.thumbnailUrl ?? categoryIcon(cat?.name ?? '', cat?.parentName),
+      icon: !p.thumbnailUrl,
+      price: won(p.price),
+      soldOut: p.soldOut,
+      remaining: p.remainingStock,
+    }
+  })
+
+  const totalPages = result?.totalPages ?? 0
+  const start = Math.max(1, Math.min(page - Math.floor(PAGE_WINDOW / 2), totalPages - PAGE_WINDOW + 1))
+  const pageNumbers = Array.from(
+    { length: Math.max(0, Math.min(PAGE_WINDOW, totalPages - start + 1)) },
+    (_, i) => start + i,
+  )
+  const goPage = (n: number) => {
+    update({ page: n > 1 ? String(n) : undefined }, true)
+    window.scrollTo(0, 0)
+  }
+
+  const view = {
+    input,
+    changeInput: (e: { target: { value: string } }) => setInput(e.target.value),
+    submitSearch: (e: FormEvent) => {
+      e.preventDefault()
+      update({ q: input.trim() || undefined })
+    },
+    popular: POPULAR_KEYWORDS.map((k) => ({ label: k, pick: () => update({ q: k }) })),
+    parents,
+    subs,
+    allOn: !categoryId,
+    pickAll: () => update({ category: undefined }),
+    title: selected?.name ?? (keyword ? `‘${keyword}’ 검색 결과` : '전체 상품'),
+    count: result?.totalElements ?? 0,
+    hideSoldOut: excludeSoldOut,
+    toggleSold: () => update({ soldOut: excludeSoldOut ? 'show' : undefined }),
+    sorts: SORTS.map((s) => ({
+      label: s.label,
+      on: s.value === sort,
+      cls: s.value === sort ? 'btn btn-on' : 'btn',
+      pick: () => update({ sort: s.value === 'LATEST' ? undefined : s.value }),
+    })),
+    items,
+    example: !!result?.example,
+    loading: products.loading,
+    firstLoad: products.loading && !result,
+    error: products.error,
+    retry: products.reload,
+    empty: !products.loading && !products.error && !!result && items.length === 0,
+    emptyTitle: keyword ? `‘${keyword}’에 맞는 상품이 없어요` : '이 카테고리에는 지금 살 수 있는 상품이 없어요',
+    emptySub: keyword
+      ? '다른 검색어로 찾아보거나 전체 상품을 둘러보세요.'
+      : '품절 상품을 함께 보거나 전체 카테고리에서 찾아보세요.',
+    resetAll: () => setParams(new URLSearchParams()),
+    showPager: totalPages > 1,
+    pages: pageNumbers.map((n) => ({ n, on: n === page, go: () => goPage(n) })),
+    hasPrev: page > 1,
+    hasNext: page < totalPages,
+    prev: () => goPage(page - 1),
+    next: () => goPage(page + 1),
   }
   return view
 }
@@ -123,7 +197,37 @@ function useMainView() {
 /** 상품 목록 */
 export default function MainPage() {
   const view = useMainView()
-  const { allCls, allOn, count, empty, groups, hideSoldOut, items, pickAll, sorts, title, toggleSold, total } = view
+  const {
+    allOn,
+    changeInput,
+    count,
+    empty,
+    emptySub,
+    emptyTitle,
+    error,
+    example,
+    firstLoad,
+    hasNext,
+    hasPrev,
+    hideSoldOut,
+    input,
+    items,
+    loading,
+    next,
+    pages,
+    parents,
+    pickAll,
+    popular,
+    prev,
+    resetAll,
+    retry,
+    showPager,
+    sorts,
+    subs,
+    submitSearch,
+    title,
+    toggleSold,
+  } = view
   return (
     <div className={styles.page}>
       <div>
@@ -137,13 +241,13 @@ export default function MainPage() {
             style={{
               maxWidth: '1240px',
               margin: '0 auto',
-              padding: '28px 24px 32px',
+              padding: '28px 24px 28px',
               boxSizing: 'border-box',
               backgroundColor: '#ffffff',
             }}
           >
             <div className={cx('panel2')}>
-              <div className={cx('search')} role="search">
+              <form className={cx('search')} role="search" onSubmit={submitSearch}>
                 <svg
                   width="22"
                   height="22"
@@ -157,47 +261,79 @@ export default function MainPage() {
                   <circle cx="11" cy="11" r="6.5" />
                   <path d="m16 16 4.5 4.5" />
                 </svg>
-                <input aria-label="상품 검색" placeholder="찾는 상품 이름을 입력해 주세요" />
-                <button type="button" style={{ backgroundColor: '#26262c' }}>
+                <input
+                  aria-label="상품 검색"
+                  placeholder="찾는 상품 이름을 입력해 주세요"
+                  value={input}
+                  onChange={changeInput}
+                  maxLength={100}
+                />
+                <button type="submit" style={{ backgroundColor: '#26262c' }}>
                   검색
                 </button>
+              </form>
+              <div className={cx('pop')}>
+                <span className={cx('pop-label')}>인기 검색어</span>
+                {popular.map((k) => (
+                  <button type="button" className={cx('kw')} onClick={k.pick} key={k.label}>
+                    {k.label}
+                  </button>
+                ))}
               </div>
               <div className={cx('cats')}>
-                <button
-                  className={cx(allCls)}
-                  onClick={pickAll}
-                  aria-pressed={allOn}
-                  style={{
-                    backgroundColor: '#26262c',
-                    color: '#ffffff',
-                    borderColor: '#5F5F6A',
-                    borderWidth: '0px',
-                    gridRow: `1 / span ${Math.max(groups.length, 1)}`,
-                  }}
-                >
-                  <span>전체</span>
-                  <small className={cx('num')}>{total}개 상품</small>
-                </button>
-                {groups.map((g, gIndex) => (
-                  <Fragment key={g.label}>
-                    <span className={cx('glabel')} id={`g-${gIndex}`} style={{ gridColumn: 2 }}>
-                      {g.label}
-                    </span>
-                    <div className={cx('gchips')} role="group" aria-labelledby={`g-${gIndex}`}>
-                      {g.chips.map((c) => (
-                        <button
-                          className={cx(c.cls)}
-                          onClick={c.pick}
-                          aria-pressed={c.on}
-                          style={{ borderStyle: 'solid', borderColor: '#8A8A95', backgroundColor: 'transparent' }}
-                          key={c.name}
+                <div className={cx('cat-row')} role="group" aria-label="카테고리">
+                  <button className={cx('cat all', allOn && 'cat-on')} onClick={pickAll} aria-pressed={allOn}>
+                    <span className={cx('ico')}>ALL</span>
+                    <span>전체</span>
+                  </button>
+                  {parents.map((g) => (
+                    <button
+                      className={cx('cat', g.on && 'cat-on')}
+                      onClick={g.toggle}
+                      aria-expanded={g.open}
+                      aria-controls="subcats"
+                      key={g.id}
+                    >
+                      <span className={cx('ico')}>
+                        <img src={g.icon} alt="" />
+                      </span>
+                      <span className={cx('cat-name')}>
+                        {g.name}
+                        <svg
+                          className={cx('chev', g.open && 'chev-open')}
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
                         >
-                          <span>{c.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </Fragment>
-                ))}
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {subs && (
+                  <div className={cx('subcats')} id="subcats" role="group" aria-label={`${subs.label} 소분류`}>
+                    {subs.items.map((c) => (
+                      <button
+                        className={cx('cat subcat', c.on && 'cat-on')}
+                        onClick={c.pick}
+                        aria-pressed={c.on}
+                        key={c.id}
+                      >
+                        <span className={cx('ico')}>
+                          <img src={c.icon} alt="" />
+                        </span>
+                        <span>{c.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -234,9 +370,11 @@ export default function MainPage() {
               }}
             >
               {title}
-              <span className={cx('num')} style={{ fontSize: '16px', fontWeight: '500', color: '#5F5F6A' }}>
-                {count}개
-              </span>
+              {!firstLoad && !error && (
+                <span className={cx('num')} style={{ fontSize: '16px', fontWeight: '500', color: '#5F5F6A' }}>
+                  {count.toLocaleString('ko-KR')}개
+                </span>
+              )}
             </h1>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 20px' }}>
               <label className={cx('tog')}>
@@ -244,13 +382,13 @@ export default function MainPage() {
                 품절 상품 빼고 보기
               </label>
               <div role="group" aria-label="정렬" style={{ display: 'flex', gap: '2px' }}>
-                {sorts.map((s, sIndex) => (
+                {sorts.map((s) => (
                   <button
                     className={cx(s.cls)}
                     onClick={s.pick}
                     aria-pressed={s.on}
                     style={{ fontSize: '14px', minHeight: '40px' }}
-                    key={sIndex}
+                    key={s.label}
                   >
                     {s.label}
                   </button>
@@ -258,50 +396,56 @@ export default function MainPage() {
               </div>
             </div>
           </div>
-          {empty && (
-            <>
-              <div
-                style={{
-                  padding: '64px 24px',
-                  border: '1px dashed #D5D5DD',
-                  borderRadius: '8px',
-                  textAlign: 'center',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '12px',
-                }}
-              >
-                <strong style={{ fontSize: '17px', fontWeight: '700' }}>
-                  이 카테고리에는 지금 살 수 있는 상품이 없어요
-                </strong>
-                <span className={cx('sub')}>품절 상품을 함께 보거나 전체 카테고리에서 찾아보세요.</span>
-                <button className={cx('btn btn-on')} onClick={pickAll}>
-                  전체 상품 보기
-                </button>
-              </div>
-            </>
+          {example && (
+            <p className={cx('example')} role="status">
+              백엔드 서버에 연결되지 않아 <strong>프론트 예시 상품</strong>을 보여주고 있어요. 서버를 켜면 실제 상품이
+              보여요.
+            </p>
           )}
-          <div
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: '32px 20px' }}
-          >
-            {items.map((p, pIndex) => (
-              <Link className={cx('card')} to="/product/1" key={pIndex}>
-                <div className={cx('tile')} style={css(`background:${p.bg}`)}>
-                  <img
-                    src={p.img}
-                    alt=""
-                    style={{ position: 'absolute', inset: '0', width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  {p.low && (
-                    <>
+          {error && (
+            <div className={cx('notice')} role="alert">
+              <strong style={{ fontSize: '17px', fontWeight: '700' }}>상품을 불러오지 못했어요</strong>
+              <span className={cx('sub')}>{error}</span>
+              <button className={cx('btn btn-on')} onClick={retry}>
+                다시 시도
+              </button>
+            </div>
+          )}
+          {firstLoad && (
+            <div className={cx('notice')} aria-live="polite">
+              <span className={cx('sub')}>상품을 불러오고 있어요</span>
+            </div>
+          )}
+          {empty && (
+            <div className={cx('notice')}>
+              <strong style={{ fontSize: '17px', fontWeight: '700' }}>{emptyTitle}</strong>
+              <span className={cx('sub')}>{emptySub}</span>
+              <button className={cx('btn btn-on')} onClick={resetAll}>
+                전체 상품 보기
+              </button>
+            </div>
+          )}
+          {!error && (
+            <div
+              aria-busy={loading}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))',
+                gap: '32px 20px',
+                opacity: loading ? 0.5 : 1,
+                transition: 'opacity .2s',
+              }}
+            >
+              {items.map((p) => (
+                <Link className={cx('card')} to={`/product/${p.id}`} key={p.id}>
+                  <div className={cx('tile')}>
+                    <img src={p.img} alt="" className={cx(p.icon ? 'tile-icon' : 'tile-img')} />
+                    {p.remaining != null && (
                       <span className={cx('chip c-low')} style={{ position: 'absolute', top: '10px', left: '10px' }}>
-                        {p.stock}개 남았어요
+                        {p.remaining}개 남았어요
                       </span>
-                    </>
-                  )}
-                  {p.soldOut && (
-                    <>
+                    )}
+                    {p.soldOut && (
                       <div
                         style={{
                           position: 'absolute',
@@ -319,44 +463,47 @@ export default function MainPage() {
                           품절
                         </span>
                       </div>
-                    </>
-                  )}
-                </div>
-                <div className={cx('label')}>
-                  <span className={cx('sub')} style={{ fontWeight: '500' }}>
-                    {p.shop}
-                  </span>
-                  <span style={{ fontSize: '15px', lineHeight: '1.45', minHeight: '44px' }}>{p.name}</span>
-                  <strong
-                    className={cx('num')}
-                    style={{ fontSize: '19px', fontWeight: '700', letterSpacing: '-0.3px', paddingTop: '4px' }}
-                  >
-                    {p.price}원
-                  </strong>
-                </div>
-              </Link>
-            ))}
-          </div>
-          <nav
-            aria-label="페이지"
-            style={{ display: 'flex', justifyContent: 'center', gap: '4px', paddingTop: '16px' }}
-          >
-            <Link className={cx('btn')} to="/" aria-label="이전 페이지">
-              ‹
-            </Link>
-            <Link className={cx('btn btn-on')} to="/" aria-current="page">
-              1
-            </Link>
-            <Link className={cx('btn')} to="/">
-              2
-            </Link>
-            <Link className={cx('btn')} to="/">
-              3
-            </Link>
-            <Link className={cx('btn')} to="/" aria-label="다음 페이지">
-              ›
-            </Link>
-          </nav>
+                    )}
+                  </div>
+                  <div className={cx('label')}>
+                    <span className={cx('sub')} style={{ fontWeight: '500' }}>
+                      {p.shop}
+                    </span>
+                    <span style={{ fontSize: '15px', lineHeight: '1.45', minHeight: '44px' }}>{p.name}</span>
+                    <strong
+                      className={cx('num')}
+                      style={{ fontSize: '19px', fontWeight: '700', letterSpacing: '-0.3px', paddingTop: '4px' }}
+                    >
+                      {p.price}원
+                    </strong>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+          {showPager && !error && (
+            <nav
+              aria-label="페이지"
+              style={{ display: 'flex', justifyContent: 'center', gap: '4px', paddingTop: '16px' }}
+            >
+              <button className={cx('btn')} onClick={prev} disabled={!hasPrev} aria-label="이전 페이지">
+                ‹
+              </button>
+              {pages.map((pg) => (
+                <button
+                  className={cx(pg.on ? 'btn btn-on' : 'btn')}
+                  onClick={pg.go}
+                  aria-current={pg.on ? 'page' : undefined}
+                  key={pg.n}
+                >
+                  {pg.n}
+                </button>
+              ))}
+              <button className={cx('btn')} onClick={next} disabled={!hasNext} aria-label="다음 페이지">
+                ›
+              </button>
+            </nav>
+          )}
         </main>
       </div>
     </div>

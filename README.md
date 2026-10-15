@@ -124,7 +124,7 @@ tools/                  디자인 → React 변환 스크립트 (아래 참고)
 - 모든 응답은 `{ resultCode, msg, data }` 형태예요. `api()`가 `data`만 꺼내 주고, 실패하면 `ApiError`를 던져요.
 - 목록 응답(`PageResponse`)은 `{ items, page, size, totalElements, totalPages }`예요. `content`가 아니라 `items`예요.
 - 목록 요청의 `page`는 0부터 시작해요(화면의 1페이지 = `page=0`, `toPageParam()`으로 바꿔요). `size`는 기본 20, 최대 100이에요.
-- 판매자 상품 목록은 `{ products: PageResponse, counts }`로 한 번 더 감싸져 있어요.
+- 판매자 상품 목록도 `PageResponse`예요. 탭별 개수는 `GET /api/v1/seller/products/counts`로 따로 받아요.
 
 ## 디자인을 다시 가져올 때
 
