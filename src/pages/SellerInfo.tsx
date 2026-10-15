@@ -1,17 +1,125 @@
+import { useEffect, useState, type ChangeEvent } from 'react'
+import { errorMessage } from '../lib/api'
+import {
+  BANKS,
+  getMySeller,
+  updateSeller,
+  type MySeller,
+  type SellerStatus,
+  type SellerUpdateRequest,
+} from '../lib/seller'
 import { makeCx } from '../lib/ui'
 import styles from './SellerInfo.module.css'
 import SellerLayout from '../components/SellerLayout'
 
 const cx = makeCx(styles)
 
+// [칩 색, 표시 이름]
+const STATUS: Record<SellerStatus, [string, string]> = {
+  PENDING: ['c-blue', '심사 중'],
+  APPROVED: ['c-ok', '판매 중'],
+  REJECTED: ['c-low', '반려됨'],
+  WITHDRAW_REQUESTED: ['c-low', '철회 심사 중'],
+  WITHDRAWN: ['c-mute', '철회됨'],
+  SANCTIONED: ['c-low', '이용 제한'],
+}
+
+/** 1234567890 → 123-45-67890 */
+const fmtBusinessNumber = (n: string | null) =>
+  n && /^\d{10}$/.test(n) ? `${n.slice(0, 3)}-${n.slice(3, 5)}-${n.slice(5)}` : (n ?? '-')
+
+type Form = {
+  businessName: string
+  phoneNumber: string
+  bankName: string
+  accountNumber: string
+  accountHolder: string
+}
+
+const toForm = (s: MySeller): Form => ({
+  businessName: s.businessName,
+  phoneNumber: s.phoneNumber,
+  bankName: s.bankName,
+  accountNumber: '', // 끝 4자리만 내려온다. 새로 입력했을 때만 계좌를 바꾼다.
+  accountHolder: s.accountHolder,
+})
+
+/** 바뀐 값만 담는다. 정산 계좌는 은행·계좌번호·예금주 중 하나라도 바뀌면 셋을 함께 보낸다. */
+function diff(seller: MySeller, form: Form): SellerUpdateRequest {
+  const body: SellerUpdateRequest = {}
+  if (form.businessName.trim() !== seller.businessName) body.businessName = form.businessName.trim()
+  if (form.phoneNumber !== seller.phoneNumber) body.phoneNumber = form.phoneNumber
+  const accountChanged =
+    form.accountNumber !== '' || form.bankName !== seller.bankName || form.accountHolder !== seller.accountHolder
+  if (accountChanged) {
+    body.bankName = form.bankName
+    body.accountNumber = form.accountNumber
+    body.accountHolder = form.accountHolder.trim()
+  }
+  return body
+}
+
+/** 내 판매자 정보 조회·수정 */
+function useSellerInfo() {
+  const [seller, setSeller] = useState<MySeller | null>(null)
+  const [form, setForm] = useState<Form | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let alive = true
+    getMySeller()
+      .then((s) => {
+        if (!alive) return
+        setSeller(s)
+        setForm(toForm(s))
+      })
+      .catch((e) => alive && setError(errorMessage(e)))
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  const bind = (key: keyof Form) => ({
+    value: form?.[key] ?? '',
+    onChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setForm((f) => (f ? { ...f, [key]: e.target.value } : f)),
+  })
+
+  async function save() {
+    if (!seller || !form || saving) return
+    const body = diff(seller, form)
+    if (Object.keys(body).length === 0) return
+    setError('')
+    setSaving(true)
+    try {
+      const next = await updateSeller(body)
+      setSeller(next)
+      setForm(toForm(next))
+    } catch (e) {
+      setError(errorMessage(e))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // 저장된 은행이 선택지에 없으면 맨 앞에 넣어 그대로 보이게 한다.
+  const banks = seller && !BANKS.includes(seller.bankName) ? [seller.bankName, ...BANKS] : BANKS
+
+  return { seller, bind, save, saving, error, banks }
+}
+
 /** 판매자 정보 */
 export default function SellerInfoPage() {
+  const { seller, bind, save, saving, banks } = useSellerInfo()
+  const [chip, label] = seller ? STATUS[seller.status] : STATUS.APPROVED
+  const last4 = seller?.accountNumber.slice(-4)
   return (
     <div className={styles.page}>
       <SellerLayout active="판매자 정보" minHeight={1040}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h1 style={{ margin: '0', fontSize: '26px', fontWeight: '700', letterSpacing: '-0.5px' }}>판매자 정보</h1>
-          <span className={cx('chip c-ok')}>판매 중</span>
+          <span className={cx('chip', chip)}>{label}</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '820px' }}>
           <section className={cx('panel')} style={{ padding: '24px 28px' }}>
@@ -28,7 +136,7 @@ export default function SellerInfoPage() {
                 사업자등록번호
               </dt>
               <dd style={{ margin: '0' }} className={cx('num')}>
-                123-45-67890
+                {fmtBusinessNumber(seller?.businessNumber ?? null)}
               </dd>
               <dt className={cx('sub')} style={{ fontSize: '15px' }}>
                 판매 카테고리
@@ -54,10 +162,10 @@ export default function SellerInfoPage() {
                 </label>
                 <input
                   id="sn"
+                  {...bind('businessName')}
                   className={cx('in')}
                   type="text"
                   placeholder=""
-                  defaultValue="온결"
                   style={{ width: '100%' }}
                 />
               </div>
@@ -67,10 +175,10 @@ export default function SellerInfoPage() {
                 </label>
                 <input
                   id="sp"
+                  {...bind('phoneNumber')}
                   className={cx('in')}
                   type="text"
                   placeholder=""
-                  defaultValue="010-1234-5678"
                   style={{ width: '100%' }}
                 />
               </div>
@@ -80,15 +188,26 @@ export default function SellerInfoPage() {
                 <label htmlFor="bk" style={{ fontSize: '14px', fontWeight: '500' }}>
                   은행
                 </label>
-                <select id="bk" className={cx('in')}>
-                  <option>국민은행</option>
+                <select id="bk" {...bind('bankName')} className={cx('in')}>
+                  {banks.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label htmlFor="ac" style={{ fontSize: '14px', fontWeight: '500' }}>
                   계좌번호
                 </label>
-                <input id="ac" className={cx('in')} type="text" placeholder="끝자리 4321" style={{ width: '100%' }} />
+                <input
+                  id="ac"
+                  {...bind('accountNumber')}
+                  className={cx('in')}
+                  type="text"
+                  placeholder={last4 ? `끝자리 ${last4}` : ''}
+                  style={{ width: '100%' }}
+                />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label htmlFor="ho" style={{ fontSize: '14px', fontWeight: '500' }}>
@@ -96,16 +215,21 @@ export default function SellerInfoPage() {
                 </label>
                 <input
                   id="ho"
+                  {...bind('accountHolder')}
                   className={cx('in')}
                   type="text"
                   placeholder=""
-                  defaultValue="김팔레"
                   style={{ width: '100%' }}
                 />
               </div>
             </div>
             <span className={cx('sub')}>정산 계좌는 끝 네 자리만 보여요. 바꾸려면 계좌번호를 새로 입력해 주세요.</span>
-            <button className={cx('btn btn-p')} style={{ alignSelf: 'flex-end' }}>
+            <button
+              className={cx('btn btn-p')}
+              disabled={!seller || saving}
+              onClick={save}
+              style={{ alignSelf: 'flex-end' }}
+            >
               저장하기
             </button>
           </section>

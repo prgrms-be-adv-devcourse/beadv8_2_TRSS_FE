@@ -1,12 +1,56 @@
-import { Link } from 'react-router-dom'
+import { useState, type ChangeEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { errorMessage } from '../lib/api'
+import { BANKS, applySeller, type SellerApplyRequest } from '../lib/seller'
 import { makeCx } from '../lib/ui'
 import styles from './SellerApply.module.css'
 import BuyerHeader from '../components/BuyerHeader'
 
 const cx = makeCx(styles)
 
+const EMPTY: SellerApplyRequest = {
+  businessName: '',
+  businessNumber: '',
+  representativeName: '',
+  phoneNumber: '',
+  bankName: '',
+  accountNumber: '',
+  accountHolder: '',
+}
+
+/** 신청 폼 값과 제출. 성공하면 마이페이지로 이동해 심사 상태를 보여준다. */
+function useApplyForm() {
+  const navigate = useNavigate()
+  const [form, setForm] = useState(EMPTY)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  const bind = (key: keyof SellerApplyRequest) => ({
+    value: form[key],
+    onChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setForm((f) => ({ ...f, [key]: e.target.value })),
+  })
+
+  async function submit() {
+    if (submitting) return
+    setError('')
+    setSubmitting(true)
+    try {
+      await applySeller({ ...form, businessName: form.businessName.trim() })
+      navigate('/mypage', { replace: true })
+    } catch (e) {
+      setError(errorMessage(e))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return { bind, submit, submitting, error }
+}
+
 /** 판매자 신청 */
 export default function SellerApplyPage() {
+  const { bind, submit, submitting } = useApplyForm()
   return (
     <div className={styles.page}>
       <div>
@@ -42,6 +86,7 @@ export default function SellerApplyPage() {
                   </label>
                   <input
                     id="bn"
+                    {...bind('businessNumber')}
                     className={cx('in')}
                     type="text"
                     placeholder="000-00-00000"
@@ -52,7 +97,14 @@ export default function SellerApplyPage() {
                   <label htmlFor="sn" style={{ fontSize: '14px', fontWeight: '500' }}>
                     상호명
                   </label>
-                  <input id="sn" className={cx('in')} type="text" placeholder="" style={{ width: '100%' }} />
+                  <input
+                    id="sn"
+                    {...bind('businessName')}
+                    className={cx('in')}
+                    type="text"
+                    placeholder=""
+                    style={{ width: '100%' }}
+                  />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label htmlFor="rp" style={{ fontSize: '14px', fontWeight: '500' }}>
@@ -60,6 +112,7 @@ export default function SellerApplyPage() {
                   </label>
                   <input
                     id="rp"
+                    {...bind('representativeName')}
                     className={cx('in')}
                     type="text"
                     placeholder="사업자등록증의 대표자 이름"
@@ -72,6 +125,7 @@ export default function SellerApplyPage() {
                   </label>
                   <input
                     id="sp"
+                    {...bind('phoneNumber')}
                     className={cx('in')}
                     type="text"
                     placeholder="010-0000-0000"
@@ -96,21 +150,42 @@ export default function SellerApplyPage() {
                     <label htmlFor="bk" style={{ fontSize: '14px', fontWeight: '500' }}>
                       은행
                     </label>
-                    <select id="bk" className={cx('in')}>
-                      <option>은행 선택</option>
+                    <select id="bk" {...bind('bankName')} className={cx('in')}>
+                      <option value="" disabled>
+                        은행 선택
+                      </option>
+                      {BANKS.map((b) => (
+                        <option key={b} value={b}>
+                          {b}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label htmlFor="ac" style={{ fontSize: '14px', fontWeight: '500' }}>
                       계좌번호
                     </label>
-                    <input id="ac" className={cx('in')} type="text" placeholder="" style={{ width: '100%' }} />
+                    <input
+                      id="ac"
+                      {...bind('accountNumber')}
+                      className={cx('in')}
+                      type="text"
+                      placeholder=""
+                      style={{ width: '100%' }}
+                    />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label htmlFor="ho" style={{ fontSize: '14px', fontWeight: '500' }}>
                       예금주
                     </label>
-                    <input id="ho" className={cx('in')} type="text" placeholder="" style={{ width: '100%' }} />
+                    <input
+                      id="ho"
+                      {...bind('accountHolder')}
+                      className={cx('in')}
+                      type="text"
+                      placeholder=""
+                      style={{ width: '100%' }}
+                    />
                   </div>
                 </div>
                 <span className={cx('sub')}>
@@ -121,7 +196,9 @@ export default function SellerApplyPage() {
                 <Link className={cx('btn')} to="/mypage">
                   취소
                 </Link>
-                <button className={cx('btn btn-p')}>신청하기</button>
+                <button className={cx('btn btn-p')} disabled={submitting} onClick={submit}>
+                  신청하기
+                </button>
               </div>
             </section>
             <aside
