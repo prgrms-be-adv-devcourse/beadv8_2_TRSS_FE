@@ -10,7 +10,7 @@ import {
   type SellerUpdateRequest,
 } from '../lib/api/member'
 import { useApi } from '../lib/useApi'
-import { NOTICE, makeCx, phone } from '../lib/ui'
+import { NOTICE, makeCx, phone, won } from '../lib/ui'
 import styles from './SellerInfo.module.css'
 import SellerLayout from '../components/SellerLayout'
 
@@ -29,6 +29,12 @@ const STATUS: Record<SellerStatus, [string, string]> = {
 /** 1234567890 → 123-45-67890 */
 const fmtBusinessNumber = (n: string | null) =>
   n && /^\d{10}$/.test(n) ? `${n.slice(0, 3)}-${n.slice(3, 5)}-${n.slice(5)}` : (n ?? '-')
+
+/** 2026-09-12T10:00:00 → 2026년 9월 12일 */
+const fmtDate = (iso?: string | null) => {
+  const d = iso ? new Date(iso) : null
+  return d && !Number.isNaN(d.getTime()) ? `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일` : '-'
+}
 
 type Form = {
   businessName: string
@@ -102,7 +108,7 @@ function useSellerInfo() {
 
 /**
  * 철회 요청 패널. 사유는 필수.
- * 미정산 금액 API가 생기기 전까지 철회 버튼은 비활성이라 ?withdrawPanel=보임 으로 패널을 열어 확인한다.
+ * 철회 버튼(미정산 0원일 때만 켜짐)으로 열고, 디자인 확인용으로 ?withdrawPanel=보임 으로도 연다.
  */
 function useWithdrawal(initialOpen: boolean, onDone: (s: MySeller) => void) {
   const [open, setOpen] = useState(initialOpen)
@@ -139,6 +145,9 @@ export default function SellerInfoPage({ withdrawPanel = '숨김' }: { withdrawP
   const w = useWithdrawal(withdrawPanel === '보임', setSeller)
   const [chip, label] = seller ? STATUS[seller.status] : STATUS.APPROVED
   const last4 = seller?.accountNumber.slice(-4)
+  // 판매 중이고 미정산 금액이 0원일 때만 철회 요청 가능 (금액을 모르면 막아 둔다)
+  const unsettled = seller?.unsettledAmount
+  const canWithdraw = seller?.status === 'APPROVED' && unsettled === 0
   return (
     <div className={styles.page}>
       <SellerLayout active="판매자 정보" minHeight={1040}>
@@ -167,7 +176,7 @@ export default function SellerInfoPage({ withdrawPanel = '숨김' }: { withdrawP
                 승인일
               </dt>
               <dd style={{ margin: '0' }} className={cx('num')}>
-                2026년 9월 12일
+                {fmtDate(seller?.approvedAt)}
               </dd>
             </dl>
           </section>
@@ -267,7 +276,7 @@ export default function SellerInfoPage({ withdrawPanel = '숨김' }: { withdrawP
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
               <span>아직 정산받지 않은 금액</span>
               <strong className={cx('num')} style={{ color: '#A33A1F' }}>
-                642,000원
+                {unsettled === undefined ? '-' : `${won(unsettled)}원`}
               </strong>
             </div>
             <p className={cx('sub')} style={{ margin: '0', fontSize: '14px' }}>
@@ -276,8 +285,13 @@ export default function SellerInfoPage({ withdrawPanel = '숨김' }: { withdrawP
             </p>
             <button
               className={cx('btn')}
-              disabled
-              style={{ alignSelf: 'flex-start', color: '#83838F', cursor: 'not-allowed' }}
+              disabled={!canWithdraw || w.open}
+              onClick={() => w.setOpen(true)}
+              style={
+                canWithdraw
+                  ? { alignSelf: 'flex-start' }
+                  : { alignSelf: 'flex-start', color: '#83838F', cursor: 'not-allowed' }
+              }
             >
               철회 요청하기
             </button>
