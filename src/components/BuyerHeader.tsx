@@ -18,7 +18,7 @@ const SUB_CATEGORIES = ['스킨케어', '메이크업', '선케어', '클렌징'
 /** 구매자 화면 공통 헤더 */
 export default function BuyerHeader({ active, cartCount = 3, balance = 48000, compact = false }: Props) {
   const { ready, loggedIn, me } = useAuth()
-  // 관리자는 마이페이지 대신 관리자 페이지(첫 메뉴인 판매자 심사)로 보낸다
+  // 관리자는 구매를 하지 않으므로 예치금·장바구니·주문내역을 숨기고, 마이페이지 대신 관리자 페이지(판매자 심사)로 보낸다
   const isAdmin = me?.role === 'ADMIN'
   const current = (key: Props['active']) => (active === key ? ({ 'aria-current': 'page' } as const) : {})
   return (
@@ -60,39 +60,43 @@ export default function BuyerHeader({ active, cartCount = 3, balance = 48000, co
         )}
         {loggedIn && (
           <nav aria-label="내 메뉴" className={styles.menu}>
-            <Link
-              to="/wallet"
-              {...current('wallet')}
-              className={`${styles.wallet} ${active === 'wallet' ? styles.walletOn : ''}`}
-            >
-              <span className={styles.walletLabel}>예치금</span>
-              <strong className={styles.walletAmount}>{balance.toLocaleString('ko-KR')}원</strong>
-            </Link>
-            <Link to="/cart" aria-label={`장바구니 ${cartCount}개`} {...current('cart')} className={styles.cart}>
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M3 4h2l2.2 10.5a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 8H6.2" />
-                <circle cx="9.5" cy="20" r="1.3" />
-                <circle cx="17" cy="20" r="1.3" />
-              </svg>
-              <span className={styles.badge}>{cartCount}</span>
-            </Link>
-            <Link
-              to="/orders"
-              {...current('orders')}
-              className={`${styles.textLink} ${active === 'orders' ? styles.textLinkOn : ''}`}
-            >
-              주문내역
-            </Link>
+            {!isAdmin && (
+              <>
+                <Link
+                  to="/wallet"
+                  {...current('wallet')}
+                  className={`${styles.wallet} ${active === 'wallet' ? styles.walletOn : ''}`}
+                >
+                  <span className={styles.walletLabel}>예치금</span>
+                  <strong className={styles.walletAmount}>{balance.toLocaleString('ko-KR')}원</strong>
+                </Link>
+                <Link to="/cart" aria-label={`장바구니 ${cartCount}개`} {...current('cart')} className={styles.cart}>
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 4h2l2.2 10.5a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 8H6.2" />
+                    <circle cx="9.5" cy="20" r="1.3" />
+                    <circle cx="17" cy="20" r="1.3" />
+                  </svg>
+                  <span className={styles.badge}>{cartCount}</span>
+                </Link>
+                <Link
+                  to="/orders"
+                  {...current('orders')}
+                  className={`${styles.textLink} ${active === 'orders' ? styles.textLinkOn : ''}`}
+                >
+                  주문내역
+                </Link>
+              </>
+            )}
             <Link
               to={isAdmin ? '/admin/sellers' : '/mypage'}
               {...current('mypage')}

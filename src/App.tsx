@@ -15,7 +15,8 @@ function ScrollToTop() {
 
 /** 권한별로 RequireRole이 확인할 role (undefined면 로그인만 확인) */
 const GUARDS: Record<ScreenAuth, MemberRole[] | undefined> = {
-  login: undefined,
+  // 구매자 화면(장바구니·주문·예치금·마이페이지·판매자 신청)이라 관리자는 들어올 수 없다
+  login: ['USER', 'SELLER'],
   SELLER: ['SELLER'],
   ADMIN: ['ADMIN'],
 }

@@ -16,7 +16,7 @@ npm run build    # 타입 검사 후 dist/ 에 빌드
 
 - 백엔드(`beadv8_2_TRSS_BE`)를 `localhost:8080`에 먼저 띄워요. 개발 서버가 `/api` 요청을 그쪽으로 넘겨줘서 CORS·쿠키 설정은 따로 필요 없어요.
 - 배포할 때는 `.env.example`을 참고해 `.env`에 `VITE_API_URL`을 넣어요.
-- 로그인이 필요한 화면은 로그인하지 않으면 `/login`으로, 권한이 없으면 `/`로 이동해요. 아래 [화면과 URL](#화면과-url)의 권한 열을 참고해요.
+- 로그인이 필요한 화면은 로그인하지 않으면 `/login`으로, 권한이 없으면 `/`로 이동해요. 구매자 화면(권한 "로그인")은 관리자가 들어올 수 없어요. 아래 [화면과 URL](#화면과-url)의 권한 열을 참고해요.
 - 판매자 승인 직후에는 토큰의 역할이 아직 `USER`예요. 다시 로그인해야 판매자 화면에 들어가요.
 - 파일을 옮기거나 이름을 바꾼 뒤 화면이 하얗게 나오면 개발 서버를 껐다 켜요.
 
@@ -59,15 +59,15 @@ tools/                  디자인 → React 변환 스크립트 (아래 참고)
 | --- | --- | --- | --- |
 | 구매자 | 상품 목록 | `/` | 누구나 |
 | | 상품 상세 | `/product/:productId` | 누구나 |
-| | 장바구니 | `/cart` | 로그인 |
-| | 주문서 | `/checkout` | 로그인 |
-| | 결제 팝업 모음 | `/checkout/popups` | 로그인 |
-| | 주문 내역 / 상세 | `/orders`, `/orders/:orderId` | 로그인 |
-| | 주문·결제 안내 모달 모음 | `/orders/errors` | 로그인 |
-| | 예치금 / 충전 결과 | `/wallet`, `/wallet/topup-result` | 로그인 |
+| | 장바구니 | `/cart` | 로그인 (관리자 제외) |
+| | 주문서 | `/checkout` | 로그인 (관리자 제외) |
+| | 결제 팝업 모음 | `/checkout/popups` | 로그인 (관리자 제외) |
+| | 주문 내역 / 상세 | `/orders`, `/orders/:orderId` | 로그인 (관리자 제외) |
+| | 주문·결제 안내 모달 모음 | `/orders/errors` | 로그인 (관리자 제외) |
+| | 예치금 / 충전 결과 | `/wallet`, `/wallet/topup-result` | 로그인 (관리자 제외) |
 | | 로그인 / 회원가입 | `/login`, `/signup` | 누구나 |
-| | 마이페이지 | `/mypage` | 로그인 |
-| 판매자 | 판매자 신청 | `/seller/apply` | 로그인 |
+| | 마이페이지 | `/mypage` | 로그인 (관리자 제외) |
+| 판매자 | 판매자 신청 | `/seller/apply` | 로그인 (관리자 제외) |
 | | 상품 관리 / 등록 / 재고 | `/seller/products`, `/seller/products/new`, `/seller/stock` | SELLER |
 | | 주문 항목 / 정산 / 판매자 정보 | `/seller/orders`, `/seller/settlements`, `/seller/info` | SELLER |
 | 관리자 | 판매자 심사 / 회원 / 상품과 카테고리 | `/admin/sellers`, `/admin/members`, `/admin/products` | ADMIN |

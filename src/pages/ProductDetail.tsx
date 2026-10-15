@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { makeCx, css } from '../lib/ui'
 import styles from './ProductDetail.module.css'
 import BuyerHeader from '../components/BuyerHeader'
+import { useAuth } from '../lib/auth'
 
 import { useState } from 'react'
 
@@ -13,8 +14,10 @@ const cx = makeCx(styles)
 /** 화면 상태와 화면에 그릴 값을 만들어요. */
 function useProductDetailView() {
   const [qty, setQty] = useState(1)
+  const { me } = useAuth()
   const view = {
     qty,
+    isAdmin: me?.role === 'ADMIN',
     total: (PRICE * qty).toLocaleString('ko-KR'),
     bg: '#F5E1E6',
     inc: () => setQty((q) => Math.min(MAX_QTY, q + 1)),
@@ -26,7 +29,7 @@ function useProductDetailView() {
 /** 상품 상세 */
 export default function ProductDetailPage() {
   const view = useProductDetailView()
-  const { bg, dec, inc, qty, total } = view
+  const { bg, dec, inc, qty, total, isAdmin } = view
   return (
     <div className={styles.page}>
       <div>
@@ -221,9 +224,16 @@ export default function ProductDetailPage() {
                   </strong>
                 </div>
               </div>
-              <Link className={cx('btn btn-p')} to="/cart" style={{ minHeight: '56px', fontSize: '17px' }}>
-                장바구니에 담기
-              </Link>
+              {/* 관리자는 구매할 수 없어 버튼을 꺼 둔다 */}
+              {isAdmin ? (
+                <button className={cx('btn btn-p')} disabled style={{ minHeight: '56px', fontSize: '17px' }}>
+                  장바구니에 담기
+                </button>
+              ) : (
+                <Link className={cx('btn btn-p')} to="/cart" style={{ minHeight: '56px', fontSize: '17px' }}>
+                  장바구니에 담기
+                </Link>
+              )}
               <p className={cx('sub')} style={{ margin: '0' }}>
                 주문은 장바구니에서 해요. 같은 상품을 다시 담으면 수량이 합쳐져요.
               </p>
