@@ -1,22 +1,12 @@
-import { useEffect, useState, type ChangeEvent, type CSSProperties } from 'react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { ApiError, errorMessage } from '../lib/api'
 import { BANKS, applySeller, canApply, getMySeller, type MySeller, type SellerApplyRequest } from '../lib/api/member'
-import { makeCx, phone } from '../lib/ui'
+import { NOTICE, makeCx, phone } from '../lib/ui'
 import styles from './SellerApply.module.css'
 import BuyerHeader from '../components/BuyerHeader'
 
 const cx = makeCx(styles)
-
-/** 로그인 화면과 같은 안내 박스 */
-const NOTICE: CSSProperties = {
-  margin: '0',
-  padding: '12px 14px',
-  borderRadius: '8px',
-  background: '#FFF1E8',
-  color: '#9A3209',
-  fontSize: '14px',
-}
 
 const EMPTY: SellerApplyRequest = {
   businessName: '',

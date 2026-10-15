@@ -3,13 +3,14 @@ import { errorMessage } from '../lib/api'
 import {
   BANKS,
   getMySeller,
+  requestSellerWithdrawal,
   updateSeller,
   type MySeller,
   type SellerStatus,
   type SellerUpdateRequest,
 } from '../lib/api/member'
 import { useApi } from '../lib/useApi'
-import { makeCx, phone } from '../lib/ui'
+import { NOTICE, makeCx, phone } from '../lib/ui'
 import styles from './SellerInfo.module.css'
 import SellerLayout from '../components/SellerLayout'
 
@@ -96,12 +97,46 @@ function useSellerInfo() {
   // 저장된 은행이 선택지에 없으면 맨 앞에 넣어 그대로 보이게 한다.
   const banks = seller && !BANKS.includes(seller.bankName) ? [seller.bankName, ...BANKS] : BANKS
 
-  return { seller, bind, save, saving, error: saveError || loadError || '', banks }
+  return { seller, setSeller, bind, save, saving, error: saveError || loadError || '', banks }
+}
+
+/**
+ * 철회 요청 패널. 사유는 필수.
+ * 미정산 금액 API가 생기기 전까지 철회 버튼은 비활성이라 ?withdrawPanel=보임 으로 패널을 열어 확인한다.
+ */
+function useWithdrawal(initialOpen: boolean, onDone: (s: MySeller) => void) {
+  const [open, setOpen] = useState(initialOpen)
+  const [reason, setReason] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  function close() {
+    setOpen(false)
+    setReason('')
+    setError('')
+  }
+
+  async function submit() {
+    if (!reason.trim() || submitting) return
+    setError('')
+    setSubmitting(true)
+    try {
+      onDone(await requestSellerWithdrawal(reason.trim()))
+      close()
+    } catch (e) {
+      setError(errorMessage(e))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return { open, setOpen, close, reason, setReason, submit, submitting, error }
 }
 
 /** 판매자 정보 */
-export default function SellerInfoPage() {
-  const { seller, bind, save, saving, banks } = useSellerInfo()
+export default function SellerInfoPage({ withdrawPanel = '숨김' }: { withdrawPanel?: '숨김' | '보임' }) {
+  const { seller, setSeller, bind, save, saving, error, banks } = useSellerInfo()
+  const w = useWithdrawal(withdrawPanel === '보임', setSeller)
   const [chip, label] = seller ? STATUS[seller.status] : STATUS.APPROVED
   const last4 = seller?.accountNumber.slice(-4)
   return (
@@ -214,6 +249,11 @@ export default function SellerInfoPage() {
               </div>
             </div>
             <span className={cx('sub')}>정산 계좌는 끝 네 자리만 보여요. 바꾸려면 계좌번호를 새로 입력해 주세요.</span>
+            {error && (
+              <p role="alert" style={NOTICE}>
+                {error}
+              </p>
+            )}
             <button
               className={cx('btn btn-p')}
               disabled={!seller || saving}
@@ -246,6 +286,50 @@ export default function SellerInfoPage() {
               철회 요청하기
             </button>
           </section>
+          {w.open && (
+            <section
+              className={cx('panel')}
+              style={{
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px',
+                maxWidth: '560px',
+                outline: '2px solid #8A6A2C',
+              }}
+            >
+              <h2 style={{ margin: '0', fontSize: '18px', fontWeight: '700' }}>판매를 그만둘까요?</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label htmlFor="wr" style={{ fontSize: '14px', fontWeight: '500' }}>
+                  사유 (필수)
+                </label>
+                <textarea
+                  id="wr"
+                  className={cx('in')}
+                  style={{ minHeight: '96px', padding: '12px 14px' }}
+                  maxLength={255}
+                  value={w.reason}
+                  onChange={(e) => w.setReason(e.target.value)}
+                ></textarea>
+              </div>
+              <p className={cx('sub')} style={{ margin: '0', fontSize: '14px' }}>
+                관리자가 승인하면 모든 상품의 판매가 멈추고 판매자 센터가 닫혀요. 구매는 계속할 수 있어요.
+              </p>
+              {w.error && (
+                <p role="alert" style={NOTICE}>
+                  {w.error}
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button className={cx('btn')} onClick={w.close}>
+                  닫기
+                </button>
+                <button className={cx('btn btn-p')} disabled={!w.reason.trim() || w.submitting} onClick={w.submit}>
+                  요청하기
+                </button>
+              </div>
+            </section>
+          )}
         </div>
       </SellerLayout>
     </div>

@@ -36,3 +36,13 @@ export const phone = (n: string) => {
   if (d.length === 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`
   return n
 }
+
+/** 에러·반려 사유 등 안내 박스 (로그인 화면의 에러 박스와 같은 모양) */
+export const NOTICE: CSSProperties = {
+  margin: '0',
+  padding: '12px 14px',
+  borderRadius: '8px',
+  background: '#FFF1E8',
+  color: '#9A3209',
+  fontSize: '14px',
+}
