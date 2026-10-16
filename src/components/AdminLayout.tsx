@@ -5,7 +5,6 @@ export const ADMIN_MENU: MenuItem[] = [
   { label: '판매자 심사', to: '/admin/sellers' },
   { label: '회원', to: '/admin/members' },
   { label: '상품과 카테고리', to: '/admin/products' },
-  { label: '반품 심사', to: '/admin/returns' },
   { label: '결제 조회', to: '/admin/payments' },
   { label: '실패 거래', to: '/admin/failed' },
   { label: '월 정산', to: '/admin/settlements' },
