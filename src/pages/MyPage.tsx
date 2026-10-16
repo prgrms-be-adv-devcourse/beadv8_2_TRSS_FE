@@ -3,7 +3,9 @@ import { Link, Navigate } from 'react-router-dom'
 import { ApiError } from '../lib/api'
 import { logout, useAuth, type MemberRole } from '../lib/auth'
 import { getMySeller, type MySeller, type SellerStatus as ApiSellerStatus } from '../lib/api/member'
-import { makeCx } from '../lib/ui'
+import { getWallet } from '../lib/api/wallet'
+import { useApi } from '../lib/useApi'
+import { makeCx, won } from '../lib/ui'
 import styles from './MyPage.module.css'
 import BuyerHeader from '../components/BuyerHeader'
 
@@ -69,6 +71,8 @@ const cx = makeCx(styles)
 function useMyPageView({ sellerStatus }: { sellerStatus?: SellerStatus }) {
   const auth = useAuth()
   const seller = useMySeller(auth.loggedIn && !sellerStatus)
+  // 마이페이지는 구매자·판매자만 들어와서 바로 지갑을 조회한다
+  const wallet = useApi(getWallet)
   // ?sellerStatus=… 로 들어오면 디자인 확인용으로 그 상태를 보여줘요.
   const status: SellerStatus = sellerStatus ?? seller?.status ?? '신청 전'
   const m = SELLER[status] ?? SELLER['신청 전']
@@ -76,6 +80,7 @@ function useMyPageView({ sellerStatus }: { sellerStatus?: SellerStatus }) {
   const text = status === 'REJECTED' && reason ? `반려 사유: ${reason}` : m[2]
   const view = {
     auth,
+    wallet: wallet.data,
     s: { chip: m[0], tag: m[1], text, act: m[3], href: m[4], btn: m[3] ? 'btn-p' : '', hasAct: !!m[3] },
   }
   return view
@@ -84,7 +89,7 @@ function useMyPageView({ sellerStatus }: { sellerStatus?: SellerStatus }) {
 /** 마이페이지 */
 export default function MyPagePage(props: { sellerStatus?: SellerStatus }) {
   const view = useMyPageView(props)
-  const { s, auth } = view
+  const { s, auth, wallet } = view
   const me = auth.me
   if (auth.ready && !me) return <Navigate to="/login" replace />
   return (
@@ -172,9 +177,9 @@ export default function MyPagePage(props: { sellerStatus?: SellerStatus }) {
                   </dt>
                   <dd style={{ margin: '0' }} className={cx('num')}>
                     <Link to="/wallet" style={{ fontWeight: '700' }}>
-                      48,000원
+                      {wallet ? `${won(wallet.balance)}원` : '…'}
                     </Link>{' '}
-                    <span className={cx('sub')}>구매 확정 대기 72,900원</span>
+                    {wallet && <span className={cx('sub')}>구매 확정 대기 {won(wallet.heldAmount)}원</span>}
                   </dd>
                 </dl>
               </section>
