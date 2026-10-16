@@ -1,0 +1,174 @@
+.footer {
+  background: var(--surface-soft);
+  border-top: 3px solid transparent;
+  border-image: var(--brand-band) 1;
+  color: var(--ink);
+  font-size: 14px;
+}
+.inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.footer a {
+  color: inherit;
+}
+.footer a:hover {
+  color: var(--ink);
+}
+
+/* 로고 + 링크 */
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 32px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--line);
+}
+.logo {
+  display: block;
+  height: 56px;
+  width: auto;
+}
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  font-size: 15px;
+}
+.links a:hover {
+  text-decoration: underline;
+}
+.linkStrong {
+  font-weight: 700;
+}
+
+/* 사업자 정보 + 고객센터 */
+.middle {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 28px 48px;
+  padding: 32px 0;
+  border-bottom: 1px solid var(--line);
+}
+.info {
+  flex: 1 1 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted);
+}
+.info p {
+  margin: 0;
+}
+.info strong {
+  color: var(--ink);
+}
+.item + .item::before {
+  content: '';
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  margin: 0 10px;
+  background: var(--line-strong);
+  vertical-align: middle;
+}
+.underline {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.notice {
+  margin-top: 4px !important;
+  font-size: 13px;
+}
+
+.cs {
+  flex: 0 1 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.csLabel {
+  font-size: 13px;
+  color: var(--muted);
+}
+.phone {
+  font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.hours {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.csButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 14px;
+}
+.pill:hover {
+  border-color: var(--ink);
+  text-decoration: none;
+}
+
+/* 저작권 + SNS */
+.bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 0 32px;
+}
+.copy {
+  color: var(--muted);
+  font-size: 13px;
+}
+.social {
+  display: flex;
+  gap: 10px;
+}
+.round {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: #fff;
+}
+.round:hover {
+  border-color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .info p {
+    display: flex;
+    flex-direction: column;
+  }
+  .item + .item::before {
+    display: none;
+  }
+  .phone {
+    font-size: 28px;
+  }
+}

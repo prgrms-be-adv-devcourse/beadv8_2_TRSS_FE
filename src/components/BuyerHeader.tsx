@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import styles from './BuyerHeader.module.css'
 import { useAuth } from '../lib/auth'
+import CategoryMenu from './CategoryMenu'
 
 type Props = {
   /** 지금 보고 있는 메뉴 */
@@ -12,8 +13,6 @@ type Props = {
   /** 검색창과 카테고리 줄이 없는 간단한 헤더 (상품 목록에서 사용) */
   compact?: boolean
 }
-
-const SUB_CATEGORIES = ['스킨케어', '메이크업', '선케어', '클렌징', '상의', '아우터', '바지']
 
 /** 구매자 화면 공통 헤더 */
 export default function BuyerHeader({ active, cartCount = 3, balance = 48000, compact = false }: Props) {
@@ -64,11 +63,26 @@ export default function BuyerHeader({ active, cartCount = 3, balance = 48000, co
               <>
                 <Link
                   to="/wallet"
+                  aria-label={`예치금 내역 (잔액 ${balance.toLocaleString('ko-KR')}원)`}
+                  title={`예치금 ${balance.toLocaleString('ko-KR')}원`}
                   {...current('wallet')}
-                  className={`${styles.wallet} ${active === 'wallet' ? styles.walletOn : ''}`}
+                  className={`${styles.iconLink} ${active === 'wallet' ? styles.iconLinkOn : ''}`}
                 >
-                  <span className={styles.walletLabel}>예치금</span>
-                  <strong className={styles.walletAmount}>{balance.toLocaleString('ko-KR')}원</strong>
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 6.5V6a2 2 0 0 1 2-2h10" />
+                    <rect x="2.5" y="6.5" width="19" height="13" rx="2.5" />
+                    <path d="M21.5 10.5H18a2 2 0 0 0 0 4h3.5" />
+                  </svg>
                 </Link>
                 <Link to="/cart" aria-label={`장바구니 ${cartCount}개`} {...current('cart')} className={styles.cart}>
                   <svg
@@ -110,21 +124,10 @@ export default function BuyerHeader({ active, cartCount = 3, balance = 48000, co
       {!compact && (
         <nav aria-label="카테고리" className={styles.categories}>
           <div className={styles.categoryRow}>
-            <Link to="/" className={`${styles.group} ${styles.groupAll}`}>
-              전체
+            <CategoryMenu />
+            <Link to="/?sort=LATEST" className={styles.group}>
+              신상품
             </Link>
-            <Link to="/" className={styles.group}>
-              뷰티
-            </Link>
-            <Link to="/" className={styles.group}>
-              의류
-            </Link>
-            <span aria-hidden="true" className={styles.divider} />
-            {SUB_CATEGORIES.map((name) => (
-              <Link key={name} to="/" className={styles.sub}>
-                {name}
-              </Link>
-            ))}
           </div>
         </nav>
       )}
