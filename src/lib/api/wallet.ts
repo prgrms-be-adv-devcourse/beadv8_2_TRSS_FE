@@ -9,4 +9,9 @@
  * GET    /api/v1/topups/{topupId}          충전 상세
  */
 
-export {}
+import { api } from '.'
+
+/** 예치금. balance = 쓸 수 있는 금액, heldAmount = 결제 후 판매자에게 지급되기 전 보관 중인 금액 */
+export type Wallet = { memberId: number; balance: number; heldAmount: number }
+
+export const getWallet = () => api<Wallet>('/api/v1/wallet')
