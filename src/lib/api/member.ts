@@ -215,3 +215,32 @@ export function getAdminMembers(query: PageQuery & { email?: string; role?: Memb
 export function getAdminMember(userId: number) {
   return api<AdminMemberDetail>(`/api/v1/admin/users/${userId}`)
 }
+
+// ── 회원 탈퇴 ──────────────────────────────────────────
+
+/** 탈퇴를 막는 이유 */
+export type WithdrawalBlockReason = 'ACTIVE_ORDERS' | 'UNSETTLED_AMOUNT' | 'BALANCE_REMAINING' | 'SELLER_ACTIVE'
+
+/** 탈퇴 조건. reasons가 비어 있으면(withdrawable) 탈퇴할 수 있다. 화면 안내용이고 실제 판단은 탈퇴 요청에서 다시 한다 */
+export type WithdrawalCheck = {
+  withdrawable: boolean
+  /** 진행 중인 주문이 있는지 (개수는 주지 않는다) */
+  hasActiveOrders: boolean
+  /** 정산받지 않은 판매 금액 */
+  unsettledAmount: number
+  /** 남은 예치금 */
+  balance: number
+  reasons: WithdrawalBlockReason[]
+}
+
+export function getWithdrawalCheck() {
+  return api<WithdrawalCheck>('/api/v1/users/me/withdrawal')
+}
+
+/**
+ * 회원 탈퇴. 비밀번호로 본인 확인 후 탈퇴하고 Refresh Token 쿠키가 지워진다.
+ * 400 PASSWORD_MISMATCH(비밀번호 불일치), 409 WITHDRAWAL_NOT_ALLOWED(조건 남음), 429 LOGIN_LOCKED(5회 실패 잠금)
+ */
+export function withdrawMember(password: string) {
+  return api<null>('/api/v1/users/me', { method: 'DELETE', body: { password } })
+}
