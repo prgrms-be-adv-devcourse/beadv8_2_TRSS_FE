@@ -6,6 +6,9 @@
  * GET    /api/v1/categories                     카테고리 트리
  * GET    /api/v1/seller/products                판매자 상품 목록 (PageResponse)
  * GET    /api/v1/seller/products/counts         판매자 상품 탭별 개수
+ * DELETE /api/v1/seller/products/{productId}    상품 삭제 (소프트 삭제)
+ * POST   /api/v1/seller/products/{productId}/stop-requests  판매 중지 요청
+ * GET    /api/v1/seller/products/{productId}/options/{optionId}/stock-history  재고 이력 (PageResponse)
  * POST   /api/v1/seller/products                상품 등록 (multipart)
  * GET    /api/v1/seller/products/{productId}    수정 폼 조회
  * PATCH  /api/v1/seller/products/{productId}    상품 수정 (multipart)
@@ -133,6 +136,8 @@ export type SellerProductSummary = {
   status: ProductDisplayStatus
   stoppedBy: ProductStoppedBy | null
   stoppedReason: string | null
+  /** 판매자가 보낸 판매 중지 요청이 관리자 심사 중이면 true */
+  stopRequestPending: boolean
   createdAt: string
 }
 
@@ -208,9 +213,55 @@ export const modifyProduct = (
   images: ProductImageFiles = {},
 ) => api<null>(`/api/v1/seller/products/${productId}`, { method: 'PATCH', body: productFormData(request, images) })
 
+/** 상품 삭제(소프트 삭제). 판매 중(품절 포함)만 지울 수 있고, 판매 중지 상품은 409예요. */
+export const deleteProduct = (productId: number) =>
+  api<null>(`/api/v1/seller/products/${productId}`, { method: 'DELETE' })
+
+/** PENDING 심사 중 · APPROVED 승인(상품 STOPPED) · REJECTED 반려 · CANCELED 심사 중 삭제·다른 이유로 중지되어 닫힘 */
+export type ProductStopRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED'
+
+export type ProductStopRequest = {
+  requestId: number
+  productId: number
+  status: ProductStopRequestStatus
+  reason: string
+  createdAt: string
+}
+
+/**
+ * 판매 중지 요청 (사유 필수, 최대 300자). 관리자가 승인할 때까지 판매는 계속돼요.
+ * 이미 심사 중인 요청이 있으면 409-STOP_REQUEST_PENDING
+ */
+export const requestProductStop = (productId: number, reason: string) =>
+  api<ProductStopRequest>(`/api/v1/seller/products/${productId}/stop-requests`, {
+    method: 'POST',
+    body: { reason },
+  })
+
 /** 재고 조정. changeQty는 늘리면 양수, 줄이면 음수 (0 불가) */
 export const adjustStock = (productId: number, optionId: number, changeQty: number) =>
   api<{ optionId: number; stock: number }>(
     `/api/v1/seller/products/${productId}/options/${optionId}/stock-adjustments`,
     { method: 'POST', body: { changeQty } },
   )
+
+/** INIT 등록 · ADJUST 직접 조정 · ORDER_DEDUCT 주문 · ORDER_RESTORE 주문 취소(결제 전 취소·만료·판매 중지) · RETURN_RESTORE 반품 */
+export type StockChangeType = 'INIT' | 'ADJUST' | 'ORDER_DEDUCT' | 'ORDER_RESTORE' | 'RETURN_RESTORE'
+
+export type StockHistory = {
+  historyId: number
+  changeType: StockChangeType
+  /** 증감량. 늘면 양수, 줄면 음수 */
+  changeQty: number
+  /** 변경 후 재고 */
+  stockAfter: number
+  /** 주문 때문에 바뀐 경우의 주문 ID. 그 외에는 null */
+  orderId: number | null
+  createdAt: string
+}
+
+/** 옵션 재고 이력 (최신순). 판매 중지 상품도 볼 수 있어요. */
+export const getStockHistory = (productId: number, optionId: number, query: PageQuery = {}) =>
+  api<PageResponse<StockHistory>>(`/api/v1/seller/products/${productId}/options/${optionId}/stock-history`, {
+    query,
+  })
