@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { NOTICE, makeCx, won } from '../lib/ui'
 import styles from './SellerProducts.module.css'
 import SellerLayout from '../components/SellerLayout'
@@ -53,6 +53,7 @@ type Action = { kind: 'stop' | 'delete'; product: SellerProductSummary }
  */
 function useSellerProductsView() {
   const [params, setParams] = useSearchParams()
+  const location = useLocation()
   const status = TABS.find((t) => t[1] === params.get('status'))?.[1]
   const keyword = params.get('q') ?? ''
   const page = Math.max(1, Number(params.get('page')) || 1)
@@ -83,7 +84,8 @@ function useSellerProductsView() {
   const [reason, setReason] = useState('')
   const [pending, setPending] = useState(false)
   const [actionError, setActionError] = useState('')
-  const [done, setDone] = useState('')
+  // 등록·수정 화면에서 저장하고 돌아오면 그 결과 문구를 보여줘요.
+  const [done, setDone] = useState(() => (location.state as { done?: string } | null)?.done ?? '')
 
   const open = (kind: Action['kind'], product: SellerProductSummary) => {
     setAction({ kind, product })
