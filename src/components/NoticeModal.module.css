@@ -1,0 +1,85 @@
+.ov {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(38, 38, 44, 0.56);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+.dlg {
+  width: 100%;
+  max-width: 400px;
+  max-height: 100%;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+  color: #26262c;
+  line-height: 1.6;
+}
+.title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+}
+.body {
+  margin: 0;
+  font-size: 15px;
+  color: #45454f;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid #d5d5dd;
+  background: #fff;
+  color: #26262c;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  box-sizing: border-box;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s;
+}
+.btn:hover {
+  border-color: #26262c;
+  color: #26262c;
+  text-decoration: none;
+}
+.btn-p {
+  background: #26262c;
+  border-color: #26262c;
+  color: #fff;
+  font-weight: 700;
+}
+.btn-p:hover {
+  background: #45454f;
+  border-color: #45454f;
+  color: #fff;
+}
