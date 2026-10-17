@@ -6,10 +6,11 @@
  * GET    /api/v1/orders/{orderId}          주문 상세
  * POST   /api/v1/orders/{orderId}/cancel   주문 취소
  * POST   /api/v1/orders/{orderId}/confirm  구매 확정
+ * GET    /api/v1/seller/order-items        판매자 주문 항목 (PageResponse, SELLER)
  * (결제 요청 POST /api/v1/orders/{orderId}/payment 는 payment.ts에)
  */
 
-import { api } from '.'
+import { api, type PageQuery, type PageResponse } from '.'
 
 /** 주문 상태. 백엔드: shared.order.dto.OrderStatus */
 export type OrderStatus =
@@ -95,3 +96,39 @@ export const cancelOrder = (orderId: number) =>
 /** 결제 완료 주문만 확정할 수 있어요. 그 외에는 409-ORDER_NOT_CONFIRMABLE */
 export const confirmOrder = (orderId: number) =>
   api<OrderConfirmResponse>(`/api/v1/orders/${orderId}/confirm`, { method: 'POST' })
+
+// ── 판매자 주문 항목 ─────────────────────────────────────
+
+/** 판매자에게 보이는 주문 상태 (결제 전·취소 주문은 안 보여요) */
+export type SellerOrderStatus = Extract<OrderStatus, 'PAID' | 'CONFIRMED' | 'RETURN_REQUESTED' | 'RETURNED'>
+
+/** 본인 상품이 들어간 주문 항목 한 줄. 상태는 주문 단위라 같은 주문의 항목은 상태가 같아요. */
+export type SellerOrderItem = {
+  orderItemId: number
+  orderId: number
+  orderNumber: string
+  /** 주문일 */
+  orderedAt: string
+  productId: number
+  productName: string
+  optionName: string
+  quantity: number
+  unitPrice: number
+  /** 금액 (단가 × 수량) */
+  lineAmount: number
+  status: SellerOrderStatus
+}
+
+export type SellerOrderItemQuery = PageQuery & {
+  /** 없으면 전체. 결제 전·취소 상태를 보내면 400-ORDER_STATUS_INVALID */
+  status?: SellerOrderStatus
+  /** 조회 시작일·종료일 (yyyy-MM-dd). 시작일이 더 늦으면 400-ORDER_PERIOD_INVALID */
+  from?: string
+  to?: string
+  /** 주문번호 또는 상품명 일부 (최대 100자) */
+  keyword?: string
+}
+
+/** 결제 완료 이후 주문 중 본인 상품 항목만 최신 주문순으로 와요. 승인된 판매자가 아니면 빈 목록이에요. */
+export const getSellerOrderItems = (query: SellerOrderItemQuery = {}) =>
+  api<PageResponse<SellerOrderItem>>('/api/v1/seller/order-items', { query })
