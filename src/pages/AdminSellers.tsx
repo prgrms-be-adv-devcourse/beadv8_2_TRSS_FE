@@ -8,6 +8,7 @@ import {
   rejectSeller,
   rejectSellerWithdrawal,
   sanctionSeller,
+  type AdminSellerCounts,
   type AdminSellerDetail,
   type SellerStatus,
 } from '../lib/api/member'
@@ -25,6 +26,16 @@ const PAGE_SIZE = 20
 // ALL = 상태 필터 없이 전체
 type Tab = SellerStatus | 'ALL'
 const TABS: Tab[] = ['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'WITHDRAW_REQUESTED', 'WITHDRAWN', 'SANCTIONED']
+// 탭별 건수 응답의 필드
+const COUNT_KEY: Record<Tab, keyof AdminSellerCounts> = {
+  ALL: 'all',
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  WITHDRAW_REQUESTED: 'withdrawRequested',
+  WITHDRAWN: 'withdrawn',
+  SANCTIONED: 'sanctioned',
+}
 
 // .btn에는 비활성 스타일이 없어 판매자 정보 화면의 꺼진 버튼과 같은 모양을 쓴다
 const OFF: CSSProperties = { color: '#83838F', cursor: 'not-allowed' }
@@ -59,13 +70,14 @@ function useAdminSellersView() {
     () => getAdminSellers({ status: tab === 'ALL' ? undefined : tab, page: toPageParam(page), size: PAGE_SIZE }),
     [tab, page],
   )
-  const items = list.data?.items ?? []
-  const totalPages = list.data?.totalPages ?? 0
+  const items = list.data?.sellers.items ?? []
+  const totalPages = list.data?.sellers.totalPages ?? 0
+  const counts = list.data?.counts
 
   // 새 목록이 도착했을 때 선택한 줄이 없으면 첫 줄을 고른다.
   // 응답 기준으로 고르므로, 페이지를 바꾼 직후 남아 있는 이전 목록으로 잘못 고르지 않는다
   useEffect(() => {
-    const first = list.data?.items[0]
+    const first = list.data?.sellers.items[0]
     if (first) setSelectedId((cur) => cur ?? first.sellerId)
   }, [list.data])
 
@@ -127,6 +139,7 @@ function useAdminSellersView() {
     changePage,
     totalPages,
     items,
+    counts,
     listError: list.error,
     listEmpty: !list.loading && !list.error && items.length === 0,
     selectedId,
@@ -157,6 +170,7 @@ export default function AdminSellersPage() {
               onClick={() => v.changeTab(s)}
             >
               {s === 'ALL' ? '전체' : ADMIN_SELLER_STATUS[s][0]}
+              {v.counts && ` ${v.counts[COUNT_KEY[s]]}`}
             </button>
           ))}
         </div>
