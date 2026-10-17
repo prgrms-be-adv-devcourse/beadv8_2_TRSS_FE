@@ -6,7 +6,7 @@ export const ADMIN_MENU: MenuItem[] = [
   { label: '회원', to: '/admin/members' },
   { label: '상품과 카테고리', to: '/admin/products' },
   { label: '결제 조회', to: '/admin/payments' },
-  { label: '실패 거래', to: '/admin/failed' },
+  // { label: '실패 거래', to: '/admin/failed' }, // 파이널 프로젝트 때 구현
   { label: '월 정산', to: '/admin/settlements' },
 ]
 
