@@ -139,9 +139,20 @@ export type AdminSellerDetail = {
   histories: AdminSellerHistory[]
 }
 
-/** 판매자 목록. 심사 대기 먼저, 그다음 최근 신청순 고정 (sort는 무시된다) */
+/** 관리자 판매자 목록의 탭별 건수. status 필터와 관계없이 전체 판매자 기준 */
+export type AdminSellerCounts = {
+  all: number
+  pending: number
+  approved: number
+  rejected: number
+  withdrawRequested: number
+  withdrawn: number
+  sanctioned: number
+}
+
+/** 판매자 목록. 심사 대기 먼저, 그다음 최근 신청순 고정 (sort는 무시된다). 탭별 건수를 함께 준다 */
 export function getAdminSellers(query: PageQuery & { status?: SellerStatus } = {}) {
-  return api<PageResponse<AdminSeller>>('/api/v1/admin/sellers', { query })
+  return api<{ sellers: PageResponse<AdminSeller>; counts: AdminSellerCounts }>('/api/v1/admin/sellers', { query })
 }
 
 export function getAdminSeller(sellerId: number) {
