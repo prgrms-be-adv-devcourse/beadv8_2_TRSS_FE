@@ -65,6 +65,8 @@ function useMainView() {
   }
 
   const [input, setInput] = useState(keyword)
+  /** 사진을 못 불러온 상품 ID. 카테고리 아이콘으로 대신 보여줘요. */
+  const [brokenImages, setBrokenImages] = useState<Set<number>>(() => new Set())
   useEffect(() => setInput(keyword), [keyword])
 
   // 백엔드에 닿지 못하면 프론트 전용 예시 데이터로 대신 보여줘요. (lib/exampleProducts.ts)
@@ -131,8 +133,12 @@ function useMainView() {
       shop: p.businessName,
       name: p.name,
       // 이미지 기능 전까지 thumbnailUrl이 없어서 카테고리 대표 아이콘을 보여줘요.
-      img: p.thumbnailUrl ?? categoryIcon(cat?.name ?? '', cat?.parentName),
-      icon: !p.thumbnailUrl,
+      img:
+        p.thumbnailUrl && !brokenImages.has(p.productId)
+          ? p.thumbnailUrl
+          : categoryIcon(cat?.name ?? '', cat?.parentName),
+      icon: !p.thumbnailUrl || brokenImages.has(p.productId),
+      imgError: () => setBrokenImages((s) => new Set(s).add(p.productId)),
       price: won(p.price),
       soldOut: p.soldOut,
       remaining: p.remainingStock,
@@ -439,7 +445,12 @@ export default function MainPage() {
               {items.map((p) => (
                 <Link className={cx('card')} to={`/product/${p.id}`} key={p.id}>
                   <div className={cx('tile')}>
-                    <img src={p.img} alt="" className={cx(p.icon ? 'tile-icon' : 'tile-img')} />
+                    <img
+                      src={p.img}
+                      alt=""
+                      className={cx(p.icon ? 'tile-icon' : 'tile-img')}
+                      onError={p.icon ? undefined : p.imgError}
+                    />
                     {p.remaining != null && (
                       <span className={cx('chip c-low')} style={{ position: 'absolute', top: '10px', left: '10px' }}>
                         {p.remaining}개 남았어요
