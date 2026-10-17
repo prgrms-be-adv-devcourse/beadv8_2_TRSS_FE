@@ -2,11 +2,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { makeCx, css, NOTICE } from '../lib/ui'
 import styles from './Cart.module.css'
 import BuyerHeader from '../components/BuyerHeader'
+import NoticeModal, { type Notice } from '../components/NoticeModal'
+import { cartNotice } from '../lib/notices/order'
 
 import { useState } from 'react'
 import { productImage } from '../lib/products'
 import { won } from '../lib/ui'
-import { errorMessage } from '../lib/api'
 import {
   deleteCartItems,
   getCart,
@@ -54,16 +55,18 @@ function useCartView() {
   const navigate = useNavigate()
   const { data: cart, setData: setCart, loading, error: loadError, reload } = useApi(getCart)
   const wallet = useApi(getWallet)
-  const [actionError, setActionError] = useState('')
+  const [notice, setNotice] = useState<Notice | null>(null)
 
-  /** 화면을 먼저 바꾸고 API를 부른 뒤, 서버 기준 값으로 다시 불러와요. 실패하면 문구를 보여줘요. */
-  async function run(call: () => Promise<unknown>, optimistic?: (items: CartItem[]) => CartItem[]) {
-    setActionError('')
+  /**
+   * 화면을 먼저 바꾸고 API를 부른 뒤, 서버 기준 값으로 다시 불러와요.
+   * 실패하면 안내 모달을 띄워요. name은 모달 문구에 넣을 상품 이름이에요.
+   */
+  async function run(call: () => Promise<unknown>, optimistic?: (items: CartItem[]) => CartItem[], name?: string) {
     if (optimistic && cart) setCart(recalc(optimistic(cart.items)))
     try {
       await call()
     } catch (e) {
-      setActionError(errorMessage(e))
+      setNotice(cartNotice(e, { name }))
     }
     reload()
   }
@@ -105,6 +108,7 @@ function useCartView() {
         run(
           () => updateCartItem(b.itemId, { selected: !b.selected }),
           (list) => list.map((i) => (i.itemId === b.itemId ? { ...i, selected: !i.selected } : i)),
+          name,
         ),
       changeQty: (next: number) => {
         const q = Math.max(1, Math.min(MAX_QTY, next))
@@ -112,12 +116,14 @@ function useCartView() {
         run(
           () => updateCartItem(b.itemId, { quantity: q }),
           (list) => list.map((i) => (i.itemId === b.itemId ? { ...i, quantity: q, lineAmount: i.price * q } : i)),
+          name,
         )
       },
       remove: () =>
         run(
           () => deleteCartItems([b.itemId]),
           (list) => list.filter((i) => i.itemId !== b.itemId),
+          name,
         ),
     }
   })
@@ -127,7 +133,9 @@ function useCartView() {
   const view = {
     loading: loading && !cart,
     empty: !!cart && items.length === 0,
-    error: actionError || loadError || '',
+    error: loadError || '',
+    notice,
+    closeNotice: () => setNotice(null),
     rows,
     count: items.length,
     sum: won(sum),
@@ -427,6 +435,7 @@ export default function CartPage() {
           )}
         </div>
       </div>
+      <NoticeModal notice={view.notice} onClose={view.closeNotice} />
     </div>
   )
 }
