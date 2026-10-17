@@ -2,7 +2,17 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ANONYMOUS, loadTossPayments, type TossPaymentsWidgets } from '@tosspayments/tosspayments-sdk'
 import { errorMessage, toPageParam } from '../lib/api'
-import { failTopup, getTopups, getWallet, prepareTopup, savePendingTopup, type TopupStatus } from '../lib/api/wallet'
+import {
+  checkoutPath,
+  failTopup,
+  getTopups,
+  getWallet,
+  getWalletTransactions,
+  prepareTopup,
+  savePendingTopup,
+  type TopupStatus,
+  type WalletTransactionType,
+} from '../lib/api/wallet'
 import { useApi } from '../lib/useApi'
 import { NOTICE, css, makeCx, won } from '../lib/ui'
 import styles from './Wallet.module.css'
@@ -40,6 +50,19 @@ const TOPUP_STATUS: Record<TopupStatus, [string, string, string]> = {
   FAILED_EXPIRED: ['c-mute', '실패', '결제 시간이 지났어요'],
   FAILED_SYSTEM_ERROR: ['c-mute', '실패', '일시적인 오류예요'],
 }
+
+/** 거래 내역 '내용' 칸 문구. 응답에 주문번호·충전번호가 없어서 유형 라벨만 보여 줘요 (10/17 결정) */
+const LEDGER_LABEL: Record<WalletTransactionType, string> = {
+  CHARGE: '충전',
+  CHARGE_CANCEL: '충전 취소',
+  PAYMENT: '주문 결제',
+  REFUND: '반품 환불',
+  SETTLEMENT: '정산 지급',
+  FEE: '정산 수수료',
+}
+
+/** +50,000원 / −52,000원 (빼기는 디자인대로 U+2212 기호) */
+const signedWon = (amount: number) => `${amount > 0 ? '+' : amount < 0 ? '−' : ''}${won(Math.abs(amount))}원`
 
 const cx = makeCx(styles)
 
@@ -97,19 +120,23 @@ function useTossWidgets(amount: number) {
 /** 화면 상태와 화면에 그릴 값을 만들어요. */
 function useWalletView() {
   const [params] = useSearchParams()
-  // 주문서에서 잔액 부족으로 왔을 때만 값이 있어요 (Q3: 주문서 담당과 쿼리 이름 합의)
+  // 주문서에서 잔액 부족으로 왔을 때만 값이 있어요 (10/16 은정님과 확정)
+  // /wallet?orderId=<숫자 주문 ID>&orderNumber=<ORD-…>&shortage=<부족 금액>
   const shortage = Number(params.get('shortage') ?? 0)
-  const orderNo = params.get('orderId')
+  const returnOrderId = params.get('orderId') // 돌아가기 링크(/checkout?orderId=)에 써요
+  const orderNumber = params.get('orderNumber') // 안내 문구에만 써요
 
   const [amount, setAmount] = useState(shortage > 0 ? Math.ceil(shortage / 10000) * 10000 : 30000)
   const [tab, setTab] = useState(0)
   const [page, setPage] = useState(1)
+  const [ledgerPage, setLedgerPage] = useState(1)
   const [paying, setPaying] = useState(false)
   const [payError, setPayError] = useState('')
 
   const toss = useTossWidgets(amount)
   const wallet = useApi(getWallet, [])
   const topups = useApi(() => getTopups({ page: toPageParam(page), size: PAGE_SIZE }), [page])
+  const ledger = useApi(() => getWalletTransactions({ page: toPageParam(ledgerPage), size: PAGE_SIZE }), [ledgerPage])
 
   const amountValid = amount >= MIN_AMOUNT && amount <= MAX_AMOUNT && amount % 10000 === 0
 
@@ -124,10 +151,13 @@ function useWalletView() {
       const prepared = await prepareTopup(amount)
       topupId = prepared.topupId
       // 2) 결제 요청 전에 topupId를 저장해요 (사용자 취소 시 토스가 orderId를 안 줘요)
-      savePendingTopup({ topupId: prepared.topupId, orderId: prepared.orderId, orderNo })
+      savePendingTopup({ topupId: prepared.topupId, orderId: prepared.orderId, returnOrderId, orderNumber })
       await widgets.setAmount({ currency: 'KRW', value: prepared.amount })
       // 3) 결제를 요청하면 토스가 successUrl 또는 failUrl로 이동시켜요
-      const back = orderNo ? `orderNo=${encodeURIComponent(orderNo)}` : ''
+      // 결과 화면에서 토스가 붙이는 orderId(TOPUP-…)와 겹치지 않게 returnOrderId로 넘겨요
+      const back = returnOrderId
+        ? new URLSearchParams({ returnOrderId, ...(orderNumber ? { orderNumber } : {}) }).toString()
+        : ''
       await widgets.requestPayment({
         orderId: prepared.orderId,
         orderName: '팔레트 예치금 충전',
@@ -153,11 +183,13 @@ function useWalletView() {
   }
 
   const items = topups.data?.items ?? []
+  const ledgerItems = ledger.data?.items ?? []
 
   return {
     // 부족액 배너
     shortage,
-    orderNo,
+    orderNumber,
+    backToCheckout: checkoutPath(returnOrderId),
     // 잔액
     balance: wallet.data?.balance,
     heldAmount: wallet.data?.heldAmount,
@@ -193,6 +225,14 @@ function useWalletView() {
     page,
     setPage,
     totalPages: topups.data?.totalPages ?? 0,
+    // 거래 내역
+    ledgerItems,
+    ledgerLoading: ledger.loading,
+    ledgerError: ledger.error,
+    ledgerEmpty: !ledger.loading && !ledger.error && ledgerItems.length === 0,
+    ledgerPage,
+    setLedgerPage,
+    ledgerTotalPages: ledger.data?.totalPages ?? 0,
   }
 }
 
@@ -214,7 +254,7 @@ export default function WalletPage() {
           }}
         >
           <h1 style={{ margin: '0', fontSize: '26px', fontWeight: '700', letterSpacing: '-0.5px' }}>예치금</h1>
-          {v.shortage > 0 && v.orderNo && (
+          {v.shortage > 0 && v.backToCheckout && (
             <div
               style={{
                 background: '#F3F1F6',
@@ -228,11 +268,17 @@ export default function WalletPage() {
               }}
             >
               <span>
-                주문 <span className={cx('num')}>{v.orderNo}</span> 결제에{' '}
-                <strong className={cx('num')}>{won(v.shortage)}원</strong>이 모자라요. 충전 금액을 {v.amountStr}원으로
-                맞춰뒀어요.
+                주문
+                {v.orderNumber && (
+                  <>
+                    {' '}
+                    <span className={cx('num')}>{v.orderNumber}</span>
+                  </>
+                )}{' '}
+                결제에 <strong className={cx('num')}>{won(v.shortage)}원</strong>이 모자라요. 충전 금액을 {v.amountStr}
+                원으로 맞춰뒀어요.
               </span>
-              <Link to="/checkout" style={{ fontWeight: '700' }}>
+              <Link to={v.backToCheckout} style={{ fontWeight: '700' }}>
                 주문서로 돌아가기
               </Link>
             </div>
@@ -312,6 +358,7 @@ export default function WalletPage() {
                   aria-label="충전 금액"
                   style={{
                     flex: '1',
+                    width: '0', // input 기본 너비(약 235px) 때문에 좁은 화면에서 카드가 넘치지 않게
                     minWidth: '0',
                     border: 'none',
                     outline: 'none',
@@ -339,7 +386,8 @@ export default function WalletPage() {
                 className={cx('btn btn-p')}
                 onClick={v.startTopup}
                 disabled={!v.widgetReady || !v.amountValid || v.paying}
-                style={{ minHeight: '56px', fontSize: '17px' }}
+                // btn의 nowrap 때문에 좁은 화면(375px 이하)에서 카드가 넘치지 않게 문구 줄바꿈을 허용해요
+                style={{ minHeight: '56px', fontSize: '17px', whiteSpace: 'normal' }}
               >
                 {v.paying ? '결제를 준비하고 있어요…' : `토스페이먼츠로 ${v.amountStr}원 충전하기`}
               </button>
@@ -426,10 +474,57 @@ export default function WalletPage() {
               </>
             )}
             {v.tabLedger && (
-              // Q1: 거래 내역 API(GET /api/v1/wallet/transactions)가 생기면 표로 바꿔요
-              <p className={cx('sub')} style={{ textAlign: 'center', padding: '32px 0', margin: '0' }}>
-                거래 내역은 준비 중이에요.
-              </p>
+              <>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className={cx('num')}>
+                    <thead>
+                      <tr>
+                        <th>날짜</th>
+                        <th>내용</th>
+                        <th style={{ textAlign: 'right' }}>금액</th>
+                        <th style={{ textAlign: 'right' }}>잔액</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {v.ledgerLoading && v.ledgerItems.length === 0 && (
+                        <tr>
+                          <td colSpan={4} className={cx('sub')} style={{ textAlign: 'center', padding: '32px 0' }}>
+                            불러오는 중이에요.
+                          </td>
+                        </tr>
+                      )}
+                      {v.ledgerEmpty && (
+                        <tr>
+                          <td colSpan={4} className={cx('sub')} style={{ textAlign: 'center', padding: '32px 0' }}>
+                            아직 거래 내역이 없어요.
+                          </td>
+                        </tr>
+                      )}
+                      {v.ledgerItems.map((t) => (
+                        <tr key={t.transactionId}>
+                          <td>{fmtDateTime(t.createdAt)}</td>
+                          <td>{LEDGER_LABEL[t.type] ?? t.type}</td>
+                          <td style={{ textAlign: 'right', ...(t.amount > 0 ? { color: '#26262C' } : {}) }}>
+                            {signedWon(t.amount)}
+                          </td>
+                          <td style={{ textAlign: 'right' }}>{won(t.balanceAfter)}원</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {v.ledgerError && (
+                  <p role="alert" style={{ ...NOTICE, marginTop: '12px' }}>
+                    {v.ledgerError}
+                  </p>
+                )}
+                <Pager
+                  page={v.ledgerPage}
+                  totalPages={v.ledgerTotalPages}
+                  onChange={v.setLedgerPage}
+                  buttonClassName={cx('btn')}
+                />
+              </>
             )}
           </section>
         </div>

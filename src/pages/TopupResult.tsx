@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ApiError, errorMessage } from '../lib/api'
 import {
+  checkoutPath,
   clearPendingTopup,
   confirmTopup,
   failTopup,
@@ -61,9 +62,10 @@ type Info = { orderId: string; amount: number; balance: number | null; reason: s
 
 /**
  * 토스가 돌려보낸 URL을 읽고 승인·실패 기록 API를 한 번 불러요.
- * - 성공: ?paymentKey&orderId&amount            → 승인(confirm). 승인이 안 되면(거절·이미 처리됨) 상세 조회
+ * - 성공: ?paymentKey&orderId&amount            → 승인(confirm). 승인이 안 되거나 결과를 모르면 상세 조회
  * - 실패: ?topupId&code&message(&orderId)       → 실패 기록(fail) 후 상세 조회
  * - 새로고침: ?topupId                          → 상세 조회
+ * 주문서에서 왔으면 returnOrderId(숫자 주문 ID)·orderNumber(ORD-…)가 함께 붙어 있어요.
  */
 function useTopupResultView() {
   const [params, setParams] = useSearchParams()
@@ -72,7 +74,15 @@ function useTopupResultView() {
   const [info, setInfo] = useState<Info>({ orderId: '', amount: 0, balance: null, reason: '' })
   const [error, setError] = useState('')
   const pending = readPendingTopup()
-  const orderNo = params.get('orderNo') ?? pending?.orderNo ?? null // TODO 주문서에서 잔액 부족으로 왔을 때만 값이 있어요. 주문서가 /wallet?orderId=주문번호&shortage=부족금액으로 넘겨야 함
+  // 주문서에서 왔을 때만 있어요. URL에 없으면(새로고침 등) 결제 요청 전에 저장해 둔 값을 써요
+  const returnOrderId = params.get('returnOrderId') ?? pending?.returnOrderId ?? null
+  const orderNumber = params.get('orderNumber') ?? pending?.orderNumber ?? null
+  /** URL을 ?topupId로 바꿀 때 돌아갈 주문 정보도 함께 남겨요 */
+  const keepParams = (topupId: number) => ({
+    topupId: String(topupId),
+    ...(returnOrderId ? { returnOrderId } : {}),
+    ...(orderNumber ? { orderNumber } : {}),
+  })
 
   useEffect(() => {
     if (started.current) return // StrictMode에서 두 번 실행되면 승인 API가 409가 나서 막아요
@@ -89,7 +99,7 @@ function useTopupResultView() {
       const t = await getTopup(id)
       setInfo({ orderId: t.orderId, amount: t.amount, balance: null, reason: t.failReason ?? '' })
       setResult(toResult(t.status))
-      setParams({ topupId: String(id), ...(orderNo ? { orderNo } : {}) }, { replace: true })
+      setParams(keepParams(id), { replace: true })
       clearPendingTopup()
     }
 
@@ -107,7 +117,7 @@ function useTopupResultView() {
             const r = await confirmTopup({ paymentKey, orderId, amount })
             setInfo({ orderId: r.orderId, amount: r.amount, balance: r.balance, reason: '' })
             setResult(toResult(r.status))
-            setParams({ topupId: String(r.topupId), ...(orderNo ? { orderNo } : {}) }, { replace: true })
+            setParams(keepParams(r.topupId), { replace: true })
             clearPendingTopup()
             return
           } catch (e) {
@@ -170,17 +180,21 @@ function useTopupResultView() {
     ...base,
     ...(result === '완료' && {
       title: `${won(info.amount)}원을 충전했어요`,
-      desc: orderNo ? `이제 주문 ${orderNo}를 결제할 수 있어요.` : '이제 예치금으로 결제할 수 있어요.',
+      desc: orderNumber
+        ? `이제 주문 ${orderNumber}를 결제할 수 있어요.`
+        : returnOrderId
+          ? '이제 주문서에서 결제할 수 있어요.'
+          : '이제 예치금으로 결제할 수 있어요.',
       v3: info.balance !== null ? `${won(info.balance)}원` : '예치금 화면에서 확인해 주세요',
     }),
     ...(result === '실패' && { desc: error || base.desc, v3: info.reason || '-' }),
   }
-  return { s, info, orderNo }
+  return { s, info, backToCheckout: checkoutPath(returnOrderId) }
 }
 
 /** 충전 결과 */
 export default function TopupResultPage() {
-  const { s, info, orderNo } = useTopupResultView()
+  const { s, info, backToCheckout } = useTopupResultView()
   return (
     <div className={styles.page}>
       <div>
@@ -302,9 +316,13 @@ export default function TopupResultPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
               {s.done && (
                 <>
-                  {orderNo ? (
+                  {backToCheckout ? (
                     <>
-                      <Link className={cx('btn btn-p')} to="/checkout" style={{ minHeight: '56px', fontSize: '17px' }}>
+                      <Link
+                        className={cx('btn btn-p')}
+                        to={backToCheckout}
+                        style={{ minHeight: '56px', fontSize: '17px' }}
+                      >
                         주문서로 돌아가 결제하기
                       </Link>
                       <Link className={cx('btn btn-q')} to="/wallet">
