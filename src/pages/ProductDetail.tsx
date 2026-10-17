@@ -56,6 +56,10 @@ function useProductDetailView() {
   const [adding, setAdding] = useState(false)
   const [added, setAdded] = useState<number | null>(null)
   const [addError, setAddError] = useState('')
+  /** 대표 사진을 못 불러오면 카테고리 아이콘으로 대신 보여줘요. */
+  const [heroBroken, setHeroBroken] = useState(false)
+  /** 못 불러온 상세 사진은 빼고 보여줘요. */
+  const [brokenGallery, setBrokenGallery] = useState<Set<string>>(() => new Set())
 
   // 상품이 바뀌면 살 수 있는 첫 옵션을 고르고 담기 결과를 지워요.
   useEffect(() => {
@@ -63,6 +67,8 @@ function useProductDetailView() {
     setQty(1)
     setAdded(null)
     setAddError('')
+    setHeroBroken(false)
+    setBrokenGallery(new Set())
   }, [product])
 
   const option = product?.options.find((o) => o.optionId === optionId)
@@ -97,9 +103,15 @@ function useProductDetailView() {
     product,
     example: !!product?.example,
     /** 이미지 기능 전까지 thumbnailUrl이 없어서 카테고리 대표 아이콘을 보여줘요. */
-    mainImg: product ? (product.thumbnailUrl ?? categoryIcon(product.categoryName, product.parentCategoryName)) : '',
-    mainIsIcon: !product?.thumbnailUrl,
-    gallery: product?.imageUrls ?? [],
+    mainImg: product
+      ? product.thumbnailUrl && !heroBroken
+        ? product.thumbnailUrl
+        : categoryIcon(product.categoryName, product.parentCategoryName)
+      : '',
+    mainIsIcon: !product?.thumbnailUrl || heroBroken,
+    heroError: () => setHeroBroken(true),
+    gallery: (product?.imageUrls ?? []).filter((url) => !brokenGallery.has(url)),
+    galleryError: (url: string) => setBrokenGallery((s) => new Set(s).add(url)),
     price: product ? won(product.price) : '',
     soldOut,
     remaining: option?.remainingStock ?? null,
@@ -227,13 +239,18 @@ function ProductBody({ view, product }: { view: View; product: NonNullable<View[
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '48px', alignItems: 'flex-start' }}>
         <div style={{ flex: '1 1 440px', display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '0' }}>
           <div className={cx('hero')}>
-            <img src={mainImg} alt={product.name} className={cx(mainIsIcon ? 'hero-icon' : 'hero-img')} />
+            <img
+              src={mainImg}
+              alt={product.name}
+              className={cx(mainIsIcon ? 'hero-icon' : 'hero-img')}
+              onError={mainIsIcon ? undefined : view.heroError}
+            />
           </div>
           {gallery.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: '10px' }}>
               {gallery.slice(0, 4).map((url) => (
                 <div className={cx('thumb')} key={url}>
-                  <img src={url} alt="" />
+                  <img src={url} alt="" onError={() => view.galleryError(url)} />
                 </div>
               ))}
             </div>
@@ -401,7 +418,13 @@ function ProductBody({ view, product }: { view: View; product: NonNullable<View[
         <h2 style={{ margin: '0', fontSize: '20px', fontWeight: '700' }}>상품 설명</h2>
         <p style={{ margin: '0', maxWidth: '640px', whiteSpace: 'pre-line' }}>{product.description}</p>
         {gallery.map((url) => (
-          <img src={url} alt="" key={url} style={{ width: '100%', borderRadius: '8px', display: 'block' }} />
+          <img
+            src={url}
+            alt=""
+            key={url}
+            onError={() => view.galleryError(url)}
+            style={{ width: '100%', borderRadius: '8px', display: 'block' }}
+          />
         ))}
       </section>
     </>
