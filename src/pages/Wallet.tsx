@@ -51,7 +51,7 @@ const TOPUP_STATUS: Record<TopupStatus, [string, string, string]> = {
   FAILED_SYSTEM_ERROR: ['c-mute', '실패', '일시적인 오류예요'],
 }
 
-/** 거래 내역 '내용' 칸 문구. 응답에 주문번호·충전번호가 없어서 유형 라벨만 보여 줘요 (10/17 결정) */
+/** 거래 내역 '내용' 칸 문구. 응답에 주문번호·충전번호가 없어서 유형 라벨만 보여 줘요 */
 const LEDGER_LABEL: Record<WalletTransactionType, string> = {
   CHARGE: '충전',
   CHARGE_CANCEL: '충전 취소',
@@ -120,7 +120,7 @@ function useTossWidgets(amount: number) {
 /** 화면 상태와 화면에 그릴 값을 만들어요. */
 function useWalletView() {
   const [params] = useSearchParams()
-  // 주문서에서 잔액 부족으로 왔을 때만 값이 있어요 (10/16 은정님과 확정)
+  // 주문서에서 잔액 부족으로 왔을 때만 값이 있어요
   // /wallet?orderId=<숫자 주문 ID>&orderNumber=<ORD-…>&shortage=<부족 금액>
   const shortage = Number(params.get('shortage') ?? 0)
   const returnOrderId = params.get('orderId') // 돌아가기 링크(/checkout?orderId=)에 써요
@@ -448,7 +448,7 @@ export default function WalletPage() {
                             {t.status === 'DONE' ? (
                               <td style={{ textAlign: 'right' }}>
                                 {cancellable ? (
-                                  // Q2: 충전 취소 API가 생기면 onClick을 연결해요
+                                  // 충전 취소 API가 생기면 onClick을 연결
                                   <button className={cx('btn')} disabled title="준비 중이에요" style={SMALL_BTN}>
                                     충전 취소하기
                                   </button>
