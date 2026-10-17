@@ -155,3 +155,32 @@
   color: #5f5f6a;
   font-weight: 500;
 }
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.done {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #e3f5ec;
+  color: #1c6b47;
+  font-size: 14px;
+}
+.empty {
+  margin: 0;
+  padding: 24px 0;
+  text-align: center;
+}
+.cat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid #e8e8ed;
+  font-size: 14px;
+}
+.cat-hidden > span:first-child {
+  color: #83838f;
+}
