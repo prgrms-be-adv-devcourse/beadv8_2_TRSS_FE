@@ -155,3 +155,7 @@
   color: #5f5f6a;
   font-weight: 500;
 }
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
