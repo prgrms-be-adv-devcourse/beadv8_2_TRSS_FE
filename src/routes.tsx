@@ -92,7 +92,7 @@ export const screens: ScreenRoute[] = [
     title: '충전 결과',
     auth: 'login',
     group: '구매자',
-    element: <WithQuery page={TopupResultPage} />,
+    element: <TopupResultPage />,
   },
   { path: '/login', title: '로그인', group: '구매자', element: <LoginPage /> },
   { path: '/signup', title: '회원가입', group: '구매자', element: <SignupPage /> },
