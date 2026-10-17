@@ -155,3 +155,15 @@
   color: #5f5f6a;
   font-weight: 500;
 }
+.done {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #e3f5ec;
+  color: #1c6b47;
+  font-size: 14px;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
