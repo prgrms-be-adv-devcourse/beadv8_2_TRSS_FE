@@ -16,6 +16,10 @@
  * GET    /api/v1/admin/categories               관리자 카테고리 목록
  * POST   /api/v1/admin/categories               카테고리 추가
  * PATCH  /api/v1/admin/categories/{categoryId}  카테고리 수정
+ * GET    /api/v1/admin/products              관리자 전체 상품 (PageResponse)
+ * POST   /api/v1/admin/products/{productId}/stop        즉시 판매 중지
+ * GET    /api/v1/admin/product-stop-requests            판매 중지 요청 목록 (PageResponse)
+ * POST   /api/v1/admin/product-stop-requests/{requestId}/approve | reject  요청 승인·반려
  *
  * 오류 코드는 노션 「상품 API · 오류 코드 정리 (프론트 전달용)」을 따라요. resultCode는 "404-PRODUCT_NOT_FOUND" 형식이에요.
  */
@@ -264,4 +268,76 @@ export type StockHistory = {
 export const getStockHistory = (productId: number, optionId: number, query: PageQuery = {}) =>
   api<PageResponse<StockHistory>>(`/api/v1/seller/products/${productId}/options/${optionId}/stock-history`, {
     query,
+  })
+
+// ── 관리자 상품 ──────────────────────────────────────────
+
+/** 관리자 화면 상태. ON_SALE 판매중(재고 있음) · SOLD_OUT 품절(판매 중 재고 0) · STOPPED 판매 중지 · DELETED 삭제됨 */
+export type AdminProductStatus = 'ON_SALE' | 'SOLD_OUT' | 'STOPPED' | 'DELETED'
+
+export type AdminProductSummary = {
+  productId: number
+  /** 판매자 ID (seller.id). 상호명은 관리자 판매자 목록으로 맞춰요. */
+  sellerId: number
+  thumbnailUrl: string | null
+  name: string
+  categoryName: string
+  price: number
+  /** 삭제되지 않은 옵션의 재고 합계 */
+  stock: number
+  status: AdminProductStatus
+  stoppedBy: ProductStoppedBy | null
+  stoppedReason: string | null
+  stoppedAt: string | null
+  createdAt: string
+}
+
+export type AdminProductQuery = PageQuery & {
+  sellerId?: number
+  status?: AdminProductStatus
+  /** 대분류 또는 소분류 ID (사용 중지 카테고리도 가능) */
+  categoryId?: number
+  /** 상품명 일부 (최대 100자) */
+  keyword?: string
+}
+
+/** 삭제된 상품까지 최신 등록순으로 와요. */
+export const getAdminProducts = (query: AdminProductQuery = {}) =>
+  api<PageResponse<AdminProductSummary>>('/api/v1/admin/products', { query })
+
+/**
+ * 즉시 판매 중지 (사유 필수, 300자, 해제 없음). 결제 대기 주문은 취소되고 심사 중인 중지 요청은 닫혀요.
+ * 이미 판매 중지·삭제된 상품은 409-PRODUCT_NOT_ON_SALE
+ */
+export const stopProductByAdmin = (productId: number, reason: string) =>
+  api<null>(`/api/v1/admin/products/${productId}/stop`, { method: 'POST', body: { reason } })
+
+export type AdminProductStopRequest = {
+  requestId: number
+  productId: number
+  productName: string
+  sellerId: number
+  /** 판매자가 적은 중지 사유 */
+  reason: string
+  status: ProductStopRequestStatus
+  /** 반려 사유. 반려가 아니면 null */
+  rejectReason: string | null
+  createdAt: string
+  /** 처리된 시각. 심사 중이면 null */
+  reviewedAt: string | null
+}
+
+/** 이 상태의 요청을 먼저 들어온 순으로 줘요. status를 안 보내면 PENDING(심사 중)이에요. */
+export const getAdminStopRequests = (query: PageQuery & { status?: ProductStopRequestStatus } = {}) =>
+  api<PageResponse<AdminProductStopRequest>>('/api/v1/admin/product-stop-requests', { query })
+
+/** 승인하면 상품이 판매 중지(SELLER_REQUEST)되고 결제 대기 주문이 취소돼요. 이미 처리된 요청은 409-STOP_REQUEST_NOT_PENDING */
+export const approveStopRequest = (requestId: number) =>
+  api<AdminProductStopRequest>(`/api/v1/admin/product-stop-requests/${requestId}/approve`, { method: 'POST' })
+
+/** 반려 (사유 필수, 300자). 상품은 그대로 판매 중이에요. */
+export const rejectStopRequest = (requestId: number, reason: string) =>
+  api<AdminProductStopRequest>(`/api/v1/admin/product-stop-requests/${requestId}/reject`, {
+    method: 'POST',
+    body: { reason },
   })

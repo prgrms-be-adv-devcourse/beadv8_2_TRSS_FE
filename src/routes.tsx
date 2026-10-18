@@ -135,7 +135,7 @@ export const screens: ScreenRoute[] = [
     title: '월 정산',
     auth: 'ADMIN',
     group: '관리자',
-    element: <WithQuery page={AdminSettlementsPage} />,
+    element: <AdminSettlementsPage />,
   },
   {
     path: '/admin/settlements/retry-modal',

@@ -30,6 +30,8 @@ export type SettlementSellerStatus = 'SCHEDULED' | 'PAID' | 'DELAYED' | 'ON_HOLD
 export type Settlement = {
   settlementId: number
   sellerId: number
+  /** 판매자 상호명. 회원 쪽에 판매자가 없으면 null (BE에 businessName 추가 후) */
+  businessName: string | null
   settlementMonth: YearMonth
   totalSalePrice: number
   totalFee: number

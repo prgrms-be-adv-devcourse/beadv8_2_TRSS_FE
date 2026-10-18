@@ -30,3 +30,12 @@ export const fmtDay = (iso: string) => {
     ? '-'
     : `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
+
+/** 2026-10-09T14:05:00 → 10.09 14:05 */
+export const fmtDateTime = (iso: string | null | undefined) => {
+  if (!iso) return '-'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '-'
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${p(d.getMonth() + 1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
+}
