@@ -2,7 +2,7 @@
  * 주문 상태 표시 공통 (주문 내역·주문 상세가 같이 써요)
  */
 
-import type { OrderStatus } from './api/order'
+import type { OrderStatus, PaymentAttemptStatus } from './api/order'
 
 /** 백엔드 custom.order.autoConfirmDays */
 export const AUTO_CONFIRM_DAYS = 7
@@ -25,6 +25,15 @@ export const ORDER_STATUS: Record<OrderStatus, { label: string; chip: string; at
   RETURNED: { label: '반품 완료', chip: 'c-mute', at: 1, hold: '결제한 금액을 예치금으로 돌려드렸어요.' },
   CONFIRMED: { label: '구매 확정', chip: 'c-mute', at: 2, hold: '판매자에게 정산될 금액이에요.' },
   CANCELED: { label: '주문 취소', chip: 'c-mute', at: 0, hold: '결제 전에 취소된 주문이에요.' },
+}
+
+/** 결제 시도 결과별 칩·설명 (주문 상세 결제 내역) */
+export const PAYMENT_STATUS: Record<PaymentAttemptStatus, { label: string; chip: string; desc: string }> = {
+  PAID: { label: '결제 완료', chip: 'c-ok', desc: '예치금에서 결제, 구매 확정까지 보관' },
+  REFUNDED: { label: '환불 완료', chip: 'c-mute', desc: '반품이 승인되어 예치금으로 돌려드렸어요' },
+  FAILED_INSUFFICIENT_BALANCE: { label: '잔액 부족', chip: 'c-low', desc: '예치금이 부족해 결제하지 못했어요' },
+  FAILED_ORDER_EXPIRED: { label: '시간 만료', chip: 'c-low', desc: '결제 가능 시간이 지나 결제하지 못했어요' },
+  FAILED_SYSTEM_ERROR: { label: '결제 실패', chip: 'c-low', desc: '일시적인 오류로 결제하지 못했어요' },
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
