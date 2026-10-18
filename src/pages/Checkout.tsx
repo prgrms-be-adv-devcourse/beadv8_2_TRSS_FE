@@ -104,6 +104,8 @@ function useCheckoutView() {
     setPay('processing')
     try {
       const r = await payOrder(o.orderId)
+      // TODO: 백엔드 OrderPayResponse에 balance(결제 후 잔액)가 추가되면 r.balance로 바꿔요.
+      // 지금은 주문서를 열 때 불러온 잔액으로 계산해서, 그 사이 다른 탭 충전·반품 환불이 있으면 실제와 달라요.
       setPaid({ ...r, left: balance - r.paidAmount })
       setPay('done')
       // 잔액을 다시 불러오지 않아요. 완료 팝업 뒤 화면이 '부족'으로 바뀌지 않게 결제 전 잔액을 그대로 두고, 헤더만 결제 후 잔액으로 바꿔요
