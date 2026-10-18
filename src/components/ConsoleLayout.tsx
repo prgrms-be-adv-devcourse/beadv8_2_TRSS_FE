@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { logout } from '../lib/auth'
 import styles from './ConsoleLayout.module.css'
 
 export type MenuItem = { label: string; to: string }
@@ -17,6 +18,8 @@ type Props = {
   /** 지금 화면의 메뉴 이름 */
   active: string
   minHeight?: number
+  /** 헤더에 로그아웃 버튼을 보여 줄지 (관리자는 마이페이지가 없어 여기서 로그아웃한다) */
+  showLogout?: boolean
   children: ReactNode
 }
 
@@ -30,6 +33,7 @@ export default function ConsoleLayout({
   menu,
   active,
   minHeight,
+  showLogout = false,
   children,
 }: Props) {
   return (
@@ -45,6 +49,11 @@ export default function ConsoleLayout({
             <Link to="/" className={styles.shopLink}>
               쇼핑몰로 가기
             </Link>
+            {showLogout && (
+              <Link to="/login" onClick={() => void logout()} className={styles.shopLink}>
+                로그아웃
+              </Link>
+            )}
           </nav>
         </div>
       </header>

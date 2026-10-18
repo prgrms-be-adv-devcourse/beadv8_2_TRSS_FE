@@ -30,6 +30,7 @@ export default function AdminLayout({
       menu={ADMIN_MENU}
       active={active}
       minHeight={minHeight}
+      showLogout
     >
       {children}
     </ConsoleLayout>
