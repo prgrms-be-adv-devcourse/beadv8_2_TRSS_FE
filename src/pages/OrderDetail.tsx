@@ -7,39 +7,14 @@ import { orderNotice } from '../lib/notices/order'
 
 import { useEffect, useState } from 'react'
 import { won } from '../lib/ui'
-import { cancelOrder, confirmOrder, getOrder, type OrderDetail, type OrderStatus } from '../lib/api/order'
+import { cancelOrder, confirmOrder, getOrder, type OrderDetail } from '../lib/api/order'
 import { useApi } from '../lib/useApi'
-
-/** 백엔드 custom.order.autoConfirmDays */
-const AUTO_CONFIRM_DAYS = 7
+import { ORDER_STATUS as STATUS, autoConfirmDate, md, mdhm, mmss } from '../lib/orderStatus'
 
 /** 반품 요청 API가 준비되면 true로 바꿔요. 그 전까지 '반품 요청하기' 버튼과 입력 화면을 숨겨요. */
 const RETURN_ENABLED = false
 
-/** 상태별 칩·진행 단계·결제 금액 안내 */
-const STATUS: Record<OrderStatus, { label: string; chip: string; at: number; hold: string }> = {
-  CREATED: { label: '결제 대기', chip: 'c-low', at: 0, hold: '아직 결제하지 않았어요.' },
-  PAYMENT_FAILED: {
-    label: '결제 실패',
-    chip: 'c-low',
-    at: 0,
-    hold: '결제하지 못했어요. 남은 시간 안에 다시 결제할 수 있어요.',
-  },
-  PAID: { label: '결제 완료', chip: 'c-ok', at: 1, hold: '' },
-  RETURN_REQUESTED: { label: '반품 요청', chip: 'c-blue', at: 1, hold: '반품이 승인되면 예치금으로 돌려드려요.' },
-  RETURNED: { label: '반품 완료', chip: 'c-mute', at: 1, hold: '결제한 금액을 예치금으로 돌려드렸어요.' },
-  CONFIRMED: { label: '구매 확정', chip: 'c-mute', at: 2, hold: '판매자에게 정산될 금액이에요.' },
-  CANCELED: { label: '주문 취소', chip: 'c-mute', at: 0, hold: '결제 전에 취소된 주문이에요.' },
-}
-
 const cx = makeCx(styles)
-
-const pad = (n: number) => String(n).padStart(2, '0')
-/** LocalDateTime 문자열 → "10.09 14:02" */
-const mdhm = (d: Date) => `${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
-const md = (d: Date) => `${d.getMonth() + 1}월 ${d.getDate()}일`
-const mmss = (sec: number) => `${pad(Math.floor(sec / 60))}:${pad(Math.floor(sec % 60))}`
-const autoConfirmDate = (paidAt: string) => new Date(new Date(paidAt).getTime() + AUTO_CONFIRM_DAYS * 86400000)
 
 /** 결제 남은 시간(초). 서버가 준 remainingSeconds부터 1초씩 줄여요. */
 function useRemaining(order: OrderDetail | null) {
