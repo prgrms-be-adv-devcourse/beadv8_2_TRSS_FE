@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ANONYMOUS, loadTossPayments, type TossPaymentsWidgets } from '@tosspayments/tosspayments-sdk'
-import { errorMessage, toPageParam } from '../lib/api'
+import { toPageParam } from '../lib/api'
 import {
   checkoutPath,
   failTopup,
@@ -13,11 +13,20 @@ import {
   type TopupStatus,
   type WalletTransactionType,
 } from '../lib/api/wallet'
+import {
+  TOPUP_NOTICE_KEY,
+  topupCanceledNotice,
+  topupNotice,
+  topupNoticeFrom,
+  type TopupNoticeCtx,
+  type TopupNoticeState,
+} from '../lib/notices/topup'
 import { useApi } from '../lib/useApi'
 import { NOTICE, css, makeCx, won } from '../lib/ui'
 import styles from './Wallet.module.css'
 import BuyerHeader from '../components/BuyerHeader'
 import Pager from '../components/Pager'
+import NoticeModal, { type Notice } from '../components/NoticeModal'
 
 const PRESETS = [10000, 30000, 50000, 100000]
 const PRESET_ON =
@@ -132,6 +141,10 @@ function useWalletView() {
   const [ledgerPage, setLedgerPage] = useState(1)
   const [paying, setPaying] = useState(false)
   const [payError, setPayError] = useState('')
+  const [notice, setNotice] = useState<Notice | null>(null)
+  const historyRef = useRef<HTMLElement | null>(null)
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const toss = useTossWidgets(amount)
   const wallet = useApi(getWallet, [])
@@ -140,9 +153,39 @@ function useWalletView() {
 
   const amountValid = amount >= MIN_AMOUNT && amount <= MAX_AMOUNT && amount % 10000 === 0
 
+  // "다시 시도하기"가 늘 최신 금액·위젯으로 충전하도록 마지막 startTopup을 들고 있어요
+  const startTopupRef = useRef<() => Promise<void>>(async () => {})
+
+  /** 모달 버튼이 할 일 */
+  const noticeCtx: TopupNoticeCtx = {
+    onRetry: () => void startTopupRef.current(),
+    onShowHistory: () => {
+      setTab(0)
+      historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    },
+  }
+
+  // 충전 결과 화면에서 넘겨준 안내(확인 중·실패·오류)를 모달로 띄워요.
+  // 띄운 뒤 history state를 지워서 새로고침하거나 뒤로 왔을 때 같은 모달이 다시 뜨지 않게 해요
+  useEffect(() => {
+    const handed = (location.state as Record<string, TopupNoticeState> | null)?.[TOPUP_NOTICE_KEY]
+    if (!handed) return
+    // 실패한 충전 금액을 다시 골라 두어 "다시 충전하기"·"다시 시도하기"가 같은 금액으로 이어지게 해요
+    if (handed.kind !== 'orderExpired' && handed.amount && handed.amount >= MIN_AMOUNT && handed.amount <= MAX_AMOUNT)
+      setAmount(handed.amount)
+    setNotice(topupNoticeFrom(handed, noticeCtx))
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: null })
+    // 처음 들어왔을 때 한 번만
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   async function startTopup() {
     const widgets = toss.widgetsRef.current
-    if (!widgets || !amountValid || paying) return
+    if (!widgets) {
+      setPayError('결제 수단을 불러오는 중이에요. 잠시 후 다시 눌러 주세요.')
+      return
+    }
+    if (!amountValid || paying) return
     setPaying(true)
     setPayError('')
     let topupId: number | null = null
@@ -151,12 +194,22 @@ function useWalletView() {
       const prepared = await prepareTopup(amount)
       topupId = prepared.topupId
       // 2) 결제 요청 전에 topupId를 저장해요 (사용자 취소 시 토스가 orderId를 안 줘요)
-      savePendingTopup({ topupId: prepared.topupId, orderId: prepared.orderId, returnOrderId, orderNumber })
+      savePendingTopup({
+        topupId: prepared.topupId,
+        orderId: prepared.orderId,
+        returnOrderId,
+        orderNumber,
+        shortage: shortage || null,
+      })
       await widgets.setAmount({ currency: 'KRW', value: prepared.amount })
       // 3) 결제를 요청하면 토스가 successUrl 또는 failUrl로 이동시켜요
       // 결과 화면에서 토스가 붙이는 orderId(TOPUP-…)와 겹치지 않게 returnOrderId로 넘겨요
       const back = returnOrderId
-        ? new URLSearchParams({ returnOrderId, ...(orderNumber ? { orderNumber } : {}) }).toString()
+        ? new URLSearchParams({
+            returnOrderId,
+            ...(orderNumber ? { orderNumber } : {}),
+            ...(shortage > 0 ? { shortage: String(shortage) } : {}),
+          }).toString()
         : ''
       await widgets.requestPayment({
         orderId: prepared.orderId,
@@ -170,17 +223,19 @@ function useWalletView() {
       if (code === 'USER_CANCEL' && topupId !== null) {
         // 결제창(팝업)을 닫은 경우: 실패를 기록해요. 다른 SDK 오류는 15분 뒤 자동 만료돼서 호출하지 않아요
         await failTopup(topupId, { code, message: (e as Error).message }).catch(() => {})
-        setPayError('결제를 취소했어요. 빠져나간 돈은 없어요.')
+        setNotice(topupCanceledNotice())
       } else if (code) {
-        setPayError((e as Error).message || '결제를 진행하지 못했어요.') // 약관 미동의 등 토스 안내 문구
+        setPayError((e as Error).message || '결제를 진행하지 못했어요.') // 약관 미동의 등 토스 안내 문구 (디자인에 모달 없음)
       } else {
-        setPayError(errorMessage(e)) // 충전 준비 API 실패 (금액 검증 등)
+        setNotice(topupNotice(e, noticeCtx)) // 충전 준비 API 실패 (TOPUP_AMOUNT_INVALID, 로그인 만료 등)
       }
       topups.reload()
     } finally {
       setPaying(false)
     }
   }
+
+  startTopupRef.current = startTopup
 
   const items = topups.data?.items ?? []
   const ledgerItems = ledger.data?.items ?? []
@@ -233,6 +288,10 @@ function useWalletView() {
     ledgerPage,
     setLedgerPage,
     ledgerTotalPages: ledger.data?.totalPages ?? 0,
+    // 안내 모달
+    notice,
+    closeNotice: () => setNotice(null),
+    historyRef,
   }
 }
 
@@ -398,7 +457,7 @@ export default function WalletPage() {
               )}
             </section>
           </div>
-          <section className={cx('panel')} style={{ padding: '8px 24px 24px' }}>
+          <section ref={v.historyRef} className={cx('panel')} style={{ padding: '8px 24px 24px' }}>
             <div role="tablist" style={{ display: 'flex', gap: '24px', borderBottom: '1px solid #E8E8ED' }}>
               {v.tabs.map((t, tIndex) => (
                 <button role="tab" aria-selected={t.on} onClick={t.pick} style={css(t.style)} key={tIndex}>
@@ -529,6 +588,7 @@ export default function WalletPage() {
           </section>
         </div>
       </div>
+      <NoticeModal notice={v.notice} onClose={v.closeNotice} />
     </div>
   )
 }

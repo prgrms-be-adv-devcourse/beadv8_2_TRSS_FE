@@ -102,13 +102,15 @@ export const failTopup = (topupId: number, body: { code: string; message?: strin
 const PENDING_KEY = 'palette:pendingTopup'
 /**
  * orderId는 토스 주문번호(TOPUP-…)예요.
- * 주문서에서 왔을 때만 returnOrderId(숫자 주문 ID, /checkout?orderId= 에 씀)와 orderNumber(ORD-…, 문구에 씀)가 있어요.
+ * 주문서에서 왔을 때만 returnOrderId(숫자 주문 ID, /checkout?orderId= 에 씀), orderNumber(ORD-…, 문구에 씀),
+ * shortage(부족 금액, 실패해서 예치금 화면으로 돌아올 때 부족액 안내를 다시 보여 줄 때 씀)가 있어요.
  */
 export type PendingTopup = {
   topupId: number
   orderId: string
   returnOrderId: string | null
   orderNumber: string | null
+  shortage?: number | null
 }
 export function savePendingTopup(p: PendingTopup) {
   try {
@@ -136,6 +138,22 @@ export function clearPendingTopup() {
 /** 주문서에서 잔액이 부족할 때 갈 예치금 주소 */
 export const topupPath = (orderId: number, orderNumber: string, shortage: number) =>
   `/wallet?${new URLSearchParams({ orderId: String(orderId), orderNumber, shortage: String(shortage) })}`
+
+/**
+ * 충전 결과 화면에서 예치금 화면으로 돌아갈 주소. 주문서에서 왔으면 주문 정보를 다시 붙여요
+ * (/wallet?orderId=&orderNumber=&shortage= — 주문서에서 올 때와 같은 쿼리)
+ */
+export const walletPath = (from: {
+  returnOrderId: string | null
+  orderNumber: string | null
+  shortage?: number | null
+}) => {
+  if (!from.returnOrderId) return '/wallet'
+  const q = new URLSearchParams({ orderId: from.returnOrderId })
+  if (from.orderNumber) q.set('orderNumber', from.orderNumber)
+  if (from.shortage && from.shortage > 0) q.set('shortage', String(from.shortage))
+  return `/wallet?${q}`
+}
 
 /** 돌아갈 주문서 주소. 주문서에서 오지 않았으면 null */
 export const checkoutPath = (returnOrderId: string | null) =>
