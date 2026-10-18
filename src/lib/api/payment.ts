@@ -3,6 +3,9 @@
  *
  * POST   /api/v1/orders/{orderId}/payment  예치금 결제
  *
+ * 실패: 402-INSUFFICIENT_BALANCE(data: InsufficientBalance), 404-ORDER_NOT_FOUND,
+ *       409-ORDER_EXPIRED / 409-ORDER_STATE_INVALID / 409-PRODUCT_NOT_ON_SALE
+ *
  * [관리자 결제 조회 · 조회 전용]
  * GET    /api/v1/admin/payments            결제 탭, keyword = 회원 이메일(@ 포함) 또는 주문번호 ORD-… (둘 다 정확히 일치), from·to = 결제 시도일
  * GET    /api/v1/admin/topups              충전 탭, keyword = 회원 이메일(정확히 일치) 또는 충전번호 TOPUP-…(앞부분 일치, 10자 이상), from·to = 충전 준비일
@@ -12,6 +15,7 @@
  */
 import { api, type PageQuery, type PageResponse } from '.'
 import type { TopupStatus } from './wallet'
+import type { OrderStatus } from './order'
 
 /** BE PaymentStatus */
 export type PaymentStatus =
@@ -70,3 +74,24 @@ export type AdminTopup = {
 
 export const getAdminTopups = (query: AdminPaymentQuery = {}) =>
   api<PageResponse<AdminTopup>>('/api/v1/admin/topups', { query })
+
+/** 결제 결과. 백엔드: OrderPayResponse */
+export type OrderPay = {
+  orderId: number
+  orderNumber: string
+  status: OrderStatus
+  paidAmount: number
+  paidAt: string
+  paymentId: number
+}
+
+/** 402-INSUFFICIENT_BALANCE 응답의 data. 백엔드: InsufficientBalanceResponse */
+export type InsufficientBalance = {
+  shortage: number
+  /** 1만 원 단위로 올린 충전 권장 금액 */
+  recommendedTopupAmount: number
+  remainingSeconds: number
+}
+
+/** 결제 대기·결제 실패이고 만료 전인 주문만 예치금으로 결제할 수 있어요. */
+export const payOrder = (orderId: number) => api<OrderPay>(`/api/v1/orders/${orderId}/payment`, { method: 'POST' })
