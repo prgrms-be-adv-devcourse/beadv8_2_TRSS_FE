@@ -31,7 +31,7 @@ import AdminRetryModalPage from './pages/AdminRetryModal'
 
 /**
  * 화면 상태를 URL 쿼리로 바꿔 볼 수 있어요.
- * 예: /checkout?balance=충분&popup=결제 요청, /orders/1?status=구매 확정, /mypage?sellerStatus=APPROVED
+ * 예: /orders/1?status=구매 확정, /mypage?sellerStatus=APPROVED
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function WithQuery({ page: Page }: { page: ComponentType<any> }) {
@@ -68,7 +68,7 @@ export const screens: ScreenRoute[] = [
     element: <ProductDetailPage />,
   },
   { path: '/cart', title: '장바구니', auth: 'login', group: '구매자', element: <CartPage /> },
-  { path: '/checkout', title: '주문서', auth: 'login', group: '구매자', element: <WithQuery page={CheckoutPage} /> },
+  { path: '/checkout', title: '주문서', auth: 'login', group: '구매자', element: <CheckoutPage /> },
   { path: '/checkout/popups', title: '결제 팝업 모음', auth: 'login', group: '구매자', element: <PaymentPopupsPage /> },
   { path: '/orders', title: '주문 내역', auth: 'login', group: '구매자', element: <OrderListPage /> },
   {

@@ -133,6 +133,10 @@ export function clearPendingTopup() {
   }
 }
 
+/** 주문서에서 잔액이 부족할 때 갈 예치금 주소 */
+export const topupPath = (orderId: number, orderNumber: string, shortage: number) =>
+  `/wallet?${new URLSearchParams({ orderId: String(orderId), orderNumber, shortage: String(shortage) })}`
+
 /** 돌아갈 주문서 주소. 주문서에서 오지 않았으면 null */
 export const checkoutPath = (returnOrderId: string | null) =>
   returnOrderId ? `/checkout?orderId=${encodeURIComponent(returnOrderId)}` : null
