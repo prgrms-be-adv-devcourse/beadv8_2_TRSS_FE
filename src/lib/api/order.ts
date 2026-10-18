@@ -2,7 +2,7 @@
  * 주문 API (백엔드 담당: 은정)
  *
  * POST   /api/v1/orders                    주문 생성
- * GET    /api/v1/orders                    주문 내역 (PageResponse)
+ * GET    /api/v1/orders                    주문 내역 (PageResponse, status 여러 개 가능)
  * GET    /api/v1/orders/{orderId}          주문 상세
  * POST   /api/v1/orders/{orderId}/cancel   주문 취소
  * POST   /api/v1/orders/{orderId}/confirm  구매 확정
@@ -37,6 +37,27 @@ export type OrderCreateResponse = {
   expiresAt: string
 }
 
+/** 결제 시도 결과. 백엔드: shared.payment.dto.PaymentAttemptStatus */
+export type PaymentAttemptStatus =
+  | 'PAID' // 결제 완료
+  | 'REFUNDED' // 반품 승인으로 환불됨
+  | 'FAILED_INSUFFICIENT_BALANCE' // 잔액 부족
+  | 'FAILED_ORDER_EXPIRED' // 결제 시점에 주문 만료
+  | 'FAILED_SYSTEM_ERROR' // 그 밖의 오류
+
+/** 주문 상세의 결제 내역 한 줄 (결제 시도 1건) */
+export type OrderPayment = {
+  paymentId: number
+  status: PaymentAttemptStatus
+  amount: number
+  /** 결제 시도 시각 */
+  attemptedAt: string
+  /** 결제 완료 시각 (PAID·REFUNDED만) */
+  paidAt: string | null
+  /** 환불 시각 (REFUNDED만) */
+  refundedAt: string | null
+}
+
 /** 주문 항목 한 줄. 주문할 때의 상품·판매자 정보와 가격으로 고정돼요. */
 export type OrderItem = {
   orderItemId: number
@@ -63,6 +84,8 @@ export type OrderDetail = {
   canceledAt: string | null
   confirmedAt: string | null
   items: OrderItem[]
+  /** 결제 내역 (결제 시도 오래된 순, 실패 포함). 백엔드 TRSS-99 이전 서버에서는 오지 않아요 */
+  payments?: OrderPayment[]
 }
 
 export type OrderCancelResponse = {
@@ -86,6 +109,42 @@ export type OrderConfirmResponse = {
  */
 export const createOrder = (cartItemIds: number[], expectedTotalPrice: number) =>
   api<OrderCreateResponse>('/api/v1/orders', { method: 'POST', body: { cartItemIds, expectedTotalPrice } })
+
+/** 주문 내역 한 줄 */
+export type OrderSummary = {
+  orderId: number
+  orderNumber: string
+  status: OrderStatus
+  totalPrice: number
+  /** 대표 상품명 (첫 항목) */
+  representativeProductName: string
+  /** 대표 상품의 현재 대표 이미지. 상품이 삭제됐거나 이미지가 없으면 null */
+  thumbnailUrl: string | null
+  itemCount: number
+  orderedAt: string
+  expiresAt: string
+  /** 결제할 수 있는 남은 시간(초). 결제 대기가 아니거나 만료됐으면 0 */
+  remainingSeconds: number
+  /** 결제 일시. 결제 전이면 null */
+  paidAt: string | null
+}
+
+export type OrderListQuery = PageQuery & {
+  /** 여러 개면 그중 하나라도 해당하는 주문. 비우면 전체 */
+  statuses?: OrderStatus[]
+  /** 조회 시작일·종료일 (yyyy-MM-dd) */
+  from?: string
+  to?: string
+}
+
+/** 최신 주문순. 상태 여러 개는 status=A&status=B 형태라 쿼리를 직접 만들어요. */
+export const getOrders = ({ statuses = [], ...rest }: OrderListQuery = {}) => {
+  const qs = new URLSearchParams()
+  statuses.forEach((s) => qs.append('status', s))
+  for (const [k, v] of Object.entries(rest)) if (v !== undefined && v !== '') qs.set(k, String(v))
+  const q = qs.toString()
+  return api<PageResponse<OrderSummary>>(`/api/v1/orders${q ? `?${q}` : ''}`)
+}
 
 export const getOrder = (orderId: number) => api<OrderDetail>(`/api/v1/orders/${orderId}`)
 
