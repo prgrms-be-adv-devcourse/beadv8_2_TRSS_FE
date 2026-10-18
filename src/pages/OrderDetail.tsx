@@ -5,10 +5,11 @@ import BuyerHeader from '../components/BuyerHeader'
 import NoticeModal, { type Notice } from '../components/NoticeModal'
 import { orderNotice } from '../lib/notices/order'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { won } from '../lib/ui'
-import { cancelOrder, confirmOrder, getOrder, type OrderDetail, type OrderStatus } from '../lib/api/order'
+import { cancelOrder, confirmOrder, getOrder, type OrderStatus } from '../lib/api/order'
 import { useApi } from '../lib/useApi'
+import { mmss, useRemaining } from '../lib/useRemaining'
 
 /** 백엔드 custom.order.autoConfirmDays */
 const AUTO_CONFIRM_DAYS = 7
@@ -38,23 +39,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
 /** LocalDateTime 문자열 → "10.09 14:02" */
 const mdhm = (d: Date) => `${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 const md = (d: Date) => `${d.getMonth() + 1}월 ${d.getDate()}일`
-const mmss = (sec: number) => `${pad(Math.floor(sec / 60))}:${pad(Math.floor(sec % 60))}`
 const autoConfirmDate = (paidAt: string) => new Date(new Date(paidAt).getTime() + AUTO_CONFIRM_DAYS * 86400000)
-
-/** 결제 남은 시간(초). 서버가 준 remainingSeconds부터 1초씩 줄여요. */
-function useRemaining(order: OrderDetail | null) {
-  const [deadline, setDeadline] = useState<number | null>(null)
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    setDeadline(order && order.remainingSeconds > 0 ? Date.now() + order.remainingSeconds * 1000 : null)
-  }, [order])
-  useEffect(() => {
-    if (deadline === null) return
-    const t = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(t)
-  }, [deadline])
-  return deadline === null ? 0 : Math.max(0, Math.ceil((deadline - now) / 1000))
-}
 
 /** 화면 상태와 화면에 그릴 값을 만들어요. */
 function useOrderDetailView() {
