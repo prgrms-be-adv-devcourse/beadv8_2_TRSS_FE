@@ -13,7 +13,8 @@ const cx = makeCx(styles)
 
 const PAGE_SIZE = 20
 
-const ROLE_LABEL: Record<MemberRole, string> = { USER: '구매자', SELLER: '판매자', ADMIN: '관리자' }
+// 역할만 보여 준다. 판매자 여부는 옆의 판매자 상태 열에서 본다
+const ROLE_LABEL: Record<MemberRole, string> = { USER: '일반 회원', ADMIN: '관리자' }
 
 const ORDER_STATUS_LABEL: Record<string, string> = {
   CREATED: '결제 대기',
@@ -133,8 +134,7 @@ export default function AdminMembersPage() {
             onChange={(e) => v.setRole(e.target.value as MemberRole | '')}
           >
             <option value="">모든 역할</option>
-            <option value="USER">구매자</option>
-            <option value="SELLER">판매자</option>
+            <option value="USER">일반 회원</option>
             <option value="ADMIN">관리자</option>
           </select>
           <select

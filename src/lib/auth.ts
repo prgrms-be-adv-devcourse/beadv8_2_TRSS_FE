@@ -1,8 +1,16 @@
 import { useSyncExternalStore } from 'react'
 import { api, getAccessToken, onAccessTokenChange, refreshAccessToken, setAccessToken } from './api'
+import type { SellerStatus } from './api/member'
 
-export type MemberRole = 'USER' | 'SELLER' | 'ADMIN'
+// 판매자는 역할이 아니라 판매자 상태(APPROVED)로 구분한다
+export type MemberRole = 'USER' | 'ADMIN'
 export type Me = { memberId: number; email: string; name: string; role: MemberRole; createdAt: string }
+
+/** 화면에 보여 줄 회원 유형. 역할에는 판매자가 없으므로 판매자 상태가 판매 중(APPROVED)이면 '판매자'로 보여 준다 */
+export function memberTypeLabel(role: MemberRole, sellerStatus?: SellerStatus | null) {
+  if (role === 'ADMIN') return '관리자'
+  return sellerStatus === 'APPROVED' ? '판매자' : '일반 회원'
+}
 
 type AuthState = {
   /** 처음 로그인 상태 확인이 끝났는지 */
