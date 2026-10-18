@@ -36,6 +36,27 @@ export type OrderCreateResponse = {
   expiresAt: string
 }
 
+/** 결제 시도 결과. 백엔드: shared.payment.dto.PaymentAttemptStatus */
+export type PaymentAttemptStatus =
+  | 'PAID' // 결제 완료
+  | 'REFUNDED' // 반품 승인으로 환불됨
+  | 'FAILED_INSUFFICIENT_BALANCE' // 잔액 부족
+  | 'FAILED_ORDER_EXPIRED' // 결제 시점에 주문 만료
+  | 'FAILED_SYSTEM_ERROR' // 그 밖의 오류
+
+/** 주문 상세의 결제 내역 한 줄 (결제 시도 1건) */
+export type OrderPayment = {
+  paymentId: number
+  status: PaymentAttemptStatus
+  amount: number
+  /** 결제 시도 시각 */
+  attemptedAt: string
+  /** 결제 완료 시각 (PAID·REFUNDED만) */
+  paidAt: string | null
+  /** 환불 시각 (REFUNDED만) */
+  refundedAt: string | null
+}
+
 /** 주문 항목 한 줄. 주문할 때의 상품·판매자 정보와 가격으로 고정돼요. */
 export type OrderItem = {
   orderItemId: number
@@ -62,6 +83,8 @@ export type OrderDetail = {
   canceledAt: string | null
   confirmedAt: string | null
   items: OrderItem[]
+  /** 결제 내역 (결제 시도 오래된 순, 실패 포함). 백엔드 TRSS-99 이전 서버에서는 오지 않아요 */
+  payments?: OrderPayment[]
 }
 
 export type OrderCancelResponse = {
