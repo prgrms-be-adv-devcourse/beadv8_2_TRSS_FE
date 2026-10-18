@@ -315,9 +315,6 @@ export default function CheckoutPage() {
                       </strong>
                     </div>
                   ))}
-                  <p className={cx('sub')} style={{ margin: '8px 0 0' }}>
-                    주문할 때의 가격과 판매자 정보로 고정돼요.
-                  </p>
                 </section>
                 <section
                   className={cx('panel')}
