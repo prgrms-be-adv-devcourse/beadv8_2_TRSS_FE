@@ -137,7 +137,8 @@ function useCartView() {
     notice,
     closeNotice: () => setNotice(null),
     rows,
-    count: items.length,
+    // 불러오기 전에는 넘기지 않아서 헤더 배지가 0으로 깜빡이지 않게 해요.
+    count: cart ? items.length : undefined,
     sum: won(sum),
     selCount: targets.length,
     orderable: orderableItems.length,
@@ -178,11 +179,11 @@ function useCartView() {
 export default function CartPage() {
   const view = useCartView()
   const { allOn, cover, gapColor, gapText, orderable, rows, selCount, sum, toggleAll } = view
-  const { loading, empty, error, count, removeSelected, walletReady, balance, balanceText, order } = view
+  const { loading, empty, error, count, removeSelected, walletReady, balanceText, order } = view
   return (
     <div className={styles.page}>
       <div>
-        <BuyerHeader active="cart" cartCount={count} balance={balance} />
+        <BuyerHeader active="cart" cartCount={count} />
         <div
           style={{
             maxWidth: '1240px',

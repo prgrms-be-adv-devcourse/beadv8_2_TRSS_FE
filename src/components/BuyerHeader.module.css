@@ -22,6 +22,10 @@
   height: 68px;
   width: auto;
 }
+/* form은 레이아웃에 끼지 않고, 안쪽 검색창이 헤더의 flex·grid 칸을 그대로 차지해요. */
+.searchForm {
+  display: contents;
+}
 .search {
   flex: 1 1 340px;
   max-width: 520px;
