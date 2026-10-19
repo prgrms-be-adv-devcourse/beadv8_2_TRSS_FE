@@ -6,6 +6,7 @@ import RequireRole from './components/RequireRole'
 import type { MemberRole } from './lib/auth'
 import ScreensPage from './pages/Screens'
 import BuyerFooterSlot from './components/BuyerFooter'
+import LogoutOnArrive from './components/LogoutOnArrive'
 import RouteNotice from './components/RouteNotice'
 
 function ScrollToTop() {
@@ -52,6 +53,7 @@ export default function App() {
       </Routes>
       <BuyerFooterSlot />
       <RouteNotice />
+      <LogoutOnArrive />
     </>
   )
 }
