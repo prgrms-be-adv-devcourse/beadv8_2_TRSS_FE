@@ -2,6 +2,7 @@ import { NOTICE, makeCx, won } from '../lib/ui'
 import styles from './AdminProducts.module.css'
 import AdminLayout from '../components/AdminLayout'
 import Pager from '../components/Pager'
+import ConfirmModal from '../components/ConfirmModal'
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { errorMessage, toPageParam } from '../lib/api'
@@ -360,22 +361,10 @@ function useAdminProductsView() {
   return view
 }
 
-/** 확인 패널: 요청 승인·반려, 즉시 판매 중지 */
+/** 확인 모달: 요청 승인·반려, 즉시 판매 중지 */
 function ActionPanel({ v }: { v: ReturnType<typeof useAdminProductsView> }) {
   return (
-    <section
-      className={cx('panel')}
-      role="dialog"
-      aria-labelledby="action-title"
-      style={{
-        padding: '24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '14px',
-        maxWidth: '560px',
-        outline: '2px solid #8A6A2C',
-      }}
-    >
+    <ConfirmModal labelledBy="action-title" onClose={v.close} busy={v.pending}>
       <h2 id="action-title" style={{ margin: '0', fontSize: '18px', fontWeight: '700' }}>
         {v.actionTitle}
       </h2>
@@ -414,7 +403,7 @@ function ActionPanel({ v }: { v: ReturnType<typeof useAdminProductsView> }) {
           {v.confirmLabel}
         </button>
       </div>
-    </section>
+    </ConfirmModal>
   )
 }
 
