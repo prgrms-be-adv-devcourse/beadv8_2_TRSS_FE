@@ -1,0 +1,238 @@
+/* 메인 상단 기획전 배너: 뉴트럴 톤 4칸, 컬러는 라벨 앞 작은 점으로만 */
+/* 배너 뒤 배경 */
+.band {
+  margin-bottom: 20px;
+  background: #ffffff;
+}
+/* 상품 목록(1240px)보다 조금 넓게: 최대 1400px, 좌우 24px */
+.wrap {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+.banner {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr 1fr 1fr;
+  height: 390px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.slide {
+  --dot: #f2a7b8;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 32px 30px;
+  overflow: hidden;
+  color: var(--ink);
+  text-decoration: none;
+  border-right: 1px solid rgba(38, 38, 44, 0.06);
+  transition: filter 0.2s;
+}
+.slide:hover {
+  color: var(--ink);
+  text-decoration: none;
+  filter: brightness(0.98);
+}
+
+.pick {
+  --dot: #f2a7b8;
+  background: #f5f2ee;
+}
+.beauty {
+  --dot: #b9a3dc;
+  background: #eeece9;
+}
+.daily {
+  --dot: #a8c0ec;
+  background: #e9ebee;
+}
+.special {
+  --dot: #e0c08a;
+  background: #26262c;
+  color: #fff;
+  border-right: none;
+}
+.special:hover {
+  color: #fff;
+  filter: brightness(1.08);
+}
+
+.text {
+  position: relative;
+  z-index: 2;
+}
+
+.code {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  opacity: 0.6;
+}
+.code::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+
+.title {
+  margin: 10px 0 0;
+  font-size: 34px;
+  line-height: 1.2;
+  letter-spacing: -1.5px;
+  white-space: pre-line;
+}
+.title b {
+  color: #e0c08a;
+}
+
+.desc {
+  margin: 8px 0 0;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.cta {
+  position: relative;
+  z-index: 2;
+  width: max-content;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+}
+.special .cta {
+  background: #e0c08a;
+  color: var(--ink);
+}
+
+.photo {
+  position: absolute;
+  right: 14px;
+  bottom: 26px;
+  width: 132px;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 16px 32px rgba(38, 38, 44, 0.2);
+  transition: transform 0.3s;
+}
+.pick .photo {
+  right: 26px;
+  bottom: 26px;
+  width: 190px;
+  transform: rotate(-3deg);
+}
+.beauty .photo {
+  transform: rotate(4deg);
+}
+.daily .photo {
+  object-position: 50% 45%;
+  transform: rotate(-4deg);
+}
+.slide:hover .photo {
+  transform: rotate(0deg) translateY(-4px);
+}
+
+.sticker {
+  position: absolute;
+  top: 100px;
+  right: 14px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink);
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  transform: rotate(12deg);
+  box-shadow: 0 6px 16px rgba(38, 38, 44, 0.1);
+}
+
+.big {
+  position: absolute;
+  right: 28px;
+  bottom: 90px;
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-size: 88px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -4px;
+  color: #e0c08a;
+}
+
+/* 태블릿: 2열 */
+@media (max-width: 1100px) {
+  .banner {
+    grid-template-columns: 1fr 1fr;
+    height: auto;
+  }
+  .slide {
+    min-height: 320px;
+  }
+  .big {
+    font-size: 80px;
+  }
+}
+
+/* 모바일: 1열 */
+@media (max-width: 640px) {
+  .band {
+    margin-bottom: 12px;
+  }
+  .wrap {
+    padding: 0 16px;
+  }
+  .banner {
+    grid-template-columns: 1fr;
+  }
+  .slide {
+    min-height: 260px;
+    padding: 28px 24px;
+    border-right: none;
+  }
+  .title {
+    font-size: 30px;
+  }
+  .photo,
+  .pick .photo {
+    width: 120px;
+    right: 20px;
+    bottom: 24px;
+  }
+  .sticker {
+    top: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+  }
+  .big {
+    font-size: 64px;
+    bottom: 84px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo {
+    transition: none;
+  }
+}
