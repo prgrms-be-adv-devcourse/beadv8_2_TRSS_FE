@@ -2,6 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { makeCx, won } from '../lib/ui'
 import styles from './Main.module.css'
 import BuyerHeader from '../components/BuyerHeader'
+import CurationBanner from '../components/CurationBanner'
 
 import { useEffect, useState, type FormEvent } from 'react'
 import { toPageParam } from '../lib/api'
@@ -238,6 +239,7 @@ export default function MainPage() {
     <div className={styles.page}>
       <div>
         <BuyerHeader compact />
+        <CurationBanner categories={parents} />
         <section
           aria-label="검색과 카테고리"
           className={cx('disc')}
@@ -259,8 +261,8 @@ export default function MainPage() {
                   height="22"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#5F5F6A"
-                  strokeWidth="1.8"
+                  stroke="#26262c"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   aria-hidden="true"
                 >
