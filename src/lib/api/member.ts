@@ -191,12 +191,18 @@ export function sanctionSeller(sellerId: number, reason: string) {
 
 export type MemberStatus = 'ACTIVE' | 'DELETED' // DELETED: 탈퇴(개인정보 비식별화)
 
+/** 회원 유형. 판매자(SELLER)는 역할이 아니라 판매자 상태가 판매 중(APPROVED)인 회원이다 */
+export type MemberType = 'USER' | 'SELLER' | 'ADMIN'
+export const MEMBER_TYPE_LABEL: Record<MemberType, string> = { USER: '일반 회원', SELLER: '판매자', ADMIN: '관리자' }
+
 /** 관리자 회원 목록 항목 */
 export type AdminMember = {
   memberId: number
   email: string
   name: string
   role: MemberRole
+  /** 일반 회원·판매자(판매 중)·관리자 */
+  memberType: MemberType
   status: MemberStatus
   createdAt: string
   /** 판매자 상태. 신청 이력이 없으면 null */
@@ -209,6 +215,8 @@ export type AdminMemberDetail = {
   email: string
   name: string
   role: MemberRole
+  /** 일반 회원·판매자(판매 중)·관리자 */
+  memberType: MemberType
   status: MemberStatus
   createdAt: string
   /** 판매자 신청 이력이 없으면 null */
@@ -219,7 +227,7 @@ export type AdminMemberDetail = {
 }
 
 /** 회원 목록. 가입일 최신순 고정, 탈퇴 회원 포함. email은 부분 검색 */
-export function getAdminMembers(query: PageQuery & { email?: string; role?: MemberRole; status?: MemberStatus } = {}) {
+export function getAdminMembers(query: PageQuery & { email?: string; memberType?: MemberType; status?: MemberStatus } = {}) {
   return api<PageResponse<AdminMember>>('/api/v1/admin/users', { query })
 }
 
