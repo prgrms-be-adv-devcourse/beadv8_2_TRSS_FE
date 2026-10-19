@@ -157,7 +157,6 @@ function useCheckoutView() {
       line: won(r.lineAmount),
     })),
     amount: won(total),
-    headerBalance: paid ? Math.max(0, paid.left) : balance,
     bal: won(balance),
     short,
     enough,
@@ -197,7 +196,7 @@ export default function CheckoutPage() {
   return (
     <div className={styles.page}>
       <div>
-        <BuyerHeader active="cart" balance={view.headerBalance} />
+        <BuyerHeader active="cart" />
         {view.ready && (
           <div style={{ background: '#FFF1E8', borderBottom: '1px solid #F6D3BE' }}>
             <div
