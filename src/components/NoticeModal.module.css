@@ -35,6 +35,51 @@
   font-size: 15px;
   color: #45454f;
 }
+.chip {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #ffede8;
+  color: #a33a1f;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.rows {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fafafb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.row dt {
+  color: #5f5f6a;
+}
+.row dd {
+  margin: 0;
+}
+.row-strong {
+  border-top: 1px solid #e8e8ed;
+  padding-top: 12px;
+  font-weight: 700;
+}
+.row-strong dt {
+  color: #26262c;
+}
+.row-strong dd {
+  color: #6e5322;
+}
 .actions {
   display: flex;
   gap: 8px;
