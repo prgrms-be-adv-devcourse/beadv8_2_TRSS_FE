@@ -46,8 +46,8 @@ export default function ConsoleLayout({
             <Link to="/" className={styles.shopLink}>
               쇼핑몰로 가기
             </Link>
-            {/* 관리자·판매자 공통. 구매자 헤더(BuyerHeader)와 같은 위치·동작 */}
-            <Link to="/login" onClick={() => void logout()} className={styles.shopLink}>
+            {/* 관리자·판매자 공통. 구매자 헤더(BuyerHeader)와 같은 위치·동작 (로그아웃 후 메인으로) */}
+            <Link to="/" onClick={() => void logout()} className={styles.shopLink}>
               로그아웃
             </Link>
           </nav>

@@ -152,7 +152,7 @@ export default function BuyerHeader({ active, cartCount, cartVersion = 0, compac
             >
               {isAdmin ? '관리자 페이지' : '마이페이지'}
             </Link>
-            <Link to="/login" onClick={() => void logout()} className={styles.textLink}>
+            <Link to="/" onClick={() => void logout()} className={styles.textLink}>
               로그아웃
             </Link>
           </nav>
