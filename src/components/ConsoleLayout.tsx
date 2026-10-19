@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { logout } from '../lib/auth'
 import styles from './ConsoleLayout.module.css'
 
 export type MenuItem = { label: string; to: string }
@@ -46,8 +45,8 @@ export default function ConsoleLayout({
             <Link to="/" className={styles.shopLink}>
               쇼핑몰로 가기
             </Link>
-            {/* 관리자·판매자 공통. 구매자 헤더(BuyerHeader)와 같은 위치·동작 */}
-            <Link to="/login" onClick={() => void logout()} className={styles.shopLink}>
+            {/* 관리자·판매자 공통. 구매자 헤더(BuyerHeader)와 같은 위치·동작 (메인 도착 후 LogoutOnArrive가 로그아웃) */}
+            <Link to="/" state={{ logout: true }} className={styles.shopLink}>
               로그아웃
             </Link>
           </nav>
