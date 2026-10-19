@@ -3,6 +3,7 @@ import { NOTICE, makeCx, won } from '../lib/ui'
 import styles from './SellerProducts.module.css'
 import SellerLayout from '../components/SellerLayout'
 import Pager from '../components/Pager'
+import ConfirmModal from '../components/ConfirmModal'
 
 import { useEffect, useState, type FormEvent } from 'react'
 import { errorMessage, toPageParam } from '../lib/api'
@@ -336,19 +337,7 @@ export default function SellerProductsPage() {
         </section>
         <Pager page={v.page} totalPages={v.totalPages} onChange={v.changePage} buttonClassName={cx('btn')} />
         {v.action && (
-          <section
-            className={cx('panel')}
-            role="dialog"
-            aria-labelledby="action-title"
-            style={{
-              padding: '24px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              maxWidth: '560px',
-              outline: '2px solid #8A6A2C',
-            }}
-          >
+          <ConfirmModal labelledBy="action-title" onClose={v.close} busy={v.pending}>
             <h2 id="action-title" style={{ margin: '0', fontSize: '18px', fontWeight: '700' }}>
               {v.action.kind === 'stop' ? '판매 중지를 요청할까요?' : '상품을 삭제할까요?'}
             </h2>
@@ -395,7 +384,7 @@ export default function SellerProductsPage() {
                 {v.pending ? '처리 중이에요' : v.action.kind === 'stop' ? '중지 요청하기' : '삭제하기'}
               </button>
             </div>
-          </section>
+          </ConfirmModal>
         )}
       </SellerLayout>
     </div>
