@@ -55,6 +55,8 @@ function useProductDetailView() {
   const [qty, setQty] = useState(1)
   const [adding, setAdding] = useState(false)
   const [added, setAdded] = useState<number | null>(null)
+  /** 담을 때마다 올려서 헤더 장바구니 배지를 다시 불러와요. */
+  const [cartVersion, setCartVersion] = useState(0)
   const [addError, setAddError] = useState('')
   /** 대표 사진을 못 불러오면 카테고리 아이콘으로 대신 보여줘요. */
   const [heroBroken, setHeroBroken] = useState(false)
@@ -88,6 +90,7 @@ function useProductDetailView() {
     try {
       const res = await addCartItem(option.optionId, qty)
       setAdded(res.quantity)
+      setCartVersion((v) => v + 1)
     } catch (e) {
       setAddError(errorMessage(e))
     } finally {
@@ -137,6 +140,7 @@ function useProductDetailView() {
     adding,
     added,
     addError,
+    cartVersion,
     addLabel: soldOut ? '품절된 상품이에요' : adding ? '담는 중이에요' : '장바구니에 담기',
     addDisabled: soldOut || adding || isAdmin || !!product?.example,
   }
@@ -150,7 +154,7 @@ export default function ProductDetailPage() {
   return (
     <div className={styles.page}>
       <div>
-        <BuyerHeader />
+        <BuyerHeader cartVersion={view.cartVersion} />
         <div
           style={{
             maxWidth: '1240px',
