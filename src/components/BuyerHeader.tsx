@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import styles from './BuyerHeader.module.css'
-import { useAuth } from '../lib/auth'
+import { logout, useAuth } from '../lib/auth'
 import CategoryMenu from './CategoryMenu'
 
 type Props = {
@@ -117,6 +117,9 @@ export default function BuyerHeader({ active, cartCount = 3, balance = 48000, co
               className={`${styles.textLink} ${active === 'mypage' ? styles.textLinkOn : ''}`}
             >
               {isAdmin ? '관리자 페이지' : '마이페이지'}
+            </Link>
+            <Link to="/login" onClick={() => void logout()} className={styles.textLink}>
+              로그아웃
             </Link>
           </nav>
         )}

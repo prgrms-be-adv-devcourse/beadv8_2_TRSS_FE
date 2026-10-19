@@ -186,13 +186,6 @@ export default function MyPagePage(props: { sellerStatus?: SellerStatus }) {
               <Link to="/seller/apply" style={{ padding: '10px 12px', color: '#45454F' }}>
                 판매자
               </Link>
-              <Link
-                to="/login"
-                onClick={() => void logout()}
-                style={{ padding: '10px 12px', color: '#5F5F6A', marginTop: '12px' }}
-              >
-                로그아웃
-              </Link>
             </nav>
             <div style={{ flex: '999 1 600px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <h1 style={{ margin: '0', fontSize: '26px', fontWeight: '700' }}>내 정보</h1>
