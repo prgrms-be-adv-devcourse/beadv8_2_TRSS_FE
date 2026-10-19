@@ -18,8 +18,9 @@ function ScrollToTop() {
 /** 권한별로 RequireRole이 확인할 role (undefined면 로그인만 확인) */
 const GUARDS: Record<ScreenAuth, MemberRole[] | undefined> = {
   // 구매자 화면(장바구니·주문·예치금·마이페이지·판매자 신청)이라 관리자는 들어올 수 없다
-  login: ['USER', 'SELLER'],
-  SELLER: ['SELLER'],
+  login: ['USER'],
+  // 판매자는 역할이 아니라 판매자 상태로 구분해 회원(USER)이면 통과시키고, RequireActiveSeller가 판매 중(APPROVED)인지 확인한다
+  SELLER: ['USER'],
   ADMIN: ['ADMIN'],
 }
 

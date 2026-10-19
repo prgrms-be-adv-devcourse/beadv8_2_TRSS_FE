@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
 import { errorMessage, toPageParam } from '../lib/api'
-import { getAdminMember, getAdminMembers, type AdminMemberDetail, type MemberStatus } from '../lib/api/member'
-import type { MemberRole } from '../lib/auth'
+import {
+  getAdminMember,
+  getAdminMembers,
+  MEMBER_TYPE_LABEL,
+  type AdminMemberDetail,
+  type MemberStatus,
+  type MemberType,
+} from '../lib/api/member'
 import { ADMIN_SELLER_STATUS, fmtDay } from '../lib/admin'
 import { useApi } from '../lib/useApi'
 import { NOTICE, makeCx, won } from '../lib/ui'
@@ -12,8 +18,6 @@ import Pager from '../components/Pager'
 const cx = makeCx(styles)
 
 const PAGE_SIZE = 20
-
-const ROLE_LABEL: Record<MemberRole, string> = { USER: '구매자', SELLER: '판매자', ADMIN: '관리자' }
 
 const ORDER_STATUS_LABEL: Record<string, string> = {
   CREATED: '결제 대기',
@@ -38,7 +42,7 @@ function useDebounced(value: string, ms = 300) {
 /** 검색·필터·페이지와 선택한 회원 상세 */
 function useAdminMembersView() {
   const [keyword, setKeyword] = useState('')
-  const [role, setRole] = useState<MemberRole | ''>('')
+  const [memberType, setMemberType] = useState<MemberType | ''>('')
   const [status, setStatus] = useState<MemberStatus | ''>('')
   const [page, setPage] = useState(1)
   const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -50,18 +54,18 @@ function useAdminMembersView() {
   useEffect(() => {
     setPage(1)
     setSelectedId(null)
-  }, [email, role, status])
+  }, [email, memberType, status])
 
   const list = useApi(
     () =>
       getAdminMembers({
         email: email || undefined,
-        role: role || undefined,
+        memberType: memberType || undefined,
         status: status || undefined,
         page: toPageParam(page),
         size: PAGE_SIZE,
       }),
-    [email, role, status, page],
+    [email, memberType, status, page],
   )
   const items = list.data?.items ?? []
 
@@ -92,8 +96,8 @@ function useAdminMembersView() {
   return {
     keyword,
     setKeyword,
-    role,
-    setRole,
+    memberType,
+    setMemberType,
     status,
     setStatus,
     page,
@@ -128,12 +132,12 @@ export default function AdminMembersPage() {
           />
           <select
             className={cx('in')}
-            aria-label="역할"
-            value={v.role}
-            onChange={(e) => v.setRole(e.target.value as MemberRole | '')}
+            aria-label="회원 유형"
+            value={v.memberType}
+            onChange={(e) => v.setMemberType(e.target.value as MemberType | '')}
           >
-            <option value="">모든 역할</option>
-            <option value="USER">구매자</option>
+            <option value="">모든 회원 유형</option>
+            <option value="USER">일반 회원</option>
             <option value="SELLER">판매자</option>
             <option value="ADMIN">관리자</option>
           </select>
@@ -181,7 +185,7 @@ export default function AdminMembersPage() {
                         <td style={{ textAlign: 'left' }}>{fmtDay(m.createdAt)}</td>
                         <td style={{ textAlign: 'left' }}>{deleted ? '탈퇴한 회원' : m.email}</td>
                         <td style={{ textAlign: 'left' }}>{deleted ? '' : m.name}</td>
-                        <td style={{ textAlign: 'left' }}>{ROLE_LABEL[m.role]}</td>
+                        <td style={{ textAlign: 'left' }}>{MEMBER_TYPE_LABEL[m.memberType]}</td>
                         <td style={{ textAlign: 'left' }}>
                           {m.sellerStatus && (
                             <span className={cx('chip', ADMIN_SELLER_STATUS[m.sellerStatus][1])}>
@@ -236,7 +240,7 @@ export default function AdminMembersPage() {
                     <dt className={cx('sub')} style={{ fontSize: '14px' }}>
                       역할
                     </dt>
-                    <dd style={{ margin: '0' }}>{ROLE_LABEL[d.role]}</dd>
+                    <dd style={{ margin: '0' }}>{MEMBER_TYPE_LABEL[d.memberType]}</dd>
                     <dt className={cx('sub')} style={{ fontSize: '14px' }}>
                       판매자 상태
                     </dt>

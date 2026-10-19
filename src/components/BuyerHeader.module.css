@@ -141,7 +141,8 @@
 @media (min-width: 900px) {
   .header:not(.compact) .bar {
     display: grid;
-    grid-template-columns: 1fr minmax(0, 520px) 1fr;
+    /* 양옆 칸은 내용보다 좁아지지 않게 (메뉴가 줄바꿈되지 않도록). 모자라면 검색창이 줄어든다 */
+    grid-template-columns: minmax(max-content, 1fr) minmax(0, 520px) minmax(max-content, 1fr);
   }
   .header:not(.compact) .logo {
     justify-self: start;
@@ -153,5 +154,13 @@
     grid-column: 3;
     justify-self: end;
     margin-left: 0;
+    flex-wrap: nowrap;
+  }
+}
+
+/* 좁은 화면: 메뉴 간격을 줄여 아이콘·텍스트 메뉴를 한 줄에 둔다 */
+@media (max-width: 480px) {
+  .menu {
+    gap: 6px 12px;
   }
 }

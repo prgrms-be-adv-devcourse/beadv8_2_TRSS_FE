@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { ApiError, errorMessage } from '../lib/api'
-import { logout, useAuth, type MemberRole } from '../lib/auth'
+import { logout, memberTypeLabel, useAuth } from '../lib/auth'
 import {
   getMySeller,
   getWithdrawalCheck,
@@ -44,8 +44,6 @@ const SELLER: Record<SellerStatus, [string, string, string, string, string]> = {
   WITHDRAWN: ['c-mute', '철회됨', '판매를 그만뒀어요. 구매는 그대로 할 수 있어요.', '다시 신청하기', '/seller/apply'],
   SANCTIONED: ['c-low', '이용 제한', '판매 활동이 제한됐어요. 다시 신청할 수 없어요.', '', ''],
 }
-
-const ROLE_LABEL: Record<MemberRole, string> = { USER: '일반 회원', SELLER: '판매자', ADMIN: '관리자' }
 
 const fmtDate = (iso?: string) => {
   if (!iso) return '-'
@@ -188,13 +186,6 @@ export default function MyPagePage(props: { sellerStatus?: SellerStatus }) {
               <Link to="/seller/apply" style={{ padding: '10px 12px', color: '#45454F' }}>
                 판매자
               </Link>
-              <Link
-                to="/login"
-                onClick={() => void logout()}
-                style={{ padding: '10px 12px', color: '#5F5F6A', marginTop: '12px' }}
-              >
-                로그아웃
-              </Link>
             </nav>
             <div style={{ flex: '999 1 600px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <h1 style={{ margin: '0', fontSize: '26px', fontWeight: '700' }}>내 정보</h1>
@@ -219,7 +210,7 @@ export default function MyPagePage(props: { sellerStatus?: SellerStatus }) {
                   <dt className={cx('sub')} style={{ fontSize: '15px' }}>
                     회원 유형
                   </dt>
-                  <dd style={{ margin: '0' }}>{me ? (ROLE_LABEL[me.role] ?? me.role) : '…'}</dd>
+                  <dd style={{ margin: '0' }}>{me ? memberTypeLabel(me.role, sellerStatus) : '…'}</dd>
                   <dt className={cx('sub')} style={{ fontSize: '15px' }}>
                     가입일
                   </dt>
