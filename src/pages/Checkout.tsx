@@ -4,7 +4,7 @@ import styles from './Checkout.module.css'
 import BuyerHeader from '../components/BuyerHeader'
 import NoticeModal, { type Notice } from '../components/NoticeModal'
 import { cartNotice, orderNotice } from '../lib/notices/order'
-import { paymentNotice } from '../lib/notices/payment'
+import { EXPIRED, paymentNotice } from '../lib/notices/payment'
 
 import { useEffect, useRef, useState } from 'react'
 import { productImage } from '../lib/products'
@@ -111,7 +111,19 @@ function useCheckoutView() {
       // 잔액을 다시 불러오지 않아요. 완료 팝업 뒤 화면이 '부족'으로 바뀌지 않게 결제 전 잔액을 그대로 두고, 헤더만 결제 후 잔액으로 바꿔요
     } catch (e) {
       setPay('')
-      setNotice(paymentNotice(e, { orderId: o.orderId, orderNumber: o.orderNumber, onCancel: cancel }))
+      const until = Date.now() + remaining * 1000
+      setNotice(
+        paymentNotice(e, {
+          orderId: o.orderId,
+          orderNumber: o.orderNumber,
+          total,
+          until,
+          productName: o.items.length === 1 ? o.items[0].productName : undefined,
+          onCancel: cancel,
+          // 남은 시간이 있으면 결제 요청 확인 팝업을 다시 열어요
+          onRetry: () => (Date.now() < until ? setPay('confirm') : setNotice(EXPIRED)),
+        }),
+      )
       order.reload()
       wallet.reload()
     } finally {
