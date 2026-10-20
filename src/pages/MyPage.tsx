@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { ApiError, errorMessage } from '../lib/api'
 import { logout, memberTypeLabel, useAuth } from '../lib/auth'
 import {
+  canApply,
   getMySeller,
   getWithdrawalCheck,
   withdrawMember,
@@ -91,6 +92,10 @@ function useMyPageView({ sellerStatus }: { sellerStatus?: SellerStatus }) {
     wallet: wallet.data,
     // 탈퇴 조건 안내용 실제 판매자 상태 (디자인 확인용 ?sellerStatus와 별개)
     sellerStatus: seller?.status,
+    // 사이드바 판매자 메뉴: 신청할 수 있을 때만 보인다. 판매자 상태를 불러오는 중(undefined)에는 숨겨 깜빡임을 막는다
+    showSellerMenu: sellerStatus
+      ? canApply(sellerStatus === '신청 전' ? null : sellerStatus)
+      : seller !== undefined && canApply(seller?.status ?? null),
     s: { chip: m[0], tag: m[1], text, act: m[3], href: m[4], btn: m[3] ? 'btn-p' : '', hasAct: !!m[3] },
   }
   return view
@@ -136,7 +141,7 @@ function useWithdrawal() {
 /** 마이페이지 */
 export default function MyPagePage(props: { sellerStatus?: SellerStatus }) {
   const view = useMyPageView(props)
-  const { s, auth, wallet, sellerStatus } = view
+  const { s, auth, wallet, sellerStatus, showSellerMenu } = view
   const w = useWithdrawal()
   const c = w.check
   // 판매자 활동(심사 중·판매 중·철회 심사 중)이면 탈퇴 불가. 표시 이름은 위 판매자 카드와 같다
@@ -183,9 +188,11 @@ export default function MyPagePage(props: { sellerStatus?: SellerStatus }) {
               <Link to="/wallet" style={{ padding: '10px 12px', color: '#45454F' }}>
                 예치금
               </Link>
-              <Link to="/seller/apply" style={{ padding: '10px 12px', color: '#45454F' }}>
-                판매자
-              </Link>
+              {showSellerMenu && (
+                <Link to="/seller/apply" style={{ padding: '10px 12px', color: '#45454F' }}>
+                  판매자
+                </Link>
+              )}
             </nav>
             <div style={{ flex: '999 1 600px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <h1 style={{ margin: '0', fontSize: '26px', fontWeight: '700' }}>내 정보</h1>
