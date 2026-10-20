@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useAuth } from '../lib/auth'
 import ConsoleLayout, { type MenuItem } from './ConsoleLayout'
 
 export const ADMIN_MENU: MenuItem[] = [
@@ -20,11 +21,13 @@ export default function AdminLayout({
   minHeight?: number
   children: ReactNode
 }) {
+  // 로그인한 관리자 이메일
+  const { me } = useAuth()
   return (
     <ConsoleLayout
       variant="admin"
       badge="관리자"
-      account="admin@palette"
+      account={me?.email ?? '관리자'}
       who="관리자"
       homePath="/admin/sellers"
       menu={ADMIN_MENU}
