@@ -9,6 +9,7 @@ import {
   type SellerStatus,
   type SellerUpdateRequest,
 } from '../lib/api/member'
+import { useActiveSeller } from '../lib/activeSeller'
 import { useApi } from '../lib/useApi'
 import { NOTICE, makeCx, phone, won } from '../lib/ui'
 import styles from './SellerInfo.module.css'
@@ -71,6 +72,8 @@ function diff(seller: MySeller, form: Form): SellerUpdateRequest {
 /** 내 판매자 정보 조회·수정 */
 function useSellerInfo() {
   const { data: seller, setData: setSeller, error: loadError } = useApi(getMySeller)
+  // 헤더·사이드바의 상호도 함께 바꾸려고 판매자 센터 공유 정보를 갱신한다
+  const active = useActiveSeller()
   const [form, setForm] = useState<Form | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -92,7 +95,9 @@ function useSellerInfo() {
     setSaveError('')
     setSaving(true)
     try {
-      setSeller(await updateSeller(body))
+      const next = await updateSeller(body)
+      setSeller(next)
+      active.setSeller(next)
     } catch (e) {
       setSaveError(errorMessage(e))
     } finally {
