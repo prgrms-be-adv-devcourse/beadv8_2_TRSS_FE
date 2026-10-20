@@ -448,7 +448,7 @@ export default function WalletPage() {
                 // btn의 nowrap 때문에 좁은 화면(375px 이하)에서 카드가 넘치지 않게 문구 줄바꿈을 허용해요
                 style={{ minHeight: '56px', fontSize: '17px', whiteSpace: 'normal' }}
               >
-                {v.paying ? '결제를 준비하고 있어요…' : `토스페이먼츠로 ${v.amountStr}원 충전하기`}
+                {v.paying ? '결제를 준비하고 있어요…' : `${v.amountStr}원 충전하기`}
               </button>
               {v.payError && (
                 <p role="alert" style={NOTICE}>
