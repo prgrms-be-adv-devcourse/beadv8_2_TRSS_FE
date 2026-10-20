@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useActiveSeller } from '../lib/activeSeller'
 import ConsoleLayout, { type MenuItem } from './ConsoleLayout'
 
 export const SELLER_MENU: MenuItem[] = [
@@ -20,11 +21,13 @@ export default function SellerLayout({
   minHeight?: number
   children: ReactNode
 }) {
+  // 로그인한 판매자의 상호 (판매자 센터 밖에서 그려지면 정보가 없어 기본 문구)
+  const { seller } = useActiveSeller()
   return (
     <ConsoleLayout
       variant="seller"
       badge="판매자 센터"
-      account="온결"
+      account={seller?.businessName ?? '판매자'}
       who="판매자 센터"
       homePath="/seller/products"
       menu={SELLER_MENU}

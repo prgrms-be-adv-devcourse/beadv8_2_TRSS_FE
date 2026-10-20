@@ -1,4 +1,6 @@
 .root {
+  /* 항상 브라우저 화면 높이 이상을 채워, 화면마다 사이드바가 같은 방식으로 끝까지 이어지게 한다 */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--surface-soft);
@@ -150,4 +152,12 @@
   background: var(--tint);
   color: var(--gold);
   font-weight: 700;
+}
+
+/* 좁은 화면: 사이드바(220px)와 본문(640px)이 한 줄에 안 들어가 위아래로 나뉜다.
+   남는 높이를 두 줄에 나눠 주지 않도록 위로 붙여, 사이드바가 빈 공간만큼 길어지지 않게 한다 */
+@media (max-width: 859px) {
+  .body {
+    align-content: flex-start;
+  }
 }

@@ -19,6 +19,23 @@ export const LOGIN: Notice = {
   actions: [{ label: '로그인하기', to: '/login', primary: true }],
 }
 
+/** 권한 가드가 이동하면서 넘기는 표시 (location.state.forbidden). RouteNotice가 받아 안내한다 */
+export type ForbiddenKind = 'role' | 'seller'
+
+/** 로그인은 했지만 들어올 수 없는 화면 (403에 해당) */
+export const FORBIDDEN: Record<ForbiddenKind, Notice> = {
+  role: {
+    title: '접근 권한이 없어요',
+    body: '이 화면을 볼 수 있는 권한이 없어 메인으로 이동했어요.',
+    actions: OK,
+  },
+  seller: {
+    title: '접근 권한이 없어요',
+    body: '판매자 센터는 판매 중인 판매자만 이용할 수 있어요. 마이페이지에서 판매자 상태를 확인해 주세요.',
+    actions: OK,
+  },
+}
+
 /** "409-PRICE_CHANGED" → "PRICE_CHANGED". ApiError가 아니면 빈 문자열 */
 export const codeOf = (e: unknown) => (e instanceof ApiError ? e.resultCode.replace(/^\d+-/, '') : '')
 

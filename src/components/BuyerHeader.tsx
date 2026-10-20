@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import styles from './BuyerHeader.module.css'
-import { logout, useAuth } from '../lib/auth'
+import { useAuth } from '../lib/auth'
 import { getCart } from '../lib/api/cart'
 import { useApi } from '../lib/useApi'
 import CategoryMenu from './CategoryMenu'
@@ -152,7 +152,7 @@ export default function BuyerHeader({ active, cartCount, cartVersion = 0, compac
             >
               {isAdmin ? '관리자 페이지' : '마이페이지'}
             </Link>
-            <Link to="/login" onClick={() => void logout()} className={styles.textLink}>
+            <Link to="/" state={{ logout: true }} className={styles.textLink}>
               로그아웃
             </Link>
           </nav>

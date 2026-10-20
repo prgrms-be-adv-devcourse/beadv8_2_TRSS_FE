@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { logout } from '../lib/auth'
 import styles from './ConsoleLayout.module.css'
 
 export type MenuItem = { label: string; to: string }
@@ -17,24 +16,15 @@ type Props = {
   menu: MenuItem[]
   /** 지금 화면의 메뉴 이름 */
   active: string
+  /** 쓰지 않음: 레이아웃이 항상 화면 높이를 채운다 (화면마다 시안 높이를 넘기던 값, 각 화면 정리 때 지운다) */
   minHeight?: number
   children: ReactNode
 }
 
 /** 관리자·판매자 화면 공통 레이아웃: 상단 헤더 + 왼쪽 메뉴 */
-export default function ConsoleLayout({
-  variant,
-  badge,
-  account,
-  who,
-  homePath,
-  menu,
-  active,
-  minHeight,
-  children,
-}: Props) {
+export default function ConsoleLayout({ variant, badge, account, who, homePath, menu, active, children }: Props) {
   return (
-    <div className={`${styles.root} ${styles[variant]}`} style={{ minHeight }}>
+    <div className={`${styles.root} ${styles[variant]}`}>
       <header className={styles.header}>
         <div className={styles.bar}>
           <Link to={homePath} aria-label={`팔레트 ${badge} 홈`} className={styles.logo}>
@@ -46,8 +36,8 @@ export default function ConsoleLayout({
             <Link to="/" className={styles.shopLink}>
               쇼핑몰로 가기
             </Link>
-            {/* 관리자·판매자 공통. 구매자 헤더(BuyerHeader)와 같은 위치·동작 */}
-            <Link to="/login" onClick={() => void logout()} className={styles.shopLink}>
+            {/* 관리자·판매자 공통. 구매자 헤더(BuyerHeader)와 같은 위치·동작 (메인 도착 후 LogoutOnArrive가 로그아웃) */}
+            <Link to="/" state={{ logout: true }} className={styles.shopLink}>
               로그아웃
             </Link>
           </nav>
