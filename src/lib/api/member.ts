@@ -238,17 +238,27 @@ export function getAdminMember(userId: number) {
 // ── 회원 탈퇴 ──────────────────────────────────────────
 
 /** 탈퇴를 막는 이유 */
-export type WithdrawalBlockReason = 'ACTIVE_ORDERS' | 'UNSETTLED_AMOUNT' | 'BALANCE_REMAINING' | 'SELLER_ACTIVE'
+export type WithdrawalBlockReason =
+  | 'ACTIVE_ORDERS'
+  | 'ACTIVE_SALES'
+  | 'UNSETTLED_AMOUNT'
+  | 'BALANCE_REMAINING'
+  | 'PENDING_TOPUPS'
+  | 'SELLER_ACTIVE'
 
 /** 탈퇴 조건. reasons가 비어 있으면(withdrawable) 탈퇴할 수 있다. 화면 안내용이고 실제 판단은 탈퇴 요청에서 다시 한다 */
 export type WithdrawalCheck = {
   withdrawable: boolean
   /** 진행 중인 주문이 있는지 (개수는 주지 않는다) */
   hasActiveOrders: boolean
+  /** 판매자 상품이 들어간 진행 중인 주문이 있는지 (판매자 정보가 있을 때만, 판매자 상태와 무관) */
+  hasActiveSales: boolean
   /** 정산받지 않은 판매 금액 */
   unsettledAmount: number
   /** 남은 예치금 */
   balance: number
+  /** 결과가 정해지지 않은 충전 건(결제창 진행 중·승인 결과 확인 중)이 있는지 */
+  hasPendingTopups: boolean
   reasons: WithdrawalBlockReason[]
 }
 
