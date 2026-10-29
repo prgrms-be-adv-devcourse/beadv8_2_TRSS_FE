@@ -283,6 +283,15 @@ export default function MyPagePage(props: { sellerStatus?: SellerStatus }) {
                       {c ? (c.hasActiveOrders ? '있어요' : '없어요') : '…'}
                     </span>
                   </li>
+                  {/* 판매자 정보가 있는 회원만. 판매자 정보를 불러오기 전이라도 막는 이유가 있으면 보여준다 */}
+                  {(sellerStatus || c?.hasActiveSales) && (
+                    <li style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                      <span>진행 중인 판매</span>
+                      <span style={c?.hasActiveSales ? LEFT : CLEAR}>
+                        {c ? (c.hasActiveSales ? '있어요' : '없어요') : '…'}
+                      </span>
+                    </li>
+                  )}
                   <li style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
                     <span>정산받지 않은 판매 금액</span>
                     <span className={cx('num')} style={c && c.unsettledAmount > 0 ? LEFT : CLEAR}>
@@ -296,6 +305,12 @@ export default function MyPagePage(props: { sellerStatus?: SellerStatus }) {
                     </span>
                   </li>
                   <li style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                    <span>결과 확인 중인 충전</span>
+                    <span style={c?.hasPendingTopups ? LEFT : CLEAR}>
+                      {c ? (c.hasPendingTopups ? '있어요' : '없어요') : '…'}
+                    </span>
+                  </li>
+                  <li style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
                     <span>판매자 활동</span>
                     <span style={sellerActive ? LEFT : CLEAR}>
                       {c ? (sellerActive ? `${sellerActivityLabel}이에요` : '없어요') : '…'}
@@ -303,7 +318,9 @@ export default function MyPagePage(props: { sellerStatus?: SellerStatus }) {
                   </li>
                 </ul>
                 <p className={cx('sub')} style={{ margin: '0', fontSize: '14px' }}>
-                  네 항목이 모두 비어야 탈퇴할 수 있어요. 판매자로 활동 중이면 판매자 철회가 끝난 뒤 탈퇴할 수 있어요.
+                  모든 항목이 비어야 탈퇴할 수 있어요. 판매자로 활동 중이면 판매자 철회가 끝난 뒤, 판매한 주문이
+                  남아 있으면 구매 확정과 정산이 끝난 뒤 탈퇴할 수 있어요. 충전 결과를 확인하는 중에는 탈퇴할 수 없으니
+                  잠시 후 다시 확인해 주세요.
                   예치금은 자동으로 돌려드리지 않으니 쓰거나, 쓰지 않은 충전 건을 <Link to="/wallet">예치금</Link>에서
                   취소해 주세요. 탈퇴하면 개인정보는 복구할 수 없게 지워져요.
                 </p>
