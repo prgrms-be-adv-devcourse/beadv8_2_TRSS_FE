@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError, errorMessage } from '../lib/api'
-import { logout, memberTypeLabel, useAuth } from '../lib/auth'
+import { loadMe, logout, memberTypeLabel, useAuth } from '../lib/auth'
 import {
   canApply,
   getMySeller,
   getWithdrawalCheck,
+  unlinkKakao,
   withdrawMember,
   type MySeller,
   type SellerStatus as ApiSellerStatus,
 } from '../lib/api/member'
 import { getWallet } from '../lib/api/wallet'
+import { startKakao } from '../lib/kakao'
 import { useApi } from '../lib/useApi'
 import { NOTICE, makeCx, won } from '../lib/ui'
 import styles from './MyPage.module.css'
+import type { KakaoLinkState } from './KakaoCallback'
 import BuyerHeader from '../components/BuyerHeader'
 
 export type SellerStatus = '신청 전' | ApiSellerStatus
@@ -75,6 +78,8 @@ const cx = makeCx(styles)
 // 탈퇴 조건: 남아 있으면 빨강, 비었으면 초록 (시안 색)
 const LEFT = { color: '#A33A1F', fontWeight: '500' }
 const CLEAR = { color: '#1C6B47', fontWeight: '500' }
+// 카카오 연결 결과 성공 안내 (NOTICE와 같은 모양, 초록)
+const LINK_OK = { ...NOTICE, background: '#E3F5EC', color: '#1C6B47' }
 
 /** 화면 상태와 화면에 그릴 값을 만들어요. */
 function useMyPageView({ sellerStatus }: { sellerStatus?: SellerStatus }) {
@@ -99,6 +104,64 @@ function useMyPageView({ sellerStatus }: { sellerStatus?: SellerStatus }) {
     s: { chip: m[0], tag: m[1], text, act: m[3], href: m[4], btn: m[3] ? 'btn-p' : '', hasAct: !!m[3] },
   }
   return view
+}
+
+/**
+ * 카카오 계정 연결·해제.
+ * 연결은 카카오 인가 화면을 거쳐 콜백 화면(KakaoCallback)이 처리하고, 결과를 location.state.kakao로 넘겨 준다.
+ * 해제는 확인 패널에서 한 번 더 확인한 뒤 부른다.
+ */
+function useKakaoLink() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [result, setResult] = useState<KakaoLinkState['kakao']>((location.state as KakaoLinkState | null)?.kakao)
+  const [open, setOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  // 새로고침하면 결과 안내가 다시 뜨지 않게 넘겨받은 표시를 지운다
+  useEffect(() => {
+    if ((location.state as KakaoLinkState | null)?.kakao)
+      navigate(location.pathname + location.search, { replace: true })
+  }, [location, navigate])
+
+  function link() {
+    setResult(undefined)
+    if (!startKakao('link'))
+      setResult({ ok: false, message: '지금은 카카오 연결을 쓸 수 없어요. 잠시 후 다시 시도해 주세요.' })
+  }
+
+  function close() {
+    setOpen(false)
+    setError('')
+  }
+
+  async function unlink() {
+    if (submitting) return
+    setError('')
+    setSubmitting(true)
+    try {
+      await unlinkKakao()
+      await loadMe().catch(() => null)
+      setOpen(false)
+      setResult({ ok: true, message: '카카오 연결을 해제했어요. 다음부터는 이메일로 로그인해 주세요.' })
+    } catch (e) {
+      setError(errorMessage(e))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return {
+    result,
+    link,
+    open,
+    openPanel: () => (setResult(undefined), setOpen(true)),
+    close,
+    unlink,
+    submitting,
+    error,
+  }
 }
 
 /**
@@ -143,6 +206,7 @@ export default function MyPagePage(props: { sellerStatus?: SellerStatus }) {
   const view = useMyPageView(props)
   const { s, auth, wallet, sellerStatus, showSellerMenu } = view
   const w = useWithdrawal()
+  const k = useKakaoLink()
   const c = w.check
   // 판매자 활동(심사 중·판매 중·철회 심사 중)이면 탈퇴 불가. 표시 이름은 위 판매자 카드와 같다
   const sellerActive = !!c?.reasons.includes('SELLER_ACTIVE')
@@ -261,6 +325,82 @@ export default function MyPagePage(props: { sellerStatus?: SellerStatus }) {
                   </>
                 )}
               </section>
+              <section
+                className={cx('panel')}
+                style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '14px' }}
+              >
+                {k.result && (
+                  <p role={k.result.ok ? 'status' : 'alert'} style={k.result.ok ? LINK_OK : NOTICE}>
+                    {k.result.message}
+                  </p>
+                )}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '16px',
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxWidth: '520px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <h2 style={{ margin: '0', fontSize: '18px', fontWeight: '700' }}>카카오 로그인</h2>
+                      {me && (
+                        <span className={cx(`chip ${me.kakaoLinked ? 'c-ok' : 'c-mute'}`)}>
+                          {me.kakaoLinked ? '연결됨' : '연결 안 됨'}
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ margin: '0', color: '#45454F' }}>
+                      {me?.kakaoLinked
+                        ? '카카오로 간편하게 로그인할 수 있어요.'
+                        : '카카오 계정을 연결하면 로그인 화면에서 카카오로 로그인할 수 있어요.'}
+                    </p>
+                  </div>
+                  {me &&
+                    (me.kakaoLinked ? (
+                      <button className={cx('btn')} disabled={k.open} onClick={k.openPanel}>
+                        연결 해제
+                      </button>
+                    ) : (
+                      <button className={cx('btn btn-p')} onClick={k.link}>
+                        카카오 연결
+                      </button>
+                    ))}
+                </div>
+              </section>
+              {k.open && (
+                <section
+                  className={cx('panel')}
+                  style={{
+                    padding: '24px 28px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '14px',
+                    outline: '2px solid #8A6A2C',
+                  }}
+                >
+                  <h2 style={{ margin: '0', fontSize: '18px', fontWeight: '700' }}>카카오 연결을 해제할까요?</h2>
+                  <p className={cx('sub')} style={{ margin: '0', fontSize: '14px' }}>
+                    해제하면 카카오로 로그인할 수 없어요. 이메일과 비밀번호로는 계속 로그인할 수 있고, 언제든 다시
+                    연결할 수 있어요.
+                  </p>
+                  {k.error && (
+                    <p role="alert" style={NOTICE}>
+                      {k.error}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button className={cx('btn')} onClick={k.close}>
+                      닫기
+                    </button>
+                    <button className={cx('btn btn-p')} disabled={k.submitting} onClick={k.unlink}>
+                      연결 해제
+                    </button>
+                  </div>
+                </section>
+              )}
               <section
                 className={cx('panel')}
                 style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '14px' }}

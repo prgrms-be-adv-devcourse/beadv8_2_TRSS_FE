@@ -155,3 +155,15 @@
   color: #5f5f6a;
   font-weight: 500;
 }
+/* 카카오 로그인 버튼 (카카오 디자인 가이드 색) */
+.btn-kakao {
+  background: #fee500;
+  border-color: #fee500;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 700;
+}
+.btn-kakao:hover {
+  background: #f2d900;
+  border-color: #f2d900;
+  color: rgba(0, 0, 0, 0.85);
+}
