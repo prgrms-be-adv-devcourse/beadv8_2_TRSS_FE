@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { login } from '../lib/auth'
 import { errorMessage } from '../lib/api'
 import { makeCx } from '../lib/ui'
+import type { KakaoLoginState } from './KakaoCallback'
 import styles from './Login.module.css'
 
 const cx = makeCx(styles)
@@ -13,7 +14,8 @@ export default function LoginPage() {
   const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  // 카카오 로그인이 실패해 콜백 화면에서 돌아온 경우 그 안내를 먼저 보여 준다
+  const [error, setError] = useState((location.state as KakaoLoginState | null)?.kakaoError ?? '')
   const [pending, setPending] = useState(false)
 
   async function onSubmit(e: FormEvent) {

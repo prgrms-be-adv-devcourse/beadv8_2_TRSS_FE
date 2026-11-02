@@ -4,6 +4,7 @@
  * 로그인·로그아웃·토큰 재발급은 lib/auth.ts에 있어요.
  * POST   /api/v1/auth/email/check | email/code | email/verify | signup
  * GET    /api/v1/users/me
+ * POST   /api/v1/users/me/social/kakao   카카오 계정 연결 | DELETE 연결 해제
  * POST   /api/v1/sellers           판매자 신청
  * GET    /api/v1/sellers/me        내 판매자 신청 상태
  * PATCH  /api/v1/seller/me         판매자 정보 수정 (SELLER)
@@ -272,4 +273,18 @@ export function getWithdrawalCheck() {
  */
 export function withdrawMember(password: string) {
   return api<null>('/api/v1/users/me', { method: 'DELETE', body: { password } })
+}
+
+/**
+ * 카카오 계정 연결. 콜백에서 받은 인가 코드를 넘긴다. 같은 카카오 계정을 다시 연결하면 성공.
+ * 400 KAKAO_AUTH_FAILED(코드 만료·재사용), 409 SOCIAL_ACCOUNT_LINKED_TO_OTHER(다른 회원에 연결됨),
+ * 409 SOCIAL_PROVIDER_ALREADY_LINKED(다른 카카오 계정이 이미 연결됨), 502(카카오 응답 없음)
+ */
+export function linkKakao(code: string) {
+  return api<null>('/api/v1/users/me/social/kakao', { method: 'POST', body: { code } })
+}
+
+/** 카카오 계정 연결 해제. 연결돼 있지 않아도 성공한다 (카카오 쪽 연결은 끊지 않음) */
+export function unlinkKakao() {
+  return api<null>('/api/v1/users/me/social/kakao', { method: 'DELETE' })
 }

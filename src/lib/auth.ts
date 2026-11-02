@@ -4,7 +4,15 @@ import type { SellerStatus } from './api/member'
 
 // 판매자는 역할이 아니라 판매자 상태(APPROVED)로 구분한다
 export type MemberRole = 'USER' | 'ADMIN'
-export type Me = { memberId: number; email: string; name: string; role: MemberRole; createdAt: string }
+export type Me = {
+  memberId: number
+  email: string
+  name: string
+  role: MemberRole
+  createdAt: string
+  /** 카카오 계정 연결 여부 (연결하면 카카오로 로그인할 수 있다) */
+  kakaoLinked: boolean
+}
 
 /** 화면에 보여 줄 회원 유형. 역할에는 판매자가 없으므로 판매자 상태가 판매 중(APPROVED)이면 '판매자'로 보여 준다 */
 export function memberTypeLabel(role: MemberRole, sellerStatus?: SellerStatus | null) {
@@ -30,7 +38,8 @@ onAccessTokenChange(() => {
   if (!getAccessToken() && state.me) setState({ me: null })
 })
 
-async function loadMe() {
+/** 내 정보를 다시 불러온다 (카카오 연결·해제 뒤 등) */
+export async function loadMe() {
   const me = await api<Me>('/api/v1/users/me')
   setState({ me })
   return me
@@ -51,6 +60,18 @@ export async function login(email: string, password: string) {
   const { accessToken } = await api<{ accessToken: string }>('/api/v1/auth/login', {
     method: 'POST',
     body: { email, password },
+  })
+  setAccessToken(accessToken)
+  const me = await loadMe()
+  setState({ ready: true })
+  return me
+}
+
+/** 카카오 로그인: 콜백에서 받은 인가 코드를 넘긴다. 응답은 이메일 로그인과 같다 */
+export async function kakaoLogin(code: string) {
+  const { accessToken } = await api<{ accessToken: string }>('/api/v1/auth/kakao', {
+    method: 'POST',
+    body: { code },
   })
   setAccessToken(accessToken)
   const me = await loadMe()
