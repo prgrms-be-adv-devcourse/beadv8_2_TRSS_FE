@@ -57,11 +57,13 @@ type Options = {
   body?: unknown
   /** 쿼리스트링 */
   query?: Record<string, string | number | boolean | undefined | null>
+  /** 추가 요청 헤더 (예: Idempotency-Key) */
+  headers?: Record<string, string>
   /** 401일 때 토큰 재발급 후 다시 시도할지 (기본 true) */
   retry?: boolean
 }
 
-async function send<T>(path: string, { method = 'GET', body, query }: Options): Promise<T> {
+async function send<T>(path: string, { method = 'GET', body, query, headers: extraHeaders }: Options): Promise<T> {
   let url = `${BASE_URL}${path}`
   if (query) {
     const qs = new URLSearchParams()
@@ -70,7 +72,7 @@ async function send<T>(path: string, { method = 'GET', body, query }: Options): 
     if (s) url += `?${s}`
   }
 
-  const headers: Record<string, string> = { Accept: 'application/json' }
+  const headers: Record<string, string> = { Accept: 'application/json', ...extraHeaders }
   const isForm = body instanceof FormData
   if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`
