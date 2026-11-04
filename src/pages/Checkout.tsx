@@ -3,13 +3,15 @@ import { makeCx, css, NOTICE } from '../lib/ui'
 import styles from './Checkout.module.css'
 import BuyerHeader from '../components/BuyerHeader'
 import NoticeModal, { type Notice } from '../components/NoticeModal'
+import { codeOf } from '../lib/notices/common'
 import { cartNotice, orderNotice } from '../lib/notices/order'
 import { EXPIRED, paymentNotice } from '../lib/notices/payment'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { productImage } from '../lib/products'
 import { won } from '../lib/ui'
-import { cancelOrder, createOrder, getOrder, isPayable } from '../lib/api/order'
+import { ApiError } from '../lib/api'
+import { cancelOrder, createOrder, getOrder, isPayable, newIdempotencyKey } from '../lib/api/order'
 import { payOrder, type OrderPay } from '../lib/api/payment'
 import { getProduct } from '../lib/api/product'
 import { getWallet, topupPath } from '../lib/api/wallet'
@@ -21,7 +23,10 @@ const AUTO_CONFIRM_DAYS = 7
 
 type PayStep = '' | 'confirm' | 'processing' | 'done'
 /** 장바구니에서 넘겨주는 값 (Cart.tsx의 order) */
-type FromCart = { cartItemIds?: number[]; expectedTotalPrice?: number } | null
+type FromCart = { cartItemIds?: number[]; expectedTotalPrice?: number; idempotencyKey?: string } | null
+
+/** 응답을 받지 못해 주문이 만들어졌는지 모르는 경우 (네트워크 오류·서버 오류). 같은 키로 다시 시도해요 */
+const isUnknownResult = (e: unknown) => e instanceof ApiError && (e.status === 0 || e.status >= 500)
 
 const cx = makeCx(styles)
 
@@ -49,22 +54,52 @@ function useCheckoutView() {
   const [busy, setBusy] = useState(false)
 
   // 장바구니에서 왔으면 결제 대기 주문을 만들어요. URL을 ?orderId=로 바꿔서 새로고침해도 주문이 다시 만들어지지 않아요
+  // 멱등 키는 장바구니에서 받은 값을 써요. 응답 전에 새로고침하거나 다시 시도해도 같은 키라 주문은 한 건만 생겨요
   const creating = useRef(false)
+  const idempotencyKey = useRef(fromCart?.idempotencyKey ?? '')
+  const createFromCart = useCallback(
+    (cart: NonNullable<FromCart>, renewed = false) => {
+      idempotencyKey.current ||= newIdempotencyKey() // 예전 장바구니 화면에서 넘어와 키가 없으면 여기서 만들어요
+      setCreateFailed(false)
+      createOrder(cart.cartItemIds!, cart.expectedTotalPrice ?? 0, idempotencyKey.current)
+        .then((r) => navigate(`/checkout?orderId=${r.orderId}`, { replace: true }))
+        .catch((e) => {
+          // 이 키로 만든 주문이 이미 취소됐으면 새 키로 한 번만 다시 만들어요. 새로고침해도 새 키를 쓰게 화면 상태에도 남겨요
+          if (codeOf(e) === 'IDEMPOTENCY_KEY_EXPIRED' && !renewed) {
+            idempotencyKey.current = newIdempotencyKey()
+            navigate('/checkout', { replace: true, state: { ...cart, idempotencyKey: idempotencyKey.current } })
+            createFromCart(cart, true)
+            return
+          }
+          setCreateFailed(true)
+          if (isUnknownResult(e)) {
+            setNotice({
+              title: '주문 결과를 확인하지 못했어요',
+              body: '연결이 불안정해 주문이 만들어졌는지 확인하지 못했어요. 다시 시도해도 주문은 한 번만 만들어져요.',
+              actions: [
+                { label: '장바구니로 가기', to: '/cart' },
+                { label: '다시 시도', primary: true, onClick: () => createFromCart(cart, renewed) },
+              ],
+            })
+            return
+          }
+          const n = cartNotice(e)
+          // 만들어진 주문이 없으니 장바구니로 돌아가게 해요
+          setNotice({
+            ...n,
+            actions: n.actions.some((a) => a.to)
+              ? n.actions
+              : [{ label: '장바구니로 가기', to: '/cart', primary: true }],
+          })
+        })
+    },
+    [navigate],
+  )
   useEffect(() => {
     if (orderId || !fromCart || creating.current) return
     creating.current = true // StrictMode에서 두 번 실행돼도 주문은 하나만 만들어요
-    createOrder(fromCart.cartItemIds!, fromCart.expectedTotalPrice ?? 0)
-      .then((r) => navigate(`/checkout?orderId=${r.orderId}`, { replace: true }))
-      .catch((e) => {
-        setCreateFailed(true)
-        const n = cartNotice(e)
-        // 만들어진 주문이 없으니 장바구니로 돌아가게 해요
-        setNotice({
-          ...n,
-          actions: n.actions.some((a) => a.to) ? n.actions : [{ label: '장바구니로 가기', to: '/cart', primary: true }],
-        })
-      })
-  }, [orderId, fromCart, navigate])
+    createFromCart(fromCart)
+  }, [orderId, fromCart, createFromCart])
 
   const order = useApi(() => (orderId ? getOrder(orderId) : Promise.resolve(null)), [orderId])
   const wallet = useApi(getWallet, [])
@@ -150,7 +185,8 @@ function useCheckoutView() {
     error: order.error || wallet.error,
     /** 주문 정보 없이 /checkout으로 바로 들어온 경우 */
     noOrder: !orderId && !fromCart,
-    createFailed,
+    // 결제 대기 주문서로 옮겨 가면(?orderId=) 실패 안내 문구를 지워요
+    createFailed: createFailed && !orderId,
     ready: !!o && isPayable(o.status),
     notice,
     closeNotice: () => setNotice(null),

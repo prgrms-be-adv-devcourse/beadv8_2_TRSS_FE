@@ -103,12 +103,34 @@ export type OrderConfirmResponse = {
   confirmedAt: string
 }
 
+/** 409-CART_ITEM_IN_PENDING_ORDER의 data */
+export type PendingOrderConflict = {
+  /** 요청한 항목이 들어 있는 결제 대기 주문 ID (오름차순) */
+  pendingOrderIds: number[]
+}
+
 /**
  * 장바구니에서 고른 항목으로 결제 대기 주문을 만들고 재고를 잡아 둬요.
- * expectedTotalPrice가 지금 가격 합계와 다르면 409-PRICE_CHANGED가 와요.
+ * - expectedTotalPrice가 지금 가격 합계와 다르면 409-PRICE_CHANGED가 와요.
+ * - 같은 idempotencyKey로 다시 보내면 처음 만든 주문을 그대로 돌려줘요. 응답을 못 받았을 때 같은 키로 다시 시도해요.
+ * - 그 키로 만든 주문이 이미 취소(만료 포함)됐으면 409-IDEMPOTENCY_KEY_EXPIRED가 와요. 새 키로 다시 보내요.
  */
-export const createOrder = (cartItemIds: number[], expectedTotalPrice: number) =>
-  api<OrderCreateResponse>('/api/v1/orders', { method: 'POST', body: { cartItemIds, expectedTotalPrice } })
+export const createOrder = (cartItemIds: number[], expectedTotalPrice: number, idempotencyKey: string) =>
+  api<OrderCreateResponse>('/api/v1/orders', {
+    method: 'POST',
+    body: { cartItemIds, expectedTotalPrice },
+    headers: { 'Idempotency-Key': idempotencyKey },
+  })
+
+/** 주문 생성 멱등 키. crypto.randomUUID는 HTTPS·localhost에서만 있어서, HTTP 개발 서버에서는 getRandomValues로 만들어요 */
+export function newIdempotencyKey(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  const b = crypto.getRandomValues(new Uint8Array(16))
+  b[6] = (b[6] & 0x0f) | 0x40 // UUID v4
+  b[8] = (b[8] & 0x3f) | 0x80
+  const h = [...b].map((x) => x.toString(16).padStart(2, '0')).join('')
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
+}
 
 /** 주문 내역 한 줄 */
 export type OrderSummary = {
