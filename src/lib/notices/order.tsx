@@ -3,13 +3,18 @@
  */
 
 import type { Notice } from '../../components/NoticeModal'
-import type { OrderStatus } from '../api/order'
+import { ApiError } from '../api'
+import type { OrderStatus, PendingOrderConflict } from '../api/order'
 import { OK, codeOf, commonNotice, subject } from './common'
 
 /** 백엔드 custom.order.cartMaxQuantity */
 const MAX_QTY = 99
 
-/** 장바구니에서 수량·선택을 바꾸거나 지울 때 */
+/** 409-CART_ITEM_IN_PENDING_ORDER에 담겨 온 첫 결제 대기 주문 ID */
+const pendingOrderIdOf = (e: unknown) =>
+  e instanceof ApiError ? (e.data as Partial<PendingOrderConflict> | null)?.pendingOrderIds?.[0] : undefined
+
+/** 장바구니에서 수량·선택을 바꾸거나 지울 때, 주문서에서 주문을 만들 때 */
 export function cartNotice(e: unknown, ctx: { name?: string } = {}): Notice {
   switch (codeOf(e)) {
     case 'STOCK_EXCEEDED':
@@ -38,11 +43,22 @@ export function cartNotice(e: unknown, ctx: { name?: string } = {}): Notice {
         body: '다른 화면에서 이미 빼거나 결제한 상품이에요. 장바구니를 다시 불러왔어요.',
         actions: OK,
       }
-    case 'CART_ITEM_IN_PENDING_ORDER':
+    case 'CART_ITEM_IN_PENDING_ORDER': {
+      // 주문 ID를 받았으면 그 주문서로 바로 갈 수 있게 해요 (응답을 못 받고 다시 주문한 경우)
+      const pendingOrderId = pendingOrderIdOf(e)
       return {
         title: '결제를 기다리는 주문이 있어요',
         body: `${subject(ctx.name)} 결제를 기다리는 주문에 들어 있어요. 그 주문을 결제하거나 취소한 뒤 다시 주문할 수 있어요.`,
-        actions: [{ label: '닫기' }, { label: '주문 내역 보기', to: '/orders', primary: true }],
+        actions: pendingOrderId
+          ? [{ label: '닫기' }, { label: '주문서로 가기', to: `/checkout?orderId=${pendingOrderId}`, primary: true }]
+          : [{ label: '닫기' }, { label: '주문 내역 보기', to: '/orders', primary: true }],
+      }
+    }
+    case 'IDEMPOTENCY_KEY_EXPIRED':
+      return {
+        title: '주문서를 다시 만들어야 해요',
+        body: '이전에 만든 주문이 취소됐어요. 장바구니에서 다시 주문해 주세요.',
+        actions: [{ label: '장바구니로 가기', to: '/cart', primary: true }],
       }
     case 'SELF_PURCHASE_NOT_ALLOWED':
       return {

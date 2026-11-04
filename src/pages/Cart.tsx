@@ -17,6 +17,7 @@ import {
   type CartItem,
   type UnorderableReason,
 } from '../lib/api/cart'
+import { newIdempotencyKey } from '../lib/api/order'
 import { getWallet } from '../lib/api/wallet'
 import { useApi } from '../lib/useApi'
 
@@ -164,11 +165,18 @@ function useCartView() {
     cover: sum ? Math.min(100, Math.round((balance / sum) * 100)) + '%' : '100%',
     gapText: gap > 0 ? won(gap) + '원이 모자라요. 주문한 뒤 충전할 수 있어요.' : '예치금으로 바로 결제할 수 있어요.',
     gapColor: gap > 0 ? '#A33A1F' : '#1C6B47',
-    /** 주문서로 선택한 항목과 예상 금액을 넘겨요. 주문 생성(POST /api/v1/orders)은 주문서에서 해요. */
+    /**
+     * 주문서로 선택한 항목과 예상 금액을 넘겨요. 주문 생성(POST /api/v1/orders)은 주문서에서 해요.
+     * 멱등 키는 여기서 한 번 만들어 넘겨서, 주문서를 새로고침하거나 다시 시도해도 같은 키로 보내요.
+     */
     order: () => {
       if (!targets.length) return
       navigate('/checkout', {
-        state: { cartItemIds: targets.map((i) => i.itemId), expectedTotalPrice: sum },
+        state: {
+          cartItemIds: targets.map((i) => i.itemId),
+          expectedTotalPrice: sum,
+          idempotencyKey: newIdempotencyKey(),
+        },
       })
     },
   }
