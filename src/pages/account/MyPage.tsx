@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import Button from '../../components/ui/Button'
+import Icon from '../../components/ui/Icon'
 import PageHeader, { HeaderIcon } from '../../components/ui/PageHeader'
 import { won } from '../../components/ui/Misc'
 import { getMySeller, type MySeller } from '../../lib/api/member'
@@ -91,17 +92,18 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
         </div>
       </div>
 
-      <div className={s.walletRow}>
-        <Link to="/wallet" className={s.walletLink}>
-          <span className={s.walletLabel}>예치금</span>
-          <span className={s.walletAmount}>
-            {wallet.data ? won(wallet.data.balance) : '-'} <i>›</i>
-          </span>
-          {wallet.data && <span className={s.walletHeld}>구매 확정 대기 {won(wallet.data.heldAmount)}</span>}
-        </Link>
-        <Button to="/wallet/topup" variant="outline" size="sm">
-          충전
-        </Button>
+      <div className={s.walletWrap}>
+        <div className={s.walletBar}>
+          <Link to="/wallet" className={s.walletLink} aria-label="예치금 내역 보기">
+            <Icon name="wallet" size={18} />
+            <span className={s.walletLabel}>예치금</span>
+            <span className={s.walletAmount}>{wallet.data ? won(wallet.data.balance) : '-'}</span>
+          </Link>
+          <Button to="/wallet/topup" size="sm">
+            충전
+          </Button>
+        </div>
+        {wallet.data && <p className={s.walletHeld}>구매 확정 대기 {won(wallet.data.heldAmount)}</p>}
       </div>
 
       {/* TODO(API 미구현): AI 뷰티 프로필 요약 — AI 설문 결과 API가 생기면 실제 요약으로 */}
