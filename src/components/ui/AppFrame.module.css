@@ -1,12 +1,11 @@
 /*
- * 구매자 화면 틀 (시안 Main.dc.html "PC로 접속했을 때")
- * - 앱 영역은 max-width 430px, 가운데. 양옆은 회색(#E9EAE6)
- * - 1024px 이상일 때만 왼쪽에 브랜드 소개 패널
+ * 구매자 화면 틀
+ * - 앱 영역은 max-width 430px, 가운데. 양옆 배경은 흰색
  * - 하단 탭바·하단 고정 버튼은 컬럼 안에서 sticky로 붙어요
  */
 .stage {
   min-height: 100vh;
-  background: var(--stage);
+  background: #fff;
 }
 .col {
   position: relative;
@@ -17,107 +16,15 @@
   background: #fff;
   display: flex;
   flex-direction: column;
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.06),
-    0 24px 60px -24px rgba(0, 0, 0, 0.28);
+}
+/* 화면이 컬럼보다 넓을 때만 컬럼 경계에 얇은 선 */
+@media (min-width: 431px) {
+  .col {
+    box-shadow: 0 0 0 1px var(--line);
+  }
 }
 .body {
   flex: 1;
   display: flex;
   flex-direction: column;
-}
-.panel {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .stage {
-    display: flex;
-  }
-  .col {
-    flex: none;
-    width: var(--col-w);
-    margin: 0;
-  }
-  .panel,
-  .spacer {
-    flex: 1 1 0;
-  }
-  .panel {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding: 0 clamp(24px, 5vw, 72px) 0 24px;
-    box-sizing: border-box;
-    min-width: 0;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-  }
-}
-
-.panelInner {
-  width: 300px;
-  max-width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-.panelLogo {
-  height: 64px;
-  width: auto;
-  display: block;
-}
-.panelLead {
-  margin: 14px 0 0;
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--sub);
-}
-.points {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  font-size: 14px;
-  color: #2d2d31;
-}
-.points li {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-.qr {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  background: #fff;
-  border-radius: 16px;
-  padding: 16px;
-}
-.qrBox {
-  width: 84px;
-  height: 84px;
-  flex: none;
-  border-radius: 8px;
-  border: 1.5px dashed #b4b4ba;
-  display: grid;
-  place-items: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--muted);
-}
-.qr p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--sub);
-}
-.qr b {
-  display: block;
-  font-size: 14px;
-  color: var(--ink);
-  margin-bottom: 2px;
 }
