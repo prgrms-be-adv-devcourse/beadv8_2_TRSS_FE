@@ -23,7 +23,7 @@ export default function CategoryPage() {
   const banner = (cur && BANNERS[cur.name]) ?? { en: 'PALETTE', img: '/images/banner/influencer-pick.jpg' }
 
   return (
-    <AppFrame tab="category">
+    <AppFrame tab="home">
       <PageHeader
         title={
           <Link to="/" aria-label="팔레트 홈" className={styles.logo}>
@@ -31,7 +31,7 @@ export default function CategoryPage() {
             <span className={styles.sr}>카테고리</span>
           </Link>
         }
-        right={<HeaderIcon to="/products" icon="search" label="검색" />}
+        right={<HeaderIcon to="/search" icon="search" label="검색" />}
       />
 
       {categories.loading && !categories.data && <Loading />}

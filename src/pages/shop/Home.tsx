@@ -47,10 +47,15 @@ export default function HomePage() {
         }
       />
 
-      <Link to="/search" className={styles.search}>
-        <Icon name="search" size={18} />
-        브랜드나 상품을 검색해 보세요
-      </Link>
+      <div className={styles.searchRow}>
+        <Link to="/category" aria-label="카테고리 전체 보기" className={styles.catBtn}>
+          <Icon name="grid" size={20} />
+        </Link>
+        <Link to="/search" className={styles.search}>
+          <Icon name="search" size={18} />
+          브랜드나 상품을 검색해 보세요
+        </Link>
+      </div>
 
       <nav aria-label="빠른 카테고리" className={styles.quick}>
         <Link to="/" aria-current="page" className={`${styles.qchip} ${styles.qon}`}>

@@ -83,7 +83,7 @@ export default function ProductListPage() {
   const listTitle = selected ? selected.name : keyword ? `‘${keyword}’ 검색 결과` : '전체 상품'
 
   return (
-    <AppFrame tab="category">
+    <AppFrame tab="home">
       <PageHeader
         back
         title={headerTitle}

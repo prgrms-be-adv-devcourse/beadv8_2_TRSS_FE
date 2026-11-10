@@ -8,9 +8,29 @@
   display: block;
 }
 
+/* 검색 줄: 왼쪽 카테고리 버튼 + 검색창 */
+.searchRow {
+  margin: 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.catBtn {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+}
+.catBtn:hover {
+  background: #ececeb;
+}
 .search {
-  /* 양옆 여백을 넓혀 검색창 가로 길이를 줄여요 */
-  margin: 0 56px;
+  flex: 1;
+  min-width: 0;
   height: 46px;
   border-radius: var(--radius-pill);
   background: var(--surface);
