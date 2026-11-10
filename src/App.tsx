@@ -5,7 +5,6 @@ import RequireActiveSeller from './components/RequireActiveSeller'
 import RequireRole from './components/RequireRole'
 import type { MemberRole } from './lib/auth'
 import ScreensPage from './pages/Screens'
-import BuyerFooterSlot from './components/BuyerFooter'
 import LogoutOnArrive from './components/LogoutOnArrive'
 import RouteNotice from './components/RouteNotice'
 
@@ -24,6 +23,7 @@ const GUARDS: Record<ScreenAuth, MemberRole[] | undefined> = {
   // 판매자는 역할이 아니라 판매자 상태로 구분해 회원(USER)이면 통과시키고, RequireActiveSeller가 판매 중(APPROVED)인지 확인한다
   SELLER: ['USER'],
   ADMIN: ['ADMIN'],
+  LOGISTICS: ['LOGISTICS'],
 }
 
 export default function App() {
@@ -51,7 +51,6 @@ export default function App() {
         <Route path="/screens" element={<ScreensPage />} />
         <Route path="*" element={<ScreensPage />} />
       </Routes>
-      <BuyerFooterSlot />
       <RouteNotice />
       <LogoutOnArrive />
     </>

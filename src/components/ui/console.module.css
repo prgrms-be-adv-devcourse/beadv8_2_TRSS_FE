@@ -1,0 +1,226 @@
+/*
+ * 판매자·관리자·물류 화면 공통 조각
+ * import c from '../../components/ui/console.module.css'
+ * PC: .toolbar(.search .select) → .table(.thead .tr)   모바일: .list(.li)
+ */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+  flex-wrap: wrap;
+}
+.toolGroup {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.search {
+  width: 280px;
+  max-width: 100%;
+  height: 40px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--input-line);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  color: var(--muted);
+}
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  font-size: 13px;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+}
+.select {
+  height: 40px;
+  min-width: 130px;
+  border: 1px solid var(--input-line);
+  border-radius: 10px;
+  padding: 0 10px;
+  font-size: 13px;
+  background: #fff;
+}
+
+/* PC 표 */
+.table {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.tr {
+  display: grid;
+  gap: 14px;
+  align-items: center;
+  min-height: 56px;
+  padding: 8px 20px;
+  border-top: 1px solid #f0f0ef;
+  font-size: 13px;
+}
+.tr > * {
+  min-width: 0;
+}
+.thead {
+  min-height: 44px;
+  padding-top: 0;
+  padding-bottom: 0;
+  background: var(--surface-soft);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  border-top: 0;
+}
+.clickable {
+  cursor: pointer;
+}
+.clickable:hover,
+.selected {
+  background: var(--surface-soft);
+}
+.ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.strong {
+  font-weight: 600;
+}
+.sub {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+.actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tableFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-top: 1px solid #f0f0ef;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* KPI 카드 */
+.kpis {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.kpi {
+  flex: 1;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 18px 20px;
+}
+.kpiLabel {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.kpiValue {
+  margin: 6px 0 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.kpiSub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 카드 · 2단(표 + 상세 패널) */
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 20px;
+}
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 16px;
+  align-items: start;
+}
+
+/* 모바일 목록 */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0 16px 24px;
+}
+.li {
+  display: flex;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.li:first-child {
+  border-top: 0;
+}
+.liBody {
+  flex: 1;
+  min-width: 0;
+}
+.liTitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.liMeta {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--sub);
+}
+.mobilePad {
+  padding: 0 16px;
+}
+.mobileSearch {
+  margin: 0 16px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  color: var(--muted);
+}
+.mobileSearch input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+  color: var(--ink);
+}
+/* 모바일 떠 있는 버튼 (상품 등록 등) */
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: 100px;
+  z-index: 19;
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.5);
+}

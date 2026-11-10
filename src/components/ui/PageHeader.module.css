@@ -1,0 +1,76 @@
+/* 화면 상단 헤더: 높이 52px, 제목 18px/600, 왼쪽 정렬 */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  height: var(--header-h);
+  padding: 0 8px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  background: #fff;
+  color: var(--ink);
+}
+.withBack {
+  padding-left: 8px;
+}
+.dark {
+  background: var(--ink);
+  color: #fff;
+}
+.title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.iconBtn {
+  flex: none;
+  width: 40px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  color: inherit;
+  padding: 0;
+  position: relative;
+}
+.right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.badge {
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--chip-bg);
+  color: var(--ink);
+}
+.dark .badge {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.dot {
+  position: absolute;
+  top: 10px;
+  right: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 99px;
+  background: #e05a6b;
+  border: 1.5px solid #fff;
+}
