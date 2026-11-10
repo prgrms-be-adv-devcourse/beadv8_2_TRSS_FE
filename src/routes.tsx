@@ -1,8 +1,11 @@
 import type { ReactElement } from 'react'
-import { buyerScreens } from './screens/buyer'
+import { buyerShopScreens } from './screens/buyerShop'
+import { buyerOrderScreens } from './screens/buyerOrder'
+import { buyerAccountScreens } from './screens/buyerAccount'
 import { sellerScreens } from './screens/seller'
 import { influencerScreens } from './screens/influencer'
-import { adminScreens } from './screens/admin'
+import { adminOpsScreens } from './screens/adminOps'
+import { adminFinanceScreens } from './screens/adminFinance'
 import { logisticsScreens } from './screens/logistics'
 
 /**
@@ -30,9 +33,12 @@ export const SCREEN_GROUPS: ScreenGroup[] = ['구매자', '판매자', '인플�
 
 /** 디자인 캔버스의 화면 하나가 라우트 하나예요. 그룹별 목록은 src/screens/*.tsx */
 export const screens: ScreenRoute[] = [
-  ...buyerScreens,
+  ...buyerShopScreens,
+  ...buyerOrderScreens,
+  ...buyerAccountScreens,
   ...sellerScreens,
   ...influencerScreens,
-  ...adminScreens,
+  ...adminOpsScreens,
+  ...adminFinanceScreens,
   ...logisticsScreens,
 ]
