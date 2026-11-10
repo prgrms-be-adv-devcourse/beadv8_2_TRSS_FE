@@ -350,24 +350,28 @@
 /* ── 정산 ── */
 .summary {
   margin: 4px 16px 0;
-  padding: 18px;
-  border-radius: 16px;
-  background: var(--ink);
-  color: #fff;
+  padding: 16px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-card);
+  background: #fff;
+  color: var(--ink);
 }
 .summaryLabel {
   margin: 0;
-  font-size: 13px;
-  opacity: 0.75;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
 }
 .summaryValue {
   margin: 4px 0 12px;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 800;
   letter-spacing: -0.5px;
 }
 .summaryDl {
   margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -378,7 +382,7 @@
   justify-content: space-between;
 }
 .summaryDl dt {
-  opacity: 0.75;
+  color: var(--muted);
 }
 .summaryDl dd {
   margin: 0;
@@ -536,11 +540,6 @@
   font-weight: 500;
   color: var(--muted);
 }
-.mobileFoot {
-  padding: 16px;
-  text-align: center;
-}
-
 /* ── 신청·상태 (구매자 모바일 틀) ── */
 .applyIntro {
   margin: 4px 16px 0;
@@ -719,4 +718,11 @@
   .mobileBlock {
     padding: 0;
   }
+}
+
+/* 판매자 정보: 정보 수정 · 로그아웃 버튼 나란히 */
+.profileActions {
+  flex: none;
+  display: flex;
+  gap: 6px;
 }

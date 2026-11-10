@@ -33,7 +33,6 @@ export const ADMIN_MENU: ConsoleMenuItem[] = [
   { key: 'reviews', label: '리뷰', to: '/admin/reviews' },
   { key: 'coupons', label: '쿠폰 · 협약', to: '/admin/coupons' },
   { key: 'docs', label: 'AI 문서', to: '/admin/docs' },
-  { key: 'ingredients', label: '성분 사전', to: '/admin/ingredients' },
 ]
 
 /** 물류 담당자 메뉴 */

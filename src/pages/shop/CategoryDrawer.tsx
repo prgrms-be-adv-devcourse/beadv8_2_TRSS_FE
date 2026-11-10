@@ -87,18 +87,6 @@ export default function CategoryDrawer({ onClose }: { onClose: () => void }) {
               </ul>
             </div>
           )}
-
-          <div className={styles.foot}>
-            <Link to="/products?sort=LATEST" className={styles.footLink}>
-              신상품
-            </Link>
-            <Link to="/wishlist" className={styles.footLink}>
-              찜 목록
-            </Link>
-            <Link to="/recommend" className={styles.footLink}>
-              맞춤 추천
-            </Link>
-          </div>
         </aside>
       </div>
     </div>

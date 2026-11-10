@@ -335,11 +335,6 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.walletHeld {
-  margin: 6px 0 0 14px;
-  font-size: 11px;
-  color: var(--muted);
-}
 .aiCard {
   margin: 14px 16px 0;
   padding: 12px 14px;

@@ -43,7 +43,7 @@ const SAMPLE: Msg[] = [
   },
 ]
 
-/** ⑱ 팔레트 도우미 (AI 챗봇) */
+/** ⑱ 팔레트 챗봇 (AI 챗봇) */
 export default function ChatbotPage() {
   const [msgs, setMsgs] = useState<Msg[]>(SAMPLE)
   const [input, setInput] = useState('')
@@ -83,7 +83,7 @@ export default function ChatbotPage() {
         </form>
       }
     >
-      <PageHeader back title="팔레트 도우미" />
+      <PageHeader back title="팔레트 챗봇" />
       <div className={styles.chat} aria-live="polite">
         <p className={styles.lead}>배송·반품·쿠폰·충전과 내 주문을 물어볼 수 있어요</p>
         {msgs.map((m) =>

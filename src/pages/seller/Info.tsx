@@ -171,9 +171,15 @@ export default function SellerInfoPage() {
             <Badge tone={statusTone}>{statusLabel}</Badge>
           </span>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setEditing(true)} disabled={seller.status !== 'APPROVED'}>
-          정보 수정
-        </Button>
+        <div className={s.profileActions}>
+          <Button variant="outline" size="sm" onClick={() => setEditing(true)} disabled={seller.status !== 'APPROVED'}>
+            정보 수정
+          </Button>
+          {/* 메인 도착 후 LogoutOnArrive가 로그아웃해요 */}
+          <Button to="/" state={{ logout: true }} variant="outline" size="sm">
+            로그아웃
+          </Button>
+        </div>
       </div>
       <dl className={s.dl}>
         <div>
@@ -360,11 +366,6 @@ export default function SellerInfoPage() {
               철회 요청
             </Button>
           </section>
-          <div className={s.mobileFoot}>
-            <Link to="/" state={{ logout: true }} className={s.textLink}>
-              로그아웃
-            </Link>
-          </div>
         </div>
       )}
 

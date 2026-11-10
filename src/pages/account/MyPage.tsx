@@ -103,7 +103,6 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
             충전
           </Button>
         </div>
-        {wallet.data && <p className={s.walletHeld}>구매 확정 대기 {won(wallet.data.heldAmount)}</p>}
       </div>
 
       {/* TODO(API 미구현): AI 뷰티 프로필 요약 — AI 설문 결과 API가 생기면 실제 요약으로 */}

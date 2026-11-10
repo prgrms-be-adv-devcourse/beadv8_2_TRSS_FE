@@ -113,25 +113,6 @@
   color: var(--ink);
 }
 
-.foot {
-  flex: none;
-  display: flex;
-  gap: 6px;
-  padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--line);
-}
-.footLink {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  display: inline-flex;
-  align-items: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--sub);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .backdrop,
   .panel {

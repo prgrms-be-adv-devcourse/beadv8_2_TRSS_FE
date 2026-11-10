@@ -1,0 +1,100 @@
+/* 구매자 공통 푸터: 연회색 바탕, 작은 글씨 */
+.footer {
+  margin-top: 32px;
+  padding: 24px 16px 28px;
+  background: var(--surface-soft);
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.logo {
+  height: 22px;
+  width: auto;
+  display: block;
+}
+.links {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.links a {
+  color: var(--sub);
+}
+.links a:hover {
+  color: var(--ink);
+}
+.links .strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+.cs {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+.csLabel {
+  font-weight: 700;
+  color: var(--sub);
+}
+.phone {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.hours {
+  flex-basis: 100%;
+}
+.biz {
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.biz summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+  color: var(--sub);
+}
+.biz summary::-webkit-details-marker {
+  display: none;
+}
+.biz[open] summary svg {
+  transform: rotate(180deg);
+}
+.biz dl {
+  margin: 4px 0 0;
+}
+.biz dl div {
+  display: flex;
+  gap: 8px;
+}
+.biz dt {
+  flex: none;
+  width: 96px;
+  color: var(--faint);
+}
+.biz dd {
+  margin: 0;
+  min-width: 0;
+  word-break: keep-all;
+}
+.notice {
+  margin: 12px 0 0;
+  font-size: 11px;
+  color: var(--faint);
+}
+.copy {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--faint);
+}

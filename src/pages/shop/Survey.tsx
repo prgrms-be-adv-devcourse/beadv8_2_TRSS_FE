@@ -19,7 +19,9 @@ export default function SurveyPage() {
   const initial = (useLocation().state as { profile?: BeautyProfile } | null)?.profile
   const [step, setStep] = useState(0)
   const [a, setA] = useState<Answers>(() =>
-    initial ? { type: initial.type, concern: initial.concern, like: initial.like, avoid: initial.avoid, cat: initial.cat } : EMPTY,
+    initial
+      ? { type: initial.type, concern: initial.concern, like: initial.like, avoid: initial.avoid, cat: initial.cat }
+      : EMPTY,
   )
   const [saving, setSaving] = useState(false)
 
@@ -57,6 +59,7 @@ export default function SurveyPage() {
 
   return (
     <AppFrame
+      footer={false}
       bottom={
         <BottomBar note={countText}>
           {last ? (

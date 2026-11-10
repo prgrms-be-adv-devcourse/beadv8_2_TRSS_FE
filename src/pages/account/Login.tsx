@@ -50,7 +50,7 @@ export default function LoginPage() {
   }
 
   return (
-    <AppFrame>
+    <AppFrame footer={false}>
       <h1 className={s.authLogo}>
         <Link to="/">
           <img src="/images/logo.png" alt="Palette" />

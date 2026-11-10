@@ -16,6 +16,7 @@ const POINTS: Array<{ icon: IconName; title: string; desc: string }> = [
 export default function SurveyIntroPage() {
   return (
     <AppFrame
+      footer={false}
       bottom={
         <BottomBar>
           <Button variant="ghost" to="/">

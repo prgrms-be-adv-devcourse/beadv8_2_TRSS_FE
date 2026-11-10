@@ -15,7 +15,9 @@ import styles from './Home.module.css'
 
 /** ① 홈 */
 export default function HomePage() {
-  const { loggedIn } = useAuth()
+  const { loggedIn, me } = useAuth()
+  // 관리자·물류 담당자는 찜·장바구니(구매자 전용)를 쓸 수 없어요
+  const staff = !!me && me.role !== 'USER'
   const categories = useApi(loadCategories, [])
   const [drawer, setDrawer] = useState(false)
   const closeDrawer = useCallback(() => setDrawer(false), [])
@@ -43,7 +45,7 @@ export default function HomePage() {
         right={
           <>
             <HeaderIcon icon="search" label="검색" onClick={() => setSearching(true)} />
-            <HeaderIcon to="/wishlist" icon="heart" label="찜 목록" />
+            {!staff && <HeaderIcon to="/wishlist" icon="heart" label="찜 목록" />}
             <CartHeaderIcon />
             <HeaderIcon
               to="/notifications"

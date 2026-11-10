@@ -28,7 +28,7 @@ type Props = {
   description?: ReactNode
   /** PC 제목 오른쪽 버튼 */
   actions?: ReactNode
-  /** 모바일 헤더 오른쪽 (기본: 구매 화면으로 / 물류는 로그아웃) */
+  /** 모바일 헤더 오른쪽 (기본: 구매 화면으로 / 관리자는 구매 화면으로 + 로그아웃 / 물류는 로그아웃) */
   mobileRight?: ReactNode
   /** 모바일에서 뒤로 버튼을 보일 때 (상세·등록 화면) */
   back?: boolean | string
@@ -130,6 +130,11 @@ export default function ConsoleShell({
     mobileRight ??
     (variant === 'logistics' ? (
       <HeaderIcon to="/" state={{ logout: true }} icon="logout" label="로그아웃" />
+    ) : variant === 'admin' ? (
+      <>
+        <HeaderIcon to="/" icon="shop" label="구매 화면으로" />
+        <HeaderIcon to="/" state={{ logout: true }} icon="logout" label="로그아웃" />
+      </>
     ) : (
       <HeaderIcon to="/" icon="shop" label="구매 화면으로" />
     ))
@@ -145,12 +150,16 @@ export default function ConsoleShell({
 
   return (
     <div className={`${styles.root} ${styles[variant]}`}>
-      <PageHeader title={title} back={back} badge={back ? undefined : MOBILE_BADGE[variant]} right={right} dark={variant === 'admin'} home={false} />
+      <PageHeader
+        title={title}
+        back={back}
+        badge={back ? undefined : MOBILE_BADGE[variant]}
+        right={right}
+        dark={variant === 'admin'}
+        home={false}
+      />
       {showChips && (
-        <nav
-          aria-label={`${badge} 메뉴`}
-          className={`${styles.chips} ${variant === 'admin' ? styles.adminChips : ''}`}
-        >
+        <nav aria-label={`${badge} 메뉴`} className={`${styles.chips} ${variant === 'admin' ? styles.adminChips : ''}`}>
           {menu.map((m) => (
             <Link
               key={m.key}
@@ -168,7 +177,9 @@ export default function ConsoleShell({
         <div className={styles.content}>{children}</div>
       </main>
       {bottom}
-      {variant === 'seller' && !hideMobileNav && <TabBar items={sellerTabs} active={sellerTabActive} label="판매자 메뉴" />}
+      {variant === 'seller' && !hideMobileNav && (
+        <TabBar items={sellerTabs} active={sellerTabActive} label="판매자 메뉴" />
+      )}
     </div>
   )
 }
