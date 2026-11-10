@@ -4,7 +4,8 @@ import AppFrame from '../../components/ui/AppFrame'
 import BottomBar from '../../components/ui/BottomBar'
 import Button from '../../components/ui/Button'
 import Icon from '../../components/ui/Icon'
-import PageHeader, { HeaderIcon } from '../../components/ui/PageHeader'
+import CartHeaderIcon from '../../components/ui/CartHeaderIcon'
+import PageHeader from '../../components/ui/PageHeader'
 import { Empty, ErrorView, Loading, Thumb, won } from '../../components/ui/Misc'
 import { errorMessage } from '../../lib/api'
 import { addCartItem, getCart, updateCartItem } from '../../lib/api/cart'
@@ -175,7 +176,7 @@ export default function ProductDetailPage() {
         </BottomBar>
       }
     >
-      <PageHeader back title="상품 상세" right={<HeaderIcon to="/cart" icon="bag" label="장바구니" />} />
+      <PageHeader back title="상품 상세" right={<CartHeaderIcon />} />
 
       <div className={styles.hero}>
         <Thumb src={images[imgIndex]} alt={product.name} width="100%" height="100%" radius={0} />

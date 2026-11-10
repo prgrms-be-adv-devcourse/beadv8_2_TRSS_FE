@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import Icon from '../../components/ui/Icon'
+import CartHeaderIcon from '../../components/ui/CartHeaderIcon'
 import PageHeader, { HeaderIcon } from '../../components/ui/PageHeader'
 import { ErrorView, Loading, Thumb } from '../../components/ui/Misc'
 import { useApi } from '../../lib/useApi'
@@ -40,7 +41,7 @@ export default function HomePage() {
           <>
             <HeaderIcon to="/search" icon="search" label="검색" />
             <HeaderIcon to="/wishlist" icon="heart" label="찜 목록" />
-            <HeaderIcon to="/cart" icon="bag" label="장바구니" />
+            <CartHeaderIcon />
             <HeaderIcon
               to="/notifications"
               icon="bell"

@@ -46,6 +46,7 @@ export function HeaderIcon({
   icon,
   label,
   dot,
+  badge,
   onClick,
   state,
 }: {
@@ -53,6 +54,8 @@ export function HeaderIcon({
   icon: IconName
   label: string
   dot?: boolean
+  /** 숫자 배지 (장바구니 개수 등). 0이나 undefined면 안 보여요 */
+  badge?: number
   onClick?: () => void
   state?: unknown
 }) {
@@ -60,6 +63,7 @@ export function HeaderIcon({
     <>
       <Icon name={icon} />
       {dot && <span className={styles.dot} />}
+      {!!badge && <span className={styles.count}>{badge > 99 ? '99+' : badge}</span>}
     </>
   )
   if (to)

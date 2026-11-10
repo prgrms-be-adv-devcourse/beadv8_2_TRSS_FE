@@ -74,3 +74,26 @@
   background: #e05a6b;
   border: 1.5px solid #fff;
 }
+.count {
+  position: absolute;
+  top: 6px;
+  right: 2px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: 99px;
+  background: var(--ink);
+  color: #fff;
+  border: 1.5px solid #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 14px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.dark .count {
+  background: #fff;
+  color: var(--ink);
+  border-color: var(--ink);
+}
