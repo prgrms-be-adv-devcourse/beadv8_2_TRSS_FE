@@ -1,4 +1,4 @@
-/* 주문 · 결제 (시안 Checkout · CheckoutShort · CouponSheet) */
+/* 주문 결제 (시안 Checkout · CheckoutShort · CouponSheet) */
 .page {
   padding: 12px 0 24px;
 }
@@ -454,4 +454,11 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--red);
+}
+
+/* 다음 우편번호 검색이 시트 안에 펼쳐지는 칸 */
+.postcode {
+  height: min(460px, 62vh);
+  margin: 0 -8px;
+  border-top: 1px solid var(--line);
 }

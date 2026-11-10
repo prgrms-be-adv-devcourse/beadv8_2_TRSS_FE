@@ -13,11 +13,13 @@ type Props = {
   right?: ReactNode
   /** 관리자 모바일처럼 검은 헤더 */
   dark?: boolean
+  /** 오른쪽 끝 홈 버튼. 기본: 뒤로 버튼이 있으면 보여요 (판매자·관리자 틀처럼 자체 버튼이 있으면 false) */
+  home?: boolean
   className?: string
 }
 
 /** 화면 상단 헤더 (높이 52px · 제목 18px/600 · 왼쪽 정렬) */
-export default function PageHeader({ title, back, badge, right, dark, className }: Props) {
+export default function PageHeader({ title, back, badge, right, dark, className, home = !!back }: Props) {
   const navigate = useNavigate()
   const goBack = () => {
     if (typeof back === 'string') navigate(back)
@@ -35,7 +37,12 @@ export default function PageHeader({ title, back, badge, right, dark, className 
       )}
       {badge && <span className={styles.badge}>{badge}</span>}
       <h1 className={styles.title}>{title}</h1>
-      {right && <div className={styles.right}>{right}</div>}
+      {(right || home) && (
+        <div className={styles.right}>
+          {right}
+          {home && <HeaderIcon to="/" icon="home" label="홈으로" />}
+        </div>
+      )}
     </header>
   )
 }

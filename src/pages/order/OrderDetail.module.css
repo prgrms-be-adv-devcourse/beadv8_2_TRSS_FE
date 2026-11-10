@@ -10,7 +10,7 @@
 }
 .bigTitle {
   margin: 4px 0 0;
-  font-family: var(--font-display), 'Noto Sans KR', serif;
+  font-family: var(--font-body);
   font-size: 23px;
   font-weight: 700;
 }

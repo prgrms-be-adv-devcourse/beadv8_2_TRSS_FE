@@ -100,6 +100,9 @@ export default function SearchPage() {
             )}
           </label>
         </form>
+        <Link to="/" aria-label="홈으로" className={styles.iconBtn}>
+          <Icon name="home" />
+        </Link>
       </header>
 
       {recent.length > 0 && (

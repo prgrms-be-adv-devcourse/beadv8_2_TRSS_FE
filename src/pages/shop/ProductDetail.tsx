@@ -1,30 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import BottomBar from '../../components/ui/BottomBar'
 import Button from '../../components/ui/Button'
-import Icon from '../../components/ui/Icon'
 import CartHeaderIcon from '../../components/ui/CartHeaderIcon'
 import PageHeader from '../../components/ui/PageHeader'
 import { Empty, ErrorView, Loading, Thumb, won } from '../../components/ui/Misc'
 import { errorMessage } from '../../lib/api'
-import { addCartItem, getCart, updateCartItem } from '../../lib/api/cart'
-import { newIdempotencyKey } from '../../lib/api/order'
+import { addCartItem } from '../../lib/api/cart'
 import { getProductReviews, getReviewSummary } from '../../lib/api/review'
 import { useAuth } from '../../lib/auth'
 import { useApi } from '../../lib/useApi'
-import {
-  AiTag,
-  ExampleNotice,
-  HeartButton,
-  MiniCard,
-  Stars,
-  imageOf,
-  loadProduct,
-  loadProducts,
-  useRequireLogin,
-  useWishes,
-} from './common'
+import { ExampleNotice, HeartButton, Stars, imageOf, loadProduct, useRequireLogin, useWishes } from './common'
 import styles from './ProductDetail.module.css'
 
 /** 백엔드 장바구니 최대 수량 (custom.order.cartMaxQuantity) */
@@ -36,7 +23,6 @@ const fmtDate = (iso: string) => iso.slice(0, 10).replace(/-/g, '.')
 export default function ProductDetailPage() {
   const { productId: idParam } = useParams()
   const productId = Number(idParam)
-  const navigate = useNavigate()
   const { me } = useAuth()
   /** 관리자는 구매할 수 없어 담기·구매 버튼을 꺼 둬요. (TRSS-54) */
   const isAdmin = me?.role === 'ADMIN'
@@ -53,16 +39,11 @@ export default function ProductDetailPage() {
     () => (product && !product.example ? getProductReviews(productId, { size: 2 }) : Promise.resolve(null)),
     [product],
   )
-  // TODO(API 미구현): AI 비슷한 상품 추천 — 지금은 같은 소분류 상품으로 채워요
-  const similar = useApi(
-    () => (product ? loadProducts({ categoryId: product.categoryId, size: 6 }) : Promise.resolve(null)),
-    [product],
-  )
 
   const [imgIndex, setImgIndex] = useState(0)
   const [optionId, setOptionId] = useState<number | null>(null)
   const [qty, setQty] = useState(1)
-  const [busy, setBusy] = useState<'' | 'cart' | 'buy'>('')
+  const [busy, setBusy] = useState<'' | 'cart'>('')
   const [added, setAdded] = useState<number | null>(null)
   const [actionError, setActionError] = useState('')
 
@@ -89,7 +70,14 @@ export default function ProductDetailPage() {
         {loaded.error ? (
           <ErrorView message={loaded.error} onRetry={loaded.reload} />
         ) : (
-          <Empty title="판매하지 않는 상품이에요" action={<Button to="/products" variant="outline" size="sm">다른 상품 보기</Button>}>
+          <Empty
+            title="판매하지 않는 상품이에요"
+            action={
+              <Button to="/products" variant="outline" size="sm">
+                다른 상품 보기
+              </Button>
+            }
+          >
             판매가 끝났거나 없는 상품이에요.
           </Empty>
         )}
@@ -105,7 +93,6 @@ export default function ProductDetailPage() {
   const showOptions = product.options.length > 1 || product.options[0]?.name !== '기본'
   const reviewCount = summary.data?.reviewCount ?? 0
   const wished = wishes.has(product.productId)
-  const similarItems = (similar.data?.items ?? []).filter((p) => p.productId !== product.productId).slice(0, 5)
 
   const addToCart = async () => {
     if (!option || disabled || !requireLogin()) return
@@ -118,36 +105,6 @@ export default function ProductDetailPage() {
     } catch (e) {
       setActionError(errorMessage(e))
     } finally {
-      setBusy('')
-    }
-  }
-
-  /**
-   * 바로 구매: 이 옵션을 장바구니에 지금 고른 수량으로 넣고, 그 항목만 주문서로 넘겨요.
-   * 이미 장바구니에 있던 옵션이면 수량을 지금 고른 수량으로 바꿔요(담기처럼 더하지 않아요).
-   */
-  const buyNow = async () => {
-    if (!option || disabled || !requireLogin()) return
-    setBusy('buy')
-    setAdded(null)
-    setActionError('')
-    try {
-      const before = await getCart()
-      const existing = before.items.find((i) => i.optionId === option.optionId)
-      if (existing) await updateCartItem(existing.itemId, { quantity: qty, selected: true })
-      else await addCartItem(option.optionId, qty)
-      const cart = existing ? before : await getCart()
-      const item = cart.items.find((i) => i.optionId === option.optionId)
-      if (!item) throw new Error('cart item not found')
-      navigate('/checkout', {
-        state: {
-          cartItemIds: [item.itemId],
-          expectedTotalPrice: item.price * qty,
-          idempotencyKey: newIdempotencyKey(),
-        },
-      })
-    } catch (e) {
-      setActionError(errorMessage(e))
       setBusy('')
     }
   }
@@ -167,11 +124,8 @@ export default function ProductDetailPage() {
           }
         >
           <HeartButton on={wished} onClick={() => wishes.toggle(product.productId)} className={styles.wish} />
-          <Button variant="outline" disabled={disabled} onClick={addToCart}>
+          <Button disabled={disabled} onClick={addToCart}>
             {busy === 'cart' ? '담는 중이에요' : '장바구니 담기'}
-          </Button>
-          <Button disabled={disabled} onClick={buyNow}>
-            {busy === 'buy' ? '준비 중이에요' : '바로 구매'}
           </Button>
         </BottomBar>
       }
@@ -243,18 +197,6 @@ export default function ProductDetailPage() {
         </div>
       </dl>
 
-      <Link to={`/product/${product.productId}/match`} className={styles.matchLink}>
-        {/* TODO(API 미구현): AI 피부 맞춤도 — 상세 안 요약은 목업이에요 */}
-        <span className={styles.matchRate}>92%</span>
-        <span className={styles.matchText}>
-          <b>
-            내 피부와 잘 맞아요 <AiTag />
-          </b>
-          <span>성분 · 맞춤 이유 보기</span>
-        </span>
-        <Icon name="chevron" size={18} />
-      </Link>
-
       <section aria-label="옵션 선택" className={styles.options}>
         {/* TODO(API 미구현): 상품 상세 옵션 그룹 구조 — 그룹(색상 → 사이즈)이 API에 없어 조합 목록을 한 줄로 보여줘요 */}
         {showOptions && (
@@ -285,7 +227,12 @@ export default function ProductDetailPage() {
         )}
         <div className={`${styles.qtyRow} ${showOptions ? styles.qtyDivided : ''}`}>
           <div className={styles.stepper}>
-            <button type="button" aria-label="수량 빼기" disabled={qty <= 1} onClick={() => setQty((q) => Math.max(1, q - 1))}>
+            <button
+              type="button"
+              aria-label="수량 빼기"
+              disabled={qty <= 1}
+              onClick={() => setQty((q) => Math.max(1, q - 1))}
+            >
               −
             </button>
             <span aria-live="polite">{qty}</span>
@@ -338,15 +285,6 @@ export default function ProductDetailPage() {
           </h2>
           <Link to={`/product/${product.productId}/reviews`}>전체 보기 ›</Link>
         </div>
-        {reviewCount > 0 && (
-          <div className={styles.aiSummary}>
-            {/* TODO(API 미구현): AI 리뷰 요약 */}
-            <p className={styles.aiTitle}>
-              <AiTag /> 리뷰 요약
-            </p>
-            <p>리뷰를 모아 요약해 드릴 예정이에요. 지금은 예시 문구예요.</p>
-          </div>
-        )}
         {reviews.data?.items.map((r) => (
           <article key={r.reviewId} className={styles.review}>
             <div className={styles.rvMeta}>
@@ -360,19 +298,6 @@ export default function ProductDetailPage() {
         ))}
         {reviews.data && reviews.data.items.length === 0 && <p className={styles.noReview}>아직 리뷰가 없어요.</p>}
       </section>
-
-      {similarItems.length > 0 && (
-        <section aria-labelledby="sim" className={styles.similar}>
-          <h2 id="sim">
-            비슷한 상품 <AiTag />
-          </h2>
-          <div className={styles.simRow}>
-            {similarItems.map((p) => (
-              <MiniCard key={p.productId} p={p} />
-            ))}
-          </div>
-        </section>
-      )}
     </AppFrame>
   )
 }

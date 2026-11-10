@@ -10,7 +10,7 @@ import ModalsPage from '../pages/order/ModalsPage'
 /** 구매자 · 주문 (장바구니·결제·주문·반품) */
 export const buyerOrderScreens: ScreenRoute[] = [
   { path: '/cart', title: '장바구니', auth: 'login', group: '구매자', element: <CartPage /> },
-  { path: '/checkout', title: '주문 · 결제', auth: 'login', group: '구매자', element: <CheckoutPage /> },
+  { path: '/checkout', title: '주문 결제', auth: 'login', group: '구매자', element: <CheckoutPage /> },
   { path: '/checkout/progress', title: '결제 진행', auth: 'login', group: '구매자', element: <PayProgressPage /> },
   {
     path: '/checkout/done',

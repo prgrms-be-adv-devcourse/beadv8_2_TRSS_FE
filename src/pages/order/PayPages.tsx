@@ -77,7 +77,7 @@ export function PayProgressPage() {
 
   return (
     <AppFrame>
-      <PageHeader title="주문 · 결제" />
+      <PageHeader title="주문 결제" />
       <div className={styles.backdrop}>
         <section role="dialog" aria-modal="true" aria-labelledby="pp-t" aria-busy="true" className={styles.dialog}>
           <span className={styles.spinner} aria-hidden="true" />

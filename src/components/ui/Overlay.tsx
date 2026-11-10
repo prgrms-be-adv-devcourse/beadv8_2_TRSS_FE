@@ -35,7 +35,7 @@ export function Modal({
   )
 }
 
-/** 아래에서 올라오는 시트 (구매자 컬럼 폭) */
+/** 화면 가운데에 뜨는 팝업 (제목 + 닫기 + 내용 + 아래 버튼) */
 export function Sheet({
   title,
   children,
@@ -49,9 +49,8 @@ export function Sheet({
 }) {
   useEscape(onClose)
   return (
-    <div className={`${styles.backdrop} ${styles.bottom}`} onClick={onClose}>
+    <div className={`${styles.backdrop} ${styles.center}`} onClick={onClose}>
       <div role="dialog" aria-modal="true" className={styles.sheet} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.grip} />
         <div className={styles.sheetHead}>
           <h2 className={styles.sheetTitle}>{title}</h2>
           <button type="button" aria-label="닫기" className={styles.close} onClick={onClose}>

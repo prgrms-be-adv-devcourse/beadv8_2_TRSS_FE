@@ -10,6 +10,7 @@ import PageHeader from '../../components/ui/PageHeader'
 import f from '../../components/ui/form.module.css'
 import { ApiError, errorMessage } from '../../lib/api'
 import { getCart, type CartItem } from '../../lib/api/cart'
+import { formatPostcodeAddress, loadPostcode } from '../../lib/postcode'
 import { getCartCoupons, validateProductCoupon, type CartCoupon } from '../../lib/api/coupon'
 import { cancelOrder, isPayable, newIdempotencyKey } from '../../lib/api/order'
 import { getWallet } from '../../lib/api/wallet'
@@ -44,7 +45,7 @@ const isUnknownResult = (e: unknown) => e instanceof ApiError && (e.status === 0
 const roundUp = (n: number) => Math.ceil(n / 10000) * 10000
 
 /**
- * 주문 · 결제 (시안 ⑥ Checkout · ⑥-1 CheckoutShort · ⑥-2 CheckoutModal · ⑥-5 CouponSheet)
+ * 주문 결제 (시안 ⑥ Checkout · ⑥-1 CheckoutShort · ⑥-2 CheckoutModal · ⑥-5 CouponSheet)
  *
  * - 장바구니에서 오면(state: cartItemIds·idempotencyKey) 아직 주문이 없어요. 배송지·쿠폰을 고르고
  *   결제하기(또는 충전하고 결제하기)를 누를 때 주문을 만들어요. 쿠폰·배송지는 주문 생성 요청에만 넣을 수 있어서예요.
@@ -60,7 +61,7 @@ export default function CheckoutPage() {
   if (state.cartItemIds?.length) return <DraftCheckout from={state as FromCart} />
   return (
     <AppFrame>
-      <PageHeader title="주문 · 결제" back="/cart" />
+      <PageHeader title="주문 결제" back="/cart" />
       <Empty
         title="주문할 상품이 없어요"
         action={
@@ -248,6 +249,8 @@ function AddressFormSection({
           onPick={(zip, addr) => {
             onChange({ ...value, zip, addr })
             setSearch(false)
+            // 기본 주소를 채운 뒤 상세 주소 칸으로 바로 옮겨요
+            window.setTimeout(() => document.getElementById('ship-addr2')?.focus(), 0)
           }}
         />
       )}
@@ -256,8 +259,8 @@ function AddressFormSection({
 }
 
 /**
- * 주소 검색 시트
- * TODO(API 미구현): 우편번호 검색 서비스(다음 우편번호 등) 연동 — 지금은 우편번호와 기본 주소를 직접 입력해요
+ * 주소 검색 시트: 다음(카카오) 우편번호 서비스를 시트 안에 펼쳐요.
+ * 주소를 고르면 우편번호·기본 주소를 채우고 닫혀요. 서비스를 불러오지 못하면 직접 입력으로 바꿔요.
  */
 function AddressSearchSheet({
   zip: z0,
@@ -270,9 +273,39 @@ function AddressSearchSheet({
   onClose: () => void
   onPick: (zip: string, addr: string) => void
 }) {
+  const boxRef = useRef<HTMLDivElement>(null)
+  const pickRef = useRef(onPick)
+  pickRef.current = onPick
+  const [failed, setFailed] = useState(false)
   const [zip, setZip] = useState(z0)
   const [addr, setAddr] = useState(a0)
   const ok = /^\d{5}$/.test(zip) && !!addr.trim()
+
+  useEffect(() => {
+    let alive = true
+    loadPostcode()
+      .then((Postcode) => {
+        if (!alive || !boxRef.current) return
+        new Postcode({
+          width: '100%',
+          height: '100%',
+          animation: true,
+          oncomplete: (d) => pickRef.current(d.zonecode, formatPostcodeAddress(d)),
+        }).embed(boxRef.current, { autoClose: false })
+      })
+      .catch(() => alive && setFailed(true))
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  if (!failed)
+    return (
+      <Sheet title="주소 검색" onClose={onClose}>
+        <div ref={boxRef} className={styles.postcode} aria-label="우편번호 검색" />
+      </Sheet>
+    )
+
   return (
     <Sheet
       title="주소 검색"
@@ -283,7 +316,7 @@ function AddressSearchSheet({
         </Button>
       }
     >
-      <p className={f.help}>주소 검색 기능을 준비하고 있어요. 지금은 우편번호와 주소를 직접 입력해 주세요.</p>
+      <p className={f.help}>주소 검색을 불러오지 못했어요. 우편번호와 주소를 직접 입력해 주세요.</p>
       <div className={`${f.field} ${styles.mt14}`}>
         <label htmlFor="as-zip" className={f.label}>
           우편번호
@@ -828,7 +861,7 @@ function DraftCheckout({ from }: { from: FromCart }) {
 
   return (
     <AppFrame bottom={bottom}>
-      <PageHeader title="주문 · 결제" back="/cart" />
+      <PageHeader title="주문 결제" back="/cart" />
       {loading && <Loading label="주문서를 준비하고 있어요" />}
       {cart.error && !cart.data && <ErrorView message={cart.error} onRetry={cart.reload} />}
       {empty && (
@@ -1043,7 +1076,7 @@ function OrderCheckout({ orderId }: { orderId: number }) {
 
   return (
     <AppFrame bottom={bottom}>
-      <PageHeader title="주문 · 결제" back="/cart" />
+      <PageHeader title="주문 결제" back="/cart" />
       {order.loading && !o && <Loading label="주문서를 불러오고 있어요" />}
       {order.error && !o && <ErrorView message={order.error} onRetry={order.reload} />}
       {ready && (

@@ -4,7 +4,7 @@ import AppFrame from '../../components/ui/AppFrame'
 import Button from '../../components/ui/Button'
 import { errorMessage } from '../../lib/api'
 import { login } from '../../lib/auth'
-import { kakaoEnabled, startKakao } from '../../lib/kakao'
+import { startKakao } from '../../lib/kakao'
 import type { KakaoLoginState } from './KakaoCallback'
 import { afterLoginPath } from './util'
 import s from './account.module.css'
@@ -88,28 +88,26 @@ export default function LoginPage() {
           {pending ? '로그인 중…' : '로그인'}
         </Button>
       </form>
-      {kakaoEnabled && (
-        <>
-          <div className={s.divider} aria-hidden="true">
-            <span />
-            또는
-            <span />
-          </div>
-          <div className={s.kakaoWrap}>
-            <button
-              type="button"
-              className={s.kakao}
-              onClick={() => {
-                setError('')
-                startKakao('login', from)
-              }}
-            >
-              <KakaoSymbol />
-              카카오 로그인
-            </button>
-          </div>
-        </>
-      )}
+      <div className={s.divider} aria-hidden="true">
+        <span />
+        또는
+        <span />
+      </div>
+      <div className={s.kakaoWrap}>
+        <button
+          type="button"
+          className={s.kakao}
+          onClick={() => {
+            setError('')
+            // 카카오 REST API 키(VITE_KAKAO_REST_API_KEY)가 없으면 인가 화면으로 가지 않아요
+            if (!startKakao('login', from))
+              setError('카카오 로그인을 아직 사용할 수 없어요. 잠시 후 다시 시도해 주세요.')
+          }}
+        >
+          <KakaoSymbol />
+          카카오 로그인
+        </button>
+      </div>
       <p className={s.authFoot}>
         처음이신가요? <Link to="/signup">회원가입</Link>
       </p>

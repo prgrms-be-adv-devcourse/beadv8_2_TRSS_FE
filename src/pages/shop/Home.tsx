@@ -7,8 +7,8 @@ import PageHeader, { HeaderIcon } from '../../components/ui/PageHeader'
 import { ErrorView, Loading, Thumb } from '../../components/ui/Misc'
 import { useApi } from '../../lib/useApi'
 import { useAuth } from '../../lib/auth'
-import { Avatar, ExampleNotice, MiniCard, SectionHead, imageOf, loadCategories, loadProducts } from './common'
-import { MOCK_CREATORS, MOCK_NOTIFICATIONS, MOCK_PROFILE, MOCK_WHY } from './mock'
+import { ExampleNotice, MiniCard, SectionHead, imageOf, loadCategories, loadProducts } from './common'
+import { MOCK_NOTIFICATIONS, MOCK_PROFILE, MOCK_WHY } from './mock'
 import CategoryDrawer from './CategoryDrawer'
 import styles from './Home.module.css'
 
@@ -162,25 +162,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
-      <section aria-label="나와 피부가 비슷한 크리에이터" className={styles.sec}>
-        {/* TODO(API 미구현): AI 크리에이터 추천 */}
-        <SectionHead
-          title="나와 피부가 비슷한 크리에이터"
-          ai
-          desc="같은 피부 고민을 가진 크리에이터의 pick이에요"
-          more={{ to: '/recommend?tab=creator' }}
-        />
-        <div className={styles.creators}>
-          {MOCK_CREATORS.map((c) => (
-            <Link key={c.initial} to="/recommend?tab=creator" className={styles.creator}>
-              <Avatar initial={c.initial} size={60} />
-              <span className={styles.creatorName}>{c.name}</span>
-              <span className={styles.creatorTag}>{c.short}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
 
       {/* TODO(API 미구현): 설문 여부 조회 — 설문 전 회원에게만 보여줘요. 지금은 항상 보여요 */}
       <Link to="/survey" className={styles.surveyCard}>

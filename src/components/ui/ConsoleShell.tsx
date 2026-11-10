@@ -145,7 +145,7 @@ export default function ConsoleShell({
 
   return (
     <div className={`${styles.root} ${styles[variant]}`}>
-      <PageHeader title={title} back={back} badge={back ? undefined : MOBILE_BADGE[variant]} right={right} dark={variant === 'admin'} />
+      <PageHeader title={title} back={back} badge={back ? undefined : MOBILE_BADGE[variant]} right={right} dark={variant === 'admin'} home={false} />
       {showChips && (
         <nav
           aria-label={`${badge} 메뉴`}
