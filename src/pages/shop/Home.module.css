@@ -224,25 +224,25 @@
   color: var(--muted);
 }
 
-/* 설문 배너: 연회색 카드 + 흰 아이콘 + 흰 단계 태그 + 검은 시작 버튼 */
+/* 설문 배너: 라벤더→스카이 그라데이션 + 흰 아이콘 + 반투명 흰 단계 태그 + 검은 시작 버튼 */
 .surveyCard {
   position: relative;
   overflow: hidden;
   margin: 24px 16px 0;
   padding: 18px 16px 18px 18px;
   border-radius: 20px;
-  background: var(--surface);
-  color: var(--ink);
+  background: linear-gradient(120deg, #e9e4f8 0%, #dfeaf8 100%);
+  color: #042c53;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 14px 12px;
   text-decoration: none;
-  transition: background 0.15s ease;
+  transition: filter 0.15s ease;
 }
 .surveyCard:hover {
-  color: var(--ink);
-  background: #ececeb;
+  color: #042c53;
+  filter: brightness(0.98);
 }
 /* 오른쪽 위 은은한 원 장식 */
 .surveyDeco {
@@ -261,6 +261,7 @@
   height: 46px;
   border-radius: 14px;
   background: #fff;
+  color: #185fa5;
   display: grid;
   place-items: center;
 }
@@ -277,7 +278,7 @@
   gap: 6px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--muted);
+  color: #185fa5;
 }
 .surveyAi {
   font-size: 10px;
@@ -285,7 +286,7 @@
   letter-spacing: 0.5px;
   padding: 1px 6px;
   border-radius: 4px;
-  background: var(--ink);
+  background: #042c53;
   color: #fff;
 }
 .surveyTitle {
@@ -295,7 +296,7 @@
 }
 .surveyDesc {
   font-size: 12px;
-  color: var(--muted);
+  color: #185fa5;
 }
 /* 아래 줄: 단계 태그(왼쪽) + 시작 버튼(오른쪽) */
 .surveyFoot {
@@ -319,10 +320,10 @@
   height: 24px;
   padding: 0 9px;
   border-radius: var(--radius-pill);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.75);
   font-size: 11px;
   font-weight: 600;
-  color: var(--sub);
+  color: #0c447c;
 }
 .surveyGo {
   position: relative;
