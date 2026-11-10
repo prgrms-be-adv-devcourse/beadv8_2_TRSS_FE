@@ -256,7 +256,7 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
             : '카카오 계정을 연결하면 로그인 화면에서 카카오로 로그인할 수 있어요.'}
         </p>
         {me && (
-          <div className={s.centerActions}>
+          <div className={s.rightActions}>
             {me.kakaoLinked ? (
               <Button variant="outline" size="sm" onClick={k.openConfirm}>
                 연결 해제
@@ -276,7 +276,7 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
           <Badge tone={sm.tone}>{sm.tag}</Badge>
         </div>
         <p className={s.cardText}>{sellerText}</p>
-        <div className={s.centerActions}>
+        <div className={s.rightActions}>
           <Button to={sm.to} size="sm" variant={sm.act ? 'primary' : 'outline'}>
             {sm.act ?? '신청 상태 보기'}
           </Button>
@@ -289,7 +289,7 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
           <Badge tone={im.tone}>{im.tag}</Badge>
         </div>
         <p className={s.cardText}>{im.text}</p>
-        <div className={s.centerActions}>
+        <div className={s.rightActions}>
           <Button to={im.to} size="sm" variant={im.act ? 'primary' : 'outline'}>
             {im.act ?? '신청 상태 보기'}
           </Button>

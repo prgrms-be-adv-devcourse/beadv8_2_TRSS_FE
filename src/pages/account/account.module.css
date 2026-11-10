@@ -980,3 +980,11 @@
 .cardFoot.centerActions {
   margin-top: 14px;
 }
+/* 내 정보: 카카오 연결 · 판매자 · 인플루언서 카드 버튼은 오른쪽 */
+.rightActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
