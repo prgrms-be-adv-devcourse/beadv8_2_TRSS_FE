@@ -304,7 +304,8 @@ export default function ProductDetailPage() {
         </div>
         {added != null && (
           <p role="status" className={styles.added}>
-            장바구니에 담았어요 · 이 옵션 {added}개 <Link to="/cart">장바구니 보기 ›</Link>
+            <span>장바구니에 담았어요</span>
+            <Link to="/cart">장바구니 보기 ›</Link>
           </p>
         )}
         {(actionError || wishes.error) && (
