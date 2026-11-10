@@ -6,12 +6,13 @@
  * GET  /api/v1/admin/settlements/runs                   실행 결과 (PageResponse, 최신순)
  * GET  /api/v1/admin/settlements                        정산서 목록 ?month&status&sellerId (PageResponse)
  * GET  /api/v1/admin/settlements/{id}                   정산서 상세 (묶인 후보 포함)
- * GET  /api/v1/admin/settlements/{id}/histories         처리 이력
+ * GET  /api/v1/admin/settlements/{id}/histories         처리 이력 (List, 처리 순서대로)
  * POST /api/v1/admin/settlements/{id}/retry             수동 재처리 { reason } (MANUAL_REQUIRED만)
  * POST /api/v1/admin/settlements/{id}/hold | release    보류 { reason } / 해제
  * GET  /api/v1/admin/settlements/preview?month=         미리보기 (판매자별 PageResponse 포함)
- * GET  /api/v1/admin/settlement-candidates              후보 목록
+ * GET  /api/v1/admin/settlement-candidates              후보 목록 ?sellerId&month&status (PageResponse, 최신순)
  * POST /api/v1/admin/settlement-candidates/{id}/exclude 후보 제외 { reason }
+ * POST /api/v1/admin/settlements/{id}/ledger-mismatch/confirm  원장 불일치 확인 { reason }
  * [판매자]
  * GET  /api/v1/seller/settlements ?month&status         내 정산서 목록 (PageResponse)
  * GET  /api/v1/seller/settlements/expected              정산 예정 금액
@@ -176,6 +177,92 @@ export const holdSettlement = (id: number, reason: string) =>
   api<Settlement>(`/api/v1/admin/settlements/${id}/hold`, { method: 'POST', body: { reason } })
 export const releaseSettlement = (id: number) =>
   api<Settlement>(`/api/v1/admin/settlements/${id}/release`, { method: 'POST' })
+
+/** 정산 후보 상태 (BE SettlementCandidateStatus) */
+export type SettlementCandidateStatus = SettlementCandidate['status']
+export const SETTLEMENT_CANDIDATE_STATUS_LABEL: Record<SettlementCandidateStatus, string> = {
+  READY: '정산 대기',
+  INCLUDED: '정산서 포함',
+  EXCLUDED: '제외',
+}
+
+/** 처리 단계 (BE SettlementHistoryStage) */
+export type SettlementHistoryStage =
+  | 'CANDIDATE_CREATE'
+  | 'VERIFY' // 원장 재대조 (관리자 불일치 확인도 VERIFY·ADMIN으로 남음)
+  | 'JUDGE'
+  | 'AGGREGATE'
+  | 'PAYOUT'
+  | 'HOLD'
+  | 'RELEASE'
+  | 'EXCLUDE'
+export const SETTLEMENT_HISTORY_STAGE_LABEL: Record<SettlementHistoryStage, string> = {
+  CANDIDATE_CREATE: '후보 생성',
+  VERIFY: '원장 재대조',
+  JUDGE: '지급 판별',
+  AGGREGATE: '정산서 확정',
+  PAYOUT: '지급',
+  HOLD: '보류',
+  RELEASE: '보류 해제',
+  EXCLUDE: '후보 제외',
+}
+/** 처리 결과 (BE SettlementHistoryResult) */
+export type SettlementHistoryResult = 'SUCCEEDED' | 'FAILED' | 'MANUAL_REQUIRED' | 'SKIPPED'
+export const SETTLEMENT_HISTORY_RESULT_LABEL: Record<SettlementHistoryResult, string> = {
+  SUCCEEDED: '성공',
+  FAILED: '실패',
+  MANUAL_REQUIRED: '수동 처리 필요',
+  SKIPPED: '건너뜀',
+}
+/** 처리를 시작한 경로 (BE SettlementTrigger) */
+export type SettlementTrigger = 'EVENT' | 'MONTHLY_JOB' | 'RETRY_SCHEDULER' | 'ADMIN' | 'LEDGER_RECHECK'
+export const SETTLEMENT_TRIGGER_LABEL: Record<SettlementTrigger, string> = {
+  EVENT: '이벤트',
+  MONTHLY_JOB: '월 정산',
+  RETRY_SCHEDULER: '재시도',
+  ADMIN: '관리자',
+  LEDGER_RECHECK: '원장 재대조',
+}
+
+/** BE SettlementHistoryResponse */
+export type SettlementHistory = {
+  historyId: number
+  stage: SettlementHistoryStage
+  attemptNo: number
+  trigger: SettlementTrigger
+  result: SettlementHistoryResult
+  errorCode: string | null
+  failReason: string | null
+  /** 관리자가 적은 사유 (재처리·보류·제외·불일치 확인) */
+  adminReason: string | null
+  batchExecutionId: number | null
+  processedAt: string
+}
+
+/** BE SettlementLedgerMismatchConfirmResponse */
+export type SettlementLedgerMismatchConfirmResult = {
+  settlementId: number
+  /** 다른 불일치가 없어 자동 해제(HOLD → READY)된 정산서 수. 남아 있으면 0 */
+  releasedCount: number
+}
+
+export const getSettlementHistories = (id: number) =>
+  api<SettlementHistory[]>(`/api/v1/admin/settlements/${id}/histories`)
+/** 사유 필수(300자 이하). 풀리지 않은 원장 불일치가 없으면 409 */
+export const confirmLedgerMismatch = (id: number, reason: string) =>
+  api<SettlementLedgerMismatchConfirmResult>(`/api/v1/admin/settlements/${id}/ledger-mismatch/confirm`, {
+    method: 'POST',
+    body: { reason },
+  })
+export const getSettlementCandidates = (
+  query: PageQuery & { sellerId?: number; month?: YearMonth; status?: SettlementCandidateStatus } = {},
+) => api<PageResponse<SettlementCandidate>>('/api/v1/admin/settlement-candidates', { query })
+/** 정산서에 묶이지 않은 READY 후보만. 사유 필수(300자 이하) */
+export const excludeSettlementCandidate = (candidateId: number, reason: string) =>
+  api<SettlementCandidate>(`/api/v1/admin/settlement-candidates/${candidateId}/exclude`, {
+    method: 'POST',
+    body: { reason },
+  })
 
 // ── 판매자 ──
 export const getMySettlements = (query: PageQuery & { month?: YearMonth; status?: SettlementSellerStatus } = {}) =>
