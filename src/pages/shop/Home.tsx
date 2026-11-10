@@ -10,6 +10,7 @@ import { useAuth } from '../../lib/auth'
 import { ExampleNotice, MiniCard, SectionHead, imageOf, loadCategories, loadProducts } from './common'
 import { MOCK_NOTIFICATIONS, MOCK_PROFILE, MOCK_WHY } from './mock'
 import CategoryDrawer from './CategoryDrawer'
+import { SearchPanel } from './Search'
 import styles from './Home.module.css'
 
 /** ① 홈 */
@@ -18,6 +19,8 @@ export default function HomePage() {
   const categories = useApi(loadCategories, [])
   const [drawer, setDrawer] = useState(false)
   const closeDrawer = useCallback(() => setDrawer(false), [])
+  const [searching, setSearching] = useState(false)
+  const closeSearch = useCallback(() => setSearching(false), [])
   // TODO(API 미구현): AI 추천(회원 맞춤 · 찜 기반 · 최근 본 상품 기반) — ai-service 추천 API가 없어 최신 상품으로 자리를 채워요
   const products = useApi(() => loadProducts({ size: 12 }), [])
   const items = products.data?.items ?? []
@@ -39,7 +42,7 @@ export default function HomePage() {
         }
         right={
           <>
-            <HeaderIcon to="/search" icon="search" label="검색" />
+            <HeaderIcon icon="search" label="검색" onClick={() => setSearching(true)} />
             <HeaderIcon to="/wishlist" icon="heart" label="찜 목록" />
             <CartHeaderIcon />
             <HeaderIcon
@@ -63,10 +66,10 @@ export default function HomePage() {
         >
           <Icon name="grid" size={20} />
         </button>
-        <Link to="/search" className={styles.search}>
+        <button type="button" aria-haspopup="dialog" className={styles.search} onClick={() => setSearching(true)}>
           <Icon name="search" size={18} />
           브랜드나 상품을 검색해 보세요
-        </Link>
+        </button>
       </div>
 
       <nav aria-label="빠른 카테고리" className={styles.quick}>
@@ -198,6 +201,7 @@ export default function HomePage() {
       </div>
 
       {drawer && <CategoryDrawer onClose={closeDrawer} />}
+      {searching && <SearchPanel onClose={closeSearch} />}
     </AppFrame>
   )
 }

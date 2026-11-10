@@ -33,6 +33,9 @@
 .search {
   flex: 1;
   min-width: 0;
+  border: 0;
+  text-align: left;
+  cursor: text;
   height: 46px;
   border-radius: var(--radius-pill);
   background: var(--surface);

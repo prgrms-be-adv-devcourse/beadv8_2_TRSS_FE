@@ -40,6 +40,50 @@ function trendingAt() {
  * - 입력 전에는 최근 검색어 · 인기 급상승 검색어 · 카테고리를 보여줘요
  */
 export default function SearchPage() {
+  return (
+    <AppFrame>
+      <SearchView />
+    </AppFrame>
+  )
+}
+
+/**
+ * 홈 검색창을 누르면 위에서 내려오는 반 높이 검색 패널
+ * - 바깥(어두운 부분)을 누르거나 Esc, 닫기 버튼으로 닫혀요
+ */
+export function SearchPanel({ onClose }: { onClose: () => void }) {
+  const [shown, setShown] = useState(false)
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setShown(true))
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      cancelAnimationFrame(t)
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prev
+    }
+  }, [onClose])
+  return (
+    <div className={`${styles.backdrop} ${shown ? styles.open : ''}`} onClick={onClose}>
+      <div className={styles.col}>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="검색"
+          className={styles.panel}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <SearchView onClose={onClose} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** 검색 내용 (전체 화면 /search 와 홈 반 높이 패널이 같이 써요) */
+function SearchView({ onClose }: { onClose?: () => void }) {
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
   const [keyword, setKeyword] = useState('')
@@ -71,13 +115,13 @@ export default function SearchPage() {
     setRecent([])
     writeRecent([])
   }
-  const back = () => (window.history.length > 1 ? navigate(-1) : navigate('/'))
+  const back = onClose ?? (() => (window.history.length > 1 ? navigate(-1) : navigate('/')))
 
   return (
-    <AppFrame>
+    <>
       <header className={styles.header}>
-        <button type="button" aria-label="뒤로" className={styles.iconBtn} onClick={back}>
-          <Icon name="back" />
+        <button type="button" aria-label={onClose ? '검색 닫기' : '뒤로'} className={styles.iconBtn} onClick={back}>
+          <Icon name={onClose ? 'close' : 'back'} />
         </button>
         <h1 className="sr-only">검색</h1>
         <form role="search" onSubmit={submit} className={styles.form}>
@@ -100,9 +144,11 @@ export default function SearchPage() {
             )}
           </label>
         </form>
-        <Link to="/" aria-label="홈으로" className={styles.iconBtn}>
-          <Icon name="home" />
-        </Link>
+        {!onClose && (
+          <Link to="/" aria-label="홈으로" className={styles.iconBtn}>
+            <Icon name="home" />
+          </Link>
+        )}
       </header>
 
       {recent.length > 0 && (
@@ -191,6 +237,6 @@ export default function SearchPage() {
           </div>
         ))}
       </section>
-    </AppFrame>
+    </>
   )
 }
