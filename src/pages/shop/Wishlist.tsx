@@ -52,7 +52,8 @@ export default function WishlistPage() {
 
   return (
     <AppFrame>
-      <PageHeader back="/mypage" title="찜" />
+      {/* 홈 하트·마이페이지 어디서 와도 온 곳으로 돌아가요 (기록이 없으면 홈) */}
+      <PageHeader back title="찜" />
 
       {res.loading && !res.data && <Loading />}
       {res.error && page === 0 && <ErrorView message={res.error} onRetry={res.reload} />}
