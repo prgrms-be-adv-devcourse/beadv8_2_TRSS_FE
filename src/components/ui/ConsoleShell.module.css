@@ -1,0 +1,247 @@
+/*
+ * 판매자 센터 · 관리자 · 물류 공통 틀 (반응형)
+ * - 1024px 이상: 왼쪽 메뉴(232px) + 본문(표)
+ * - 1023px 이하: 상단 헤더 + (판매자) 하단 탭바 / (관리자·물류) 상단 메뉴 칩
+ */
+.root {
+  min-height: 100vh;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+.side {
+  display: none;
+}
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pcHead {
+  display: none;
+}
+.content {
+  flex: 1;
+}
+
+/* 모바일 메뉴 칩 */
+.chips {
+  display: flex;
+  gap: 6px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  background: inherit;
+}
+.chip {
+  flex: none;
+  height: 34px;
+  padding: 0 13px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--input-line);
+  box-sizing: border-box;
+  color: var(--sub);
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.chipOn {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+  font-weight: 700;
+}
+.mobileNote {
+  margin: 0;
+  padding: 0 16px 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+@media (min-width: 1024px) {
+  .root {
+    flex-direction: row;
+    background: var(--console-bg);
+  }
+  .mobileOnly {
+    display: none !important;
+  }
+  .side {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    flex: none;
+    width: 232px;
+    background: #fff;
+    border-right: 1px solid var(--line);
+    box-sizing: border-box;
+    padding: 22px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+  .main {
+    padding: 28px 36px 48px;
+    box-sizing: border-box;
+  }
+  .pcHead {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .pcTitle {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+  }
+  .pcDesc {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .pcActions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px 20px;
+}
+.brand img {
+  height: 26px;
+  width: auto;
+  display: block;
+}
+.brandBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--chip-bg);
+  color: var(--ink);
+}
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.item {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  color: var(--sub);
+  font-weight: 500;
+}
+.item:hover {
+  background: var(--surface);
+}
+.itemOn,
+.itemOn:hover {
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+}
+.count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--faint);
+}
+.itemOn .count {
+  color: #fff;
+}
+.who {
+  margin-top: auto;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--console-bg);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+.who span {
+  color: var(--muted);
+}
+.sideLink {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--sub);
+  margin-top: 6px;
+}
+.sideLink:first-of-type {
+  margin-top: auto;
+}
+.who + .sideLink {
+  margin-top: 6px;
+}
+
+/* 관리자: 검은 사이드바 */
+.admin .side {
+  background: var(--ink);
+  border-right-color: rgba(255, 255, 255, 0.1);
+}
+.admin .brand img {
+  filter: invert(1);
+}
+.admin .brandBadge {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.admin .item {
+  color: rgba(255, 255, 255, 0.62);
+}
+.admin .item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.admin .itemOn,
+.admin .itemOn:hover {
+  background: #fff;
+  color: var(--ink);
+}
+.admin .sideLink {
+  border-color: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.72);
+}
+.admin .who {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+}
+.admin .who span {
+  color: rgba(255, 255, 255, 0.55);
+}
+.adminChips {
+  background: var(--ink);
+}
+.adminChips .chip {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.72);
+}
+.adminChips .chipOn {
+  background: #fff;
+  color: var(--ink);
+}
+
+/* 물류: 파란 배지 */
+.logistics .brandBadge {
+  background: var(--blue-bg);
+  color: var(--blue-ink);
+}

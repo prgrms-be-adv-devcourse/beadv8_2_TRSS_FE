@@ -1,0 +1,102 @@
+/* 반품 요청 (시안 Return) */
+.section {
+  padding: 4px 16px 0;
+}
+.h2 {
+  margin: 0 0 6px;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 800;
+}
+.item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.item input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--ink);
+  margin: 0;
+  flex: none;
+}
+.itemText {
+  flex: 1;
+  font-size: 13px;
+}
+.itemText small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.itemText b {
+  display: block;
+  font-weight: 800;
+  margin-top: 2px;
+}
+.fieldset {
+  border: 0;
+  margin: 0;
+  padding: 20px 16px 0;
+}
+.fieldset legend {
+  margin-bottom: 10px;
+}
+.reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.reason {
+  height: 48px;
+  border-radius: 10px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--input-line);
+}
+.reasonOn {
+  border: 1.5px solid var(--ink);
+  font-weight: 700;
+}
+.dot,
+.dotOn {
+  width: 18px;
+  height: 18px;
+  border-radius: 99px;
+  box-sizing: border-box;
+  flex: none;
+  border: 1.5px solid #b4b4ba;
+}
+.dotOn {
+  border: 5px solid var(--ink);
+}
+.label {
+  display: block;
+  margin: 14px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sub);
+}
+.info {
+  margin: 14px 16px 24px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--console-bg);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+.info b {
+  color: var(--ink);
+}

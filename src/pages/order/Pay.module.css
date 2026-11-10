@@ -1,0 +1,206 @@
+/* 결제 진행 · 결제 완료 · 주문 만료 (시안 PayProgress · PayDone · OrderExpired) */
+.backdrop {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: rgba(38, 38, 44, 0.56);
+}
+.dialog,
+.result {
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: var(--radius-card);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  line-height: 1.6;
+}
+.dialog {
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+}
+.result {
+  padding-top: 40px;
+}
+.title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+}
+.bigTitle {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 800;
+}
+.desc {
+  margin: 6px 0 0;
+  font-size: 15px;
+  color: var(--sub);
+}
+.spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 4px solid var(--line);
+  border-top-color: var(--ink);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.steps {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  font-size: 12px;
+}
+.steps li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+.stepLine,
+.stepLineOff {
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  right: -50%;
+  height: 2px;
+  background: var(--ink);
+}
+.stepLineOff {
+  background: var(--line);
+}
+.stepDot {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border-radius: 99px;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+}
+.stepDone {
+  color: var(--sub);
+}
+.stepDone .stepDot {
+  background: var(--ink);
+  color: #fff;
+}
+.stepNow {
+  color: var(--ink);
+  font-weight: 700;
+}
+.stepNow .stepDot {
+  background: #fff;
+  border: 2px solid var(--ink);
+}
+.stepNow .stepDot span {
+  width: 8px;
+  height: 8px;
+  border-radius: 9px;
+  background: var(--ink);
+}
+.stepNext {
+  color: var(--muted);
+}
+.stepNext .stepDot {
+  background: #fff;
+  border: 2px solid var(--line);
+}
+
+.okMark {
+  width: 56px;
+  height: 56px;
+  border-radius: 99px;
+  background: var(--green-bg);
+  color: var(--green-ink);
+  display: grid;
+  place-items: center;
+}
+.sum {
+  margin: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 16px;
+  text-align: left;
+  background: var(--surface-soft);
+  border-radius: 12px;
+  padding: 16px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+.sum dt {
+  color: var(--muted);
+}
+.sum dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.strong {
+  font-weight: 800;
+}
+.note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.expired {
+  padding: 120px 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+}
+.expired .desc {
+  margin: 0;
+  font-size: 14px;
+}
+.warnMark {
+  width: 64px;
+  height: 64px;
+  border-radius: 99px;
+  background: var(--amber-bg);
+  color: var(--amber-ink);
+  display: grid;
+  place-items: center;
+}
+.expiredSum {
+  margin: 26px 16px 24px;
+  padding: 4px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  font-size: 14px;
+}
+.expiredSum div {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 0;
+}
+.expiredSum div + div {
+  border-top: 1px solid var(--line);
+}
+.expiredSum dt {
+  color: var(--muted);
+}
+.expiredSum dd {
+  margin: 0;
+  font-weight: 700;
+}

@@ -1,0 +1,728 @@
+/* 판매자 센터 공통 조각 (TRSS-201) — 표·KPI·목록은 components/ui/console.module.css */
+
+/* ── 글자 ── */
+.h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.para {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+.faint {
+  font-size: 12px;
+  color: var(--muted);
+}
+.faintLine {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.ink {
+  color: var(--ink);
+  text-decoration: none;
+}
+.danger {
+  color: var(--red-ink);
+}
+.right {
+  display: flex;
+  justify-content: flex-end;
+  text-align: right;
+}
+.footNote {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.fileTag {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--green-bg);
+  color: var(--green-ink);
+}
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--surface);
+}
+.amount {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 배치 ── */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.gapBottom {
+  margin-bottom: 14px;
+}
+.mobileBlock {
+  padding: 0 16px;
+  margin: 12px 0;
+}
+.mobileStack {
+  display: flex;
+  flex-direction: column;
+}
+.narrow {
+  max-width: 720px;
+}
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 10px;
+}
+.sectionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.chipRow {
+  padding: 12px 0 0;
+}
+.mobileTools {
+  padding: 4px 16px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.flush {
+  margin: 0;
+}
+.selectRow {
+  display: flex;
+  gap: 8px;
+}
+.selectRow select {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── 카드·패널 ── */
+.panel {
+  background: #fff;
+  padding: 20px 16px;
+  border-bottom: 8px solid var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mPanel {
+  padding: 16px;
+  margin: 8px 16px 16px;
+  border-radius: 16px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mPanel select,
+.mPanel textarea {
+  background: #fff;
+}
+.mSection {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mForm {
+  padding: 16px 16px 24px;
+}
+
+/* ── 상품 한 칸 (썸네일 + 글) ── */
+.prod {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+.prodText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.prodText b {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.prodCard {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--surface);
+}
+.badges {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* 모바일 상품 목록 */
+.liHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.inlineLinks {
+  display: flex;
+  gap: 14px;
+  margin-top: 4px;
+}
+.dangerLink,
+.textBtn,
+.textLink {
+  display: inline-block;
+  padding: 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.dangerLink {
+  color: var(--red-ink);
+}
+.textBtn,
+.textLink {
+  color: var(--sub);
+}
+.rowIcon,
+.iconBtn {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--sub);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  border-radius: 99px;
+}
+.rowIcon {
+  margin: -4px -8px 0 0;
+}
+
+/* 판매 중지 요청 안내 */
+.warnBox {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--red-bg);
+  color: var(--red-ink);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.warnBox ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: var(--sub);
+}
+
+/* ── 안내 줄 ── */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.notice > span {
+  flex: 1;
+}
+.notice_done {
+  background: var(--green-bg);
+  color: var(--green-ink);
+}
+.notice_error {
+  background: var(--red-bg);
+  color: var(--red-ink);
+}
+.notice_info {
+  background: var(--blue-bg);
+  color: var(--blue-ink);
+}
+.noticeClose {
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 2px;
+}
+
+/* ── 페이지 이동 ── */
+.pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+.pagerNum {
+  font-size: 13px;
+  color: var(--sub);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 모달·시트 ── */
+.modalLead {
+  margin: 0 0 6px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.modalForm {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.sheetActions {
+  display: flex;
+  gap: 8px;
+}
+.sheetActions > * {
+  flex: 1 1 0;
+}
+.issuedCode {
+  margin: 10px 0 0;
+  text-align: center;
+}
+.issuedCode code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--surface);
+  user-select: all;
+}
+
+/* ── 주문 카드 (모바일) ── */
+.cards {
+  padding: 4px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.orderCard {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.orderCardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── 정산 ── */
+.summary {
+  margin: 4px 16px 0;
+  padding: 16px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-card);
+  background: #fff;
+  color: var(--ink);
+}
+.summaryLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.summaryValue {
+  margin: 4px 0 12px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.summaryDl {
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.summaryDl div {
+  display: flex;
+  justify-content: space-between;
+}
+.summaryDl dt {
+  color: var(--muted);
+}
+.summaryDl dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.monthList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.monthList > li {
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+}
+.monthList > li:first-child {
+  border-top: 0;
+}
+.monthRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.monthMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+.monthPay {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.detailRow {
+  padding: 4px 20px 16px;
+  background: var(--surface-soft);
+  border-top: 1px solid #f0f0ef;
+}
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+}
+.detailHead {
+  margin: 0;
+  font-size: 13px;
+}
+.innerTable {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.detailList {
+  list-style: none;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 13px;
+}
+.detailList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+/* ── 판매자 정보 ── */
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.profileHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.avatar,
+.avatarSm {
+  flex: none;
+  border-radius: 99px;
+  background: var(--ink);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+.avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+}
+.avatarSm {
+  width: 36px;
+  height: 36px;
+  font-size: 14px;
+}
+.profileName {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+.dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+}
+.dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dl dt {
+  color: var(--muted);
+}
+.dl dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.menuLink {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 4px;
+  border-top: 1px solid var(--line);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+.menuLink span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+/* ── 신청·상태 (구매자 모바일 틀) ── */
+.applyIntro {
+  margin: 4px 16px 0;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--surface);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+.applyIntro ol {
+  margin: 0;
+  padding-left: 18px;
+}
+.applyIntroTitle {
+  margin: 0 0 6px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.statusWrap {
+  padding: 8px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.statusHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 0 8px;
+  text-align: center;
+}
+.statusIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 99px;
+  display: grid;
+  place-items: center;
+}
+.toneNeutral {
+  background: var(--chip-bg);
+  color: var(--sub);
+}
+.toneGreen {
+  background: var(--green-bg);
+  color: var(--green-ink);
+}
+.toneRed {
+  background: var(--red-bg);
+  color: var(--red-ink);
+}
+.toneBlue {
+  background: var(--blue-bg);
+  color: var(--blue-ink);
+}
+.toneAmber {
+  background: var(--amber-bg);
+  color: var(--amber-ink);
+}
+.statusTitle {
+  margin: 4px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+.statusDesc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+.reasonBox {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--red-bg);
+  font-size: 14px;
+}
+.reasonBox p {
+  margin: 0;
+}
+.reasonLabel {
+  margin-bottom: 4px !important;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--red-ink);
+}
+
+/* ── 협약·쿠폰 카드 (모바일) ── */
+.cardList {
+  list-style: none;
+  margin: 0;
+  padding: 8px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.partnerCard {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.partnerHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cardActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.couponStats {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.couponStats b {
+  color: var(--ink);
+}
+.miniKpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 4px 16px 0;
+}
+.miniKpis > div {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface);
+}
+.miniKpis p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.miniKpis b {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+}
+.unitInput {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.unitInput input {
+  padding-right: 36px;
+}
+.unitInput > span {
+  position: absolute;
+  right: 14px;
+  font-size: 14px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.ruleList {
+  margin: 4px 0 14px;
+  padding: 12px 14px 12px 28px;
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+
+@media (min-width: 1024px) {
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 22px 24px;
+  }
+  .mobileBlock {
+    padding: 0;
+  }
+}
+
+/* 판매자 정보: 정보 수정 · 로그아웃 버튼 나란히 */
+.profileActions {
+  flex: none;
+  display: flex;
+  gap: 6px;
+}

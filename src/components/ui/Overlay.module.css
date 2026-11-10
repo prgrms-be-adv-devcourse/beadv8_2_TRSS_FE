@@ -1,0 +1,84 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(14, 14, 16, 0.45);
+  display: flex;
+  justify-content: center;
+}
+.center {
+  align-items: center;
+  padding: 24px;
+}
+
+/* 모달 */
+.modal {
+  width: 100%;
+  max-width: 340px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 26px 22px 20px;
+  box-sizing: border-box;
+  text-align: center;
+}
+.modalTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+.modalBody {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+.actions {
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.actions > * {
+  flex: 1 1 0;
+}
+
+/* 시트: 화면 가운데에 뜨는 팝업 (쿠폰 선택 · 주소 검색 · 옵션 변경 등) */
+.sheet {
+  width: 100%;
+  max-width: 420px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 20px;
+  box-sizing: border-box;
+  padding: 8px 0 20px;
+  box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.4);
+}
+.sheetHead {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px 4px 20px;
+}
+.sheetTitle {
+  margin: 0;
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+}
+.close {
+  width: 40px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+}
+.sheetBody {
+  padding: 0 20px;
+}
+.sheetFoot {
+  padding: 16px 20px 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}

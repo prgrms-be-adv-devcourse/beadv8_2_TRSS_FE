@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
-import { screens } from '../routes'
+import { SCREEN_GROUPS, screens } from '../routes'
 import styles from './Screens.module.css'
 
-const GROUPS = ['구매자', '판매자', '관리자'] as const
+const GROUPS = SCREEN_GROUPS
 
 /** 모든 화면 바로가기 (개발용) */
 export default function ScreensPage() {

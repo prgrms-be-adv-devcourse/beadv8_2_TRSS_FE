@@ -51,12 +51,23 @@ export type Cart = {
 
 export const getCart = () => api<Cart>('/api/v1/cart')
 
+/** 장바구니가 바뀌었다고 알려요. 헤더 장바구니 배지(lib/cartCount.ts)가 듣고 개수를 다시 불러와요. */
+export const CART_CHANGED = 'palette:cart-changed'
+function changed<T>(p: Promise<T>) {
+  return p.then((r) => {
+    window.dispatchEvent(new Event(CART_CHANGED))
+    return r
+  })
+}
+
 /** 같은 옵션을 다시 담으면 수량이 합쳐져요. */
 export const addCartItem = (optionId: number, quantity: number) =>
-  api<{ optionId: number; quantity: number }>('/api/v1/cart/items', {
-    method: 'POST',
-    body: { optionId, quantity },
-  })
+  changed(
+    api<{ optionId: number; quantity: number }>('/api/v1/cart/items', {
+      method: 'POST',
+      body: { optionId, quantity },
+    }),
+  )
 
 /** 수량·선택 여부 중 바꿀 값만 보내요. */
 export const updateCartItem = (itemId: number, body: { quantity?: number; selected?: boolean }) =>
@@ -67,4 +78,4 @@ export const selectAllCartItems = (selected: boolean) =>
 
 /** 백엔드가 itemIds=1&itemIds=2 형태를 받아서 쿼리를 직접 만들어요. */
 export const deleteCartItems = (itemIds: number[]) =>
-  api<void>(`/api/v1/cart/items?${itemIds.map((id) => `itemIds=${id}`).join('&')}`, { method: 'DELETE' })
+  changed(api<void>(`/api/v1/cart/items?${itemIds.map((id) => `itemIds=${id}`).join('&')}`, { method: 'DELETE' }))

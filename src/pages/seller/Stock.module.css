@@ -1,0 +1,205 @@
+/* S3 재고 */
+.pc {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.side {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+.sideTitle {
+  margin: 0 8px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.sideItem {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 10px;
+  font-size: 13px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.sideItem:hover {
+  background: var(--surface-soft);
+}
+.sideOn,
+.sideOn:hover {
+  background: var(--surface);
+}
+.step {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  border: 1px solid var(--input-line);
+  border-radius: 99px;
+  background: #fff;
+  overflow: hidden;
+}
+.step button {
+  width: 34px;
+  height: 100%;
+  border: 0;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+.step button:disabled {
+  color: var(--faint);
+  cursor: not-allowed;
+}
+.step input {
+  width: 52px;
+  height: 100%;
+  border: 0;
+  outline: none;
+  text-align: center;
+  font: inherit;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+}
+.memo {
+  width: 100%;
+  height: 36px;
+  box-sizing: border-box;
+  border: 1px solid var(--input-line);
+  border-radius: 10px;
+  padding: 0 10px;
+  font-size: 13px;
+  outline: none;
+}
+.after {
+  margin: 0;
+  font-size: 13px;
+  color: var(--sub);
+}
+.plus {
+  color: var(--green-ink);
+}
+
+/* 모바일 */
+.pickBox {
+  margin: 4px 16px 0;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--surface);
+}
+.pick {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.pickText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pickText select {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 0;
+  outline: none;
+}
+.pickMeta {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--sub);
+}
+.mSection {
+  padding: 20px 16px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.opts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.optOn {
+  border-color: var(--ink);
+}
+.radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 99px;
+  border: 5px solid var(--ink);
+  box-sizing: border-box;
+  flex: none;
+}
+.optName {
+  flex: 1;
+  font-weight: 600;
+}
+.adjRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.adjRow .step {
+  height: 48px;
+}
+.adjRow .step button {
+  width: 48px;
+}
+.adjRow .step input {
+  width: 64px;
+  font-size: 18px;
+}
+.hist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.hist li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.hist li:first-child {
+  border-top: 0;
+}
+.histMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}

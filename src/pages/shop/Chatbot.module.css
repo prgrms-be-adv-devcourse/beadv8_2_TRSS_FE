@@ -1,0 +1,128 @@
+.chat {
+  flex: 1;
+  padding: 8px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface-soft);
+}
+.lead {
+  margin: 4px auto 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+.me {
+  align-self: flex-end;
+  max-width: 78%;
+}
+.me p {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 18px 18px 4px 18px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.bot {
+  align-self: flex-start;
+  max-width: 86%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.bubble {
+  padding: 10px 14px;
+  border-radius: 18px 18px 18px 4px;
+  background: #fff;
+  border: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.bubble p {
+  margin: 0;
+}
+.order {
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--surface);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.order > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+.order > span span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.source {
+  font-size: 11px;
+  color: var(--muted);
+  padding-left: 4px;
+}
+.link {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--input-line);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.inputBar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px calc(14px + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1px solid var(--line);
+}
+.inputBar input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--input-line);
+  background: var(--surface-soft);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+.inputBar input:focus {
+  border-color: var(--ink);
+}
+.inputBar button {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-pill);
+  border: 0;
+  background: var(--ink);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.inputBar button:disabled {
+  background: var(--line-strong);
+  cursor: not-allowed;
+}

@@ -1,0 +1,190 @@
+/* 구매자·쇼핑 공통 조각 */
+
+.ai {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: var(--ink);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+.stars {
+  color: #f2b01e;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+.starsOff {
+  color: #d8d8dc;
+}
+
+.heart {
+  border: 0;
+  background: #fff;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+.heartOn {
+  color: #e05a6b;
+}
+
+/* 2열 카드 */
+.card {
+  position: relative;
+  min-width: 0;
+}
+.cardLink {
+  display: block;
+  color: var(--ink);
+  text-decoration: none;
+}
+.cardImg {
+  position: relative;
+  display: block;
+  height: 192px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.cardHeart {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+.low {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  background: rgba(14, 14, 16, 0.78);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 7px;
+  border-radius: 5px;
+}
+.soldOut {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.66);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+.brand {
+  display: block;
+  margin-top: 9px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.name {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.price {
+  display: block;
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 800;
+}
+.why {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--sub);
+  line-height: 1.4;
+}
+
+/* 가로 스크롤 작은 카드 */
+.mini {
+  flex: none;
+  width: 132px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.mini .brand {
+  margin-top: 8px;
+  font-size: 10px;
+}
+.mini .price {
+  font-size: 14px;
+}
+
+/* 섹션 제목 */
+.secHead {
+  padding: 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.secTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.secDesc {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.secDesc a {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.more {
+  flex: none;
+  font-size: 12px;
+  color: var(--sub);
+  text-decoration: none;
+  padding: 8px 0;
+}
+
+.example {
+  margin: 8px 16px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--amber-bg);
+  color: var(--amber-ink);
+  font-size: 12px;
+}
+
+.avatar {
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: #e9e6e1;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--sub);
+}
