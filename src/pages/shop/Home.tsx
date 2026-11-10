@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import Icon from '../../components/ui/Icon'
@@ -7,12 +8,15 @@ import { useApi } from '../../lib/useApi'
 import { useAuth } from '../../lib/auth'
 import { Avatar, ExampleNotice, MiniCard, SectionHead, imageOf, loadCategories, loadProducts } from './common'
 import { MOCK_CREATORS, MOCK_NOTIFICATIONS, MOCK_PROFILE, MOCK_WHY } from './mock'
+import CategoryDrawer from './CategoryDrawer'
 import styles from './Home.module.css'
 
 /** ① 홈 */
 export default function HomePage() {
   const { loggedIn } = useAuth()
   const categories = useApi(loadCategories, [])
+  const [drawer, setDrawer] = useState(false)
+  const closeDrawer = useCallback(() => setDrawer(false), [])
   // TODO(API 미구현): AI 추천(회원 맞춤 · 찜 기반 · 최근 본 상품 기반) — ai-service 추천 API가 없어 최신 상품으로 자리를 채워요
   const products = useApi(() => loadProducts({ size: 12 }), [])
   const items = products.data?.items ?? []
@@ -48,9 +52,16 @@ export default function HomePage() {
       />
 
       <div className={styles.searchRow}>
-        <Link to="/category" aria-label="카테고리 전체 보기" className={styles.catBtn}>
+        <button
+          type="button"
+          aria-label="카테고리 열기"
+          aria-haspopup="dialog"
+          aria-expanded={drawer}
+          className={styles.catBtn}
+          onClick={() => setDrawer(true)}
+        >
           <Icon name="grid" size={20} />
-        </Link>
+        </button>
         <Link to="/search" className={styles.search}>
           <Icon name="search" size={18} />
           브랜드나 상품을 검색해 보세요
@@ -203,6 +214,8 @@ export default function HomePage() {
           <Icon name="chat" />
         </Link>
       </div>
+
+      {drawer && <CategoryDrawer onClose={closeDrawer} />}
     </AppFrame>
   )
 }

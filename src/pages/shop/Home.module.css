@@ -24,6 +24,8 @@
   color: var(--ink);
   display: grid;
   place-items: center;
+  border: 0;
+  padding: 0;
 }
 .catBtn:hover {
   background: #ececeb;
