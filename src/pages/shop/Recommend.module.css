@@ -1,0 +1,195 @@
+.basis {
+  margin: 4px 16px 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 13px;
+}
+.basis > span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.basis > span:first-child span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.change {
+  flex: none;
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.tabs {
+  margin-top: 8px;
+  padding: 0 16px;
+}
+
+.filters {
+  display: flex;
+  gap: 6px;
+  padding: 14px 16px 4px;
+  overflow-x: auto;
+}
+.chip,
+.chipOn {
+  flex: none;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.chip {
+  border: 1px solid var(--input-line);
+  background: #fff;
+  color: var(--sub);
+  font-weight: 600;
+}
+.chipOn {
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0 16px;
+}
+.list li {
+  display: flex;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.img {
+  flex: none;
+  line-height: 0;
+}
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--ink);
+  text-decoration: none;
+  max-width: 100%;
+}
+.brand {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+}
+.name {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.price {
+  font-size: 15px;
+}
+.why {
+  font-size: 12px;
+  color: var(--green-ink);
+}
+.hide {
+  margin-top: 2px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--input-line);
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.empty {
+  margin: 24px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+.hiddenBar {
+  margin: 14px 16px 24px;
+  font-size: 12px;
+  color: var(--sub);
+  text-align: center;
+}
+.hiddenBar button {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.creatorLead {
+  margin: 14px 16px 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.creators {
+  list-style: none;
+  margin: 0;
+  padding: 0 16px 24px;
+}
+.creators li {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.creatorHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.creatorText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+.creatorText span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.picks {
+  margin-top: 12px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.picks a {
+  line-height: 0;
+}
+.more {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sub);
+}

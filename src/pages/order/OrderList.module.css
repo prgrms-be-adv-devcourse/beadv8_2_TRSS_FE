@@ -1,0 +1,106 @@
+/* 주문 내역 · 반품 내역 (시안 OrderList) */
+.top {
+  background: #fff;
+  padding-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.top > [role='tablist'] {
+  margin: 0 16px;
+}
+.chips {
+  padding-top: 10px;
+}
+.list {
+  flex: 1;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0 120px;
+}
+.card {
+  background: #fff;
+  padding: 14px 16px;
+}
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.cardHead a {
+  color: var(--sub);
+  text-decoration: none;
+  padding: 6px 0;
+}
+.status {
+  margin: 4px 0 10px;
+  font-size: 14px;
+  font-weight: 800;
+}
+.statusGreen {
+  color: var(--green);
+}
+.warn,
+.note {
+  margin-left: 6px;
+  font-size: 12px;
+}
+.warn {
+  font-weight: 700;
+  color: var(--red);
+  font-variant-numeric: tabular-nums;
+}
+.note {
+  font-weight: 600;
+  color: var(--sub);
+}
+.product {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+.product > div {
+  flex: 1;
+  min-width: 0;
+}
+.name {
+  margin: 0;
+  font-size: 13px;
+}
+.amount {
+  margin: 3px 0 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+.actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.actions > * {
+  height: 44px;
+  padding: 0 22px;
+  font-size: 14px;
+}
+.reason {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--console-bg);
+  font-size: 12px;
+  color: var(--sub);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.more {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
