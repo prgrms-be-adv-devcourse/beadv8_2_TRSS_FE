@@ -726,8 +726,19 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+/*
+ * 토스 결제위젯: 위젯 안쪽 여백(24px)을 다른 칸(16px)과 맞추려고 안쪽 div를 8px씩 넓히고,
+ * 넘친 부분은 이 칸에서 잘라 화면 밖으로 삐져나가지(가로 스크롤) 않게 해요
+ */
 .widget {
+  overflow: hidden;
+}
+.widget > div {
   margin: 0 -8px;
+}
+.widget iframe {
+  display: block;
+  width: 100% !important;
 }
 
 /* 충전 결과 */
