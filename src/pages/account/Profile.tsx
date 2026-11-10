@@ -262,7 +262,7 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
                 연결 해제
               </Button>
             ) : (
-              <Button size="sm" onClick={k.link} disabled={!kakaoEnabled}>
+              <Button variant="outline" size="sm" onClick={k.link} disabled={!kakaoEnabled}>
                 카카오 연결
               </Button>
             )}
@@ -277,7 +277,7 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
         </div>
         <p className={s.cardText}>{sellerText}</p>
         <div className={s.rightActions}>
-          <Button to={sm.to} size="sm" variant={sm.act ? 'primary' : 'outline'}>
+          <Button to={sm.to} size="sm" variant="outline">
             {sm.act ?? '신청 상태 보기'}
           </Button>
         </div>
@@ -290,7 +290,7 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
         </div>
         <p className={s.cardText}>{im.text}</p>
         <div className={s.rightActions}>
-          <Button to={im.to} size="sm" variant={im.act ? 'primary' : 'outline'}>
+          <Button to={im.to} size="sm" variant="outline">
             {im.act ?? '신청 상태 보기'}
           </Button>
         </div>
