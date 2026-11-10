@@ -2,6 +2,7 @@ import type { ScreenRoute } from '../routes'
 import HomePage from '../pages/shop/Home'
 import CategoryPage from '../pages/shop/Category'
 import ProductListPage from '../pages/shop/ProductList'
+import SearchPage from '../pages/shop/Search'
 import ProductDetailPage from '../pages/shop/ProductDetail'
 import DetailMatchPage from '../pages/shop/DetailMatch'
 import ReviewsPage from '../pages/shop/Reviews'
@@ -18,6 +19,7 @@ import ChatbotPage from '../pages/shop/Chatbot'
 export const buyerShopScreens: ScreenRoute[] = [
   { path: '/', title: '홈', group: '구매자', element: <HomePage /> },
   { path: '/category', title: '카테고리', group: '구매자', element: <CategoryPage /> },
+  { path: '/search', title: '검색 (최근·인기 급상승·카테고리)', group: '구매자', element: <SearchPage /> },
   { path: '/products', title: '상품 목록·검색', group: '구매자', element: <ProductListPage /> },
   { path: '/product/:productId', demo: '/product/1', title: '상품 상세', group: '구매자', element: <ProductDetailPage /> },
   {

@@ -34,20 +34,20 @@ export default function HomePage() {
         }
         right={
           <>
-            <HeaderIcon to="/products" icon="search" label="검색" />
+            <HeaderIcon to="/search" icon="search" label="검색" />
+            <HeaderIcon to="/wishlist" icon="heart" label="찜 목록" />
+            <HeaderIcon to="/cart" icon="bag" label="장바구니" />
             <HeaderIcon
               to="/notifications"
               icon="bell"
               label={hasUnread ? '알림, 새 알림 있음' : '알림'}
               dot={hasUnread}
             />
-            <HeaderIcon to="/wishlist" icon="heart" label="찜 목록" />
-            <HeaderIcon to="/cart" icon="bag" label="장바구니" />
           </>
         }
       />
 
-      <Link to="/products" className={styles.search}>
+      <Link to="/search" className={styles.search}>
         <Icon name="search" size={18} />
         브랜드나 상품을 검색해 보세요
       </Link>

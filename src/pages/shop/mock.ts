@@ -113,3 +113,19 @@ export const MOCK_NOTIFICATIONS: Noti[] = [
   { id: 5, kind: 'ship', group: '11.04', time: '10:15', title: '주문하신 상품의 배송이 시작됐어요', body: '글로우 커버 쿠션 · [택배사]', img: '/images/cushion.jpg', unread: false, to: '/orders' },
   { id: 6, kind: 'pay', group: '11.03', time: '21:47', title: '24,000원 결제를 완료했어요', body: '글로우 커버 쿠션 · 예치금 결제', img: '/images/cushion.jpg', unread: false, to: '/orders' },
 ]
+
+/** 인기 급상승 검색어 (change: 지난 시간 대비 순위 변동, 'new'는 새로 진입) */
+// TODO(API 미구현): GET /api/v1/search/trending 이 생기면 이 목업을 지워요
+export type TrendingKeyword = { word: string; change: number | 'new' }
+export const MOCK_TRENDING: TrendingKeyword[] = [
+  { word: '선크림', change: 2 },
+  { word: '시카 크림', change: 'new' },
+  { word: '쿠션', change: 0 },
+  { word: '나이아신아마이드 세럼', change: 3 },
+  { word: '립틴트', change: -1 },
+  { word: '클렌징폼', change: 1 },
+  { word: '윈드브레이커', change: 'new' },
+  { word: '와이드 팬츠', change: -2 },
+  { word: '마스크팩', change: 0 },
+  { word: '오버핏 티셔츠', change: -1 },
+]
