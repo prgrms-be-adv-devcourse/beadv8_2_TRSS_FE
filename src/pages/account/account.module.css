@@ -968,3 +968,15 @@
 .note.inBody {
   margin: 16px 0 0;
 }
+
+/* 내 정보: 카드 안 버튼은 가운데 */
+.centerActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.cardFoot.centerActions {
+  margin-top: 14px;
+}

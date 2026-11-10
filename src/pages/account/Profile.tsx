@@ -73,7 +73,17 @@ function useKakaoLink() {
 }
 
 /** 이름 변경·비밀번호 변경 (목업) */
-function EditSheet({ kind, name, onClose, onDone }: { kind: 'name' | 'password'; name: string; onClose: () => void; onDone: (m: string) => void }) {
+function EditSheet({
+  kind,
+  name,
+  onClose,
+  onDone,
+}: {
+  kind: 'name' | 'password'
+  name: string
+  onClose: () => void
+  onDone: (m: string) => void
+}) {
   const [value, setValue] = useState(kind === 'name' ? name : '')
   const [next, setNext] = useState('')
   const [next2, setNext2] = useState('')
@@ -85,7 +95,11 @@ function EditSheet({ kind, name, onClose, onDone }: { kind: 'name' | 'password';
   function save() {
     // TODO(API 미구현): PATCH /api/v1/users/me { name } — 이름 변경
     // TODO(API 미구현): PATCH /api/v1/users/me/password { currentPassword, newPassword } — 비밀번호 변경
-    onDone(kind === 'name' ? '이름을 바꿨어요. (목업: 서버에는 아직 저장되지 않아요)' : '비밀번호를 바꿨어요. (목업: 서버에는 아직 저장되지 않아요)')
+    onDone(
+      kind === 'name'
+        ? '이름을 바꿨어요. (목업: 서버에는 아직 저장되지 않아요)'
+        : '비밀번호를 바꿨어요. (목업: 서버에는 아직 저장되지 않아요)',
+    )
   }
 
   return (
@@ -93,7 +107,7 @@ function EditSheet({ kind, name, onClose, onDone }: { kind: 'name' | 'password';
       title={kind === 'name' ? '이름 바꾸기' : '비밀번호 바꾸기'}
       onClose={onClose}
       footer={
-        <Button size="lg" block disabled={!valid} onClick={save}>
+        <Button size="lg" disabled={!valid} onClick={save}>
           저장하기
         </Button>
       }
@@ -103,7 +117,13 @@ function EditSheet({ kind, name, onClose, onDone }: { kind: 'name' | 'password';
           <label htmlFor="pf-name" className={f.label}>
             이름
           </label>
-          <input id="pf-name" className={f.input} maxLength={20} value={value} onChange={(e) => setValue(e.target.value)} />
+          <input
+            id="pf-name"
+            className={f.input}
+            maxLength={20}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
         </div>
       ) : (
         <>
@@ -111,20 +131,41 @@ function EditSheet({ kind, name, onClose, onDone }: { kind: 'name' | 'password';
             <label htmlFor="pf-cur" className={f.label}>
               지금 비밀번호
             </label>
-            <input id="pf-cur" type="password" autoComplete="current-password" className={f.input} value={value} onChange={(e) => setValue(e.target.value)} />
+            <input
+              id="pf-cur"
+              type="password"
+              autoComplete="current-password"
+              className={f.input}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+            />
           </div>
           <div className={f.field}>
             <label htmlFor="pf-new" className={f.label}>
               새 비밀번호
             </label>
-            <input id="pf-new" type="password" autoComplete="new-password" className={f.input} value={next} onChange={(e) => setNext(e.target.value)} />
+            <input
+              id="pf-new"
+              type="password"
+              autoComplete="new-password"
+              className={f.input}
+              value={next}
+              onChange={(e) => setNext(e.target.value)}
+            />
             <p className={f.help}>영문, 숫자, 특수문자를 섞어 8~20자</p>
           </div>
           <div className={f.field}>
             <label htmlFor="pf-new2" className={f.label}>
               새 비밀번호 확인
             </label>
-            <input id="pf-new2" type="password" autoComplete="new-password" className={f.input} value={next2} onChange={(e) => setNext2(e.target.value)} />
+            <input
+              id="pf-new2"
+              type="password"
+              autoComplete="new-password"
+              className={f.input}
+              value={next2}
+              onChange={(e) => setNext2(e.target.value)}
+            />
             {next2 && next !== next2 && <p className={f.error}>비밀번호가 서로 달라요.</p>}
           </div>
         </>
@@ -139,7 +180,8 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
   const seller = useMySeller(!props.sellerStatus)
   const sellerView: SellerView = props.sellerStatus ?? seller?.status ?? '신청 전'
   const sm = SELLER_META[sellerView] ?? SELLER_META['신청 전']
-  const sellerText = sellerView === 'REJECTED' && !props.sellerStatus && seller?.reason ? `반려 사유: ${seller.reason}` : sm.text
+  const sellerText =
+    sellerView === 'REJECTED' && !props.sellerStatus && seller?.reason ? `반려 사유: ${seller.reason}` : sm.text
   const inf = useInfluencerStatus(props.influencerStatus)
   const im = INFLUENCER_META[inf.view ?? '신청 전']
   const check = useApi(getWithdrawalCheck, [])
@@ -185,7 +227,7 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
             <dd>{fmtDate(me?.createdAt)}</dd>
           </div>
         </dl>
-        <div className={`${s.actions} ${s.cardFoot}`}>
+        <div className={`${s.actions} ${s.cardFoot} ${s.centerActions}`}>
           <Button variant="outline" size="sm" onClick={() => setEdit('name')}>
             이름 바꾸기
           </Button>
@@ -213,16 +255,19 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
             ? '카카오로 간편하게 로그인할 수 있어요.'
             : '카카오 계정을 연결하면 로그인 화면에서 카카오로 로그인할 수 있어요.'}
         </p>
-        {me &&
-          (me.kakaoLinked ? (
-            <Button variant="outline" size="sm" onClick={k.openConfirm}>
-              연결 해제
-            </Button>
-          ) : (
-            <Button size="sm" onClick={k.link} disabled={!kakaoEnabled}>
-              카카오 연결
-            </Button>
-          ))}
+        {me && (
+          <div className={s.centerActions}>
+            {me.kakaoLinked ? (
+              <Button variant="outline" size="sm" onClick={k.openConfirm}>
+                연결 해제
+              </Button>
+            ) : (
+              <Button size="sm" onClick={k.link} disabled={!kakaoEnabled}>
+                카카오 연결
+              </Button>
+            )}
+          </div>
+        )}
       </section>
 
       <section aria-labelledby="pf-seller" className={s.card}>
@@ -231,9 +276,11 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
           <Badge tone={sm.tone}>{sm.tag}</Badge>
         </div>
         <p className={s.cardText}>{sellerText}</p>
-        <Button to={sm.to} size="sm" variant={sm.act ? 'primary' : 'outline'}>
-          {sm.act ?? '신청 상태 보기'}
-        </Button>
+        <div className={s.centerActions}>
+          <Button to={sm.to} size="sm" variant={sm.act ? 'primary' : 'outline'}>
+            {sm.act ?? '신청 상태 보기'}
+          </Button>
+        </div>
       </section>
 
       <section aria-labelledby="pf-inf" className={s.card}>
@@ -242,9 +289,11 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
           <Badge tone={im.tone}>{im.tag}</Badge>
         </div>
         <p className={s.cardText}>{im.text}</p>
-        <Button to={im.to} size="sm" variant={im.act ? 'primary' : 'outline'}>
-          {im.act ?? '신청 상태 보기'}
-        </Button>
+        <div className={s.centerActions}>
+          <Button to={im.to} size="sm" variant={im.act ? 'primary' : 'outline'}>
+            {im.act ?? '신청 상태 보기'}
+          </Button>
+        </div>
       </section>
 
       <section aria-labelledby="pf-leave" className={`${s.card} ${s.lastCard}`}>
@@ -274,9 +323,11 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
           예치금은 자동으로 돌려드리지 않으니 쓰거나, <Link to="/wallet/topups">쓰지 않은 충전 건을 취소</Link>해
           주세요. 탈퇴하면 개인정보는 복구할 수 없게 지워져요.
         </p>
-        <Button to="/mypage/withdraw" variant="outline" size="sm">
-          탈퇴 조건 확인하고 진행하기
-        </Button>
+        <div className={s.centerActions}>
+          <Button to="/mypage/withdraw" variant="outline" size="sm">
+            탈퇴 조건 확인하고 진행하기
+          </Button>
+        </div>
       </section>
 
       {k.open && (
