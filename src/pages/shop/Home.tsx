@@ -41,6 +41,7 @@ export default function HomePage() {
               label={hasUnread ? '알림, 새 알림 있음' : '알림'}
               dot={hasUnread}
             />
+            <HeaderIcon to="/wishlist" icon="heart" label="찜 목록" />
             <HeaderIcon to="/cart" icon="bag" label="장바구니" />
           </>
         }
