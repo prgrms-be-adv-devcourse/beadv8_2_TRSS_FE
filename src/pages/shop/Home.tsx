@@ -173,7 +173,7 @@ export default function HomePage() {
         </span>
         <span className={styles.surveyText}>
           <span className={styles.surveyEyebrow}>
-            <span className={styles.surveyAi}>AI</span>뷰티 설문 · 약 30초
+            <span className={styles.surveyAi}>AI</span>뷰티 설문
           </span>
           <b className={styles.surveyTitle}>30초 설문하고 맞춤 추천 받기</b>
           <span className={styles.surveyDesc}>피부 타입과 성분 취향을 알려주세요</span>

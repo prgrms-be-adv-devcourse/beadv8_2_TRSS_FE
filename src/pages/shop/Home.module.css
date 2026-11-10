@@ -9,7 +9,8 @@
 }
 
 .search {
-  margin: 0 auto;
+  /* 양옆 여백을 넓혀 검색창 가로 길이를 줄여요 */
+  margin: 0 56px;
   height: 46px;
   border-radius: var(--radius-pill);
   background: var(--surface);
@@ -20,7 +21,6 @@
   color: var(--muted);
   font-size: 14px;
   text-decoration: none;
-  width: fit-content;
   box-sizing: border-box;
 }
 
