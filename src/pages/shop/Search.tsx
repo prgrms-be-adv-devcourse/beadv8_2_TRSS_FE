@@ -4,7 +4,6 @@ import AppFrame from '../../components/ui/AppFrame'
 import Icon from '../../components/ui/Icon'
 import { ErrorView, Loading } from '../../components/ui/Misc'
 import { useApi } from '../../lib/useApi'
-import { categoryIcon } from '../../lib/products'
 import { loadCategories } from './common'
 import { MOCK_TRENDING } from './mock'
 import styles from './Search.module.css'
@@ -182,9 +181,6 @@ export default function SearchPage() {
             <div className={styles.cats}>
               {g.children.map((c) => (
                 <Link key={c.categoryId} to={`/products?categoryId=${c.categoryId}`} className={styles.cat}>
-                  <span className={styles.catIcon}>
-                    <img src={categoryIcon(c.name, g.name)} alt="" />
-                  </span>
                   {c.name}
                 </Link>
               ))}

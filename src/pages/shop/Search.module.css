@@ -200,35 +200,24 @@
   font-weight: 700;
   margin-bottom: 10px;
 }
+/* 소분류: 글씨 칩 (줄바꿈) */
 .cats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .cat {
-  display: flex;
-  flex-direction: column;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--input-line);
+  border-radius: var(--radius-pill);
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--sub);
-  text-align: center;
-  word-break: keep-all;
+  white-space: nowrap;
 }
-.catIcon {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  background: var(--surface);
-  display: grid;
-  place-items: center;
-}
-.catIcon img {
-  width: 30px;
-  height: 30px;
-}
-@media (min-width: 768px) {
-  .cats {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
+.cat:hover {
+  border-color: var(--ink);
+  color: var(--ink);
 }
