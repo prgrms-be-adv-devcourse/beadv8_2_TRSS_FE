@@ -452,9 +452,6 @@
   font-size: 12px;
   color: var(--faint);
 }
-.menuMuted {
-  color: var(--sub);
-}
 .subMenu {
   margin: 18px 16px 24px;
   padding: 4px 14px 0;
@@ -1034,4 +1031,11 @@
   justify-content: flex-end;
   gap: 8px;
   margin-top: 14px;
+}
+
+/* 마이페이지 상단: 내 정보 · 로그아웃 버튼 나란히 */
+.meActions {
+  flex: none;
+  display: flex;
+  gap: 6px;
 }

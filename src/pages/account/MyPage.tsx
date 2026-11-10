@@ -80,9 +80,15 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
           <p className={s.meName}>{me ? `${me.name}님` : '…'}</p>
           <p className={s.meMail}>{me?.email}</p>
         </div>
-        <Button to="/mypage/profile" variant="outline" size="sm">
-          내 정보
-        </Button>
+        <div className={s.meActions}>
+          <Button to="/mypage/profile" variant="outline" size="sm">
+            내 정보
+          </Button>
+          {/* 메인 도착 후 LogoutOnArrive가 로그아웃해요 */}
+          <Button to="/" state={{ logout: true }} variant="outline" size="sm">
+            로그아웃
+          </Button>
+        </div>
       </div>
 
       <div className={s.walletRow}>
@@ -157,9 +163,6 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
             <span className={s.menuRight}>{infMeta.tag} ›</span>
           </Link>
         )}
-        <Link to="/" state={{ logout: true }} className={`${s.menuItem} ${s.menuMuted}`}>
-          로그아웃
-        </Link>
       </nav>
 
       {approvedInfluencer && (
