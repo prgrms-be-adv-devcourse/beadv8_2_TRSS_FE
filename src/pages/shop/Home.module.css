@@ -202,26 +202,25 @@
   color: var(--muted);
 }
 
-/* 설문 배너: 검은 카드 + 아이콘 + 단계 태그 + 흰 시작 버튼 */
+/* 설문 배너: 연회색 카드 + 흰 아이콘 + 흰 단계 태그 + 검은 시작 버튼 */
 .surveyCard {
   position: relative;
   overflow: hidden;
   margin: 24px 16px 0;
   padding: 18px 16px 18px 18px;
   border-radius: 20px;
-  background: linear-gradient(135deg, #0e0e10 0%, #26262c 60%, #3a3a42 100%);
-  color: #fff;
+  background: var(--surface);
+  color: var(--ink);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 14px 12px;
   text-decoration: none;
-  box-shadow: 0 14px 30px -18px rgba(14, 14, 16, 0.7);
-  transition: transform 0.15s ease;
+  transition: background 0.15s ease;
 }
 .surveyCard:hover {
-  color: #fff;
-  transform: translateY(-1px);
+  color: var(--ink);
+  background: #ececeb;
 }
 /* 오른쪽 위 은은한 원 장식 */
 .surveyDeco {
@@ -231,7 +230,7 @@
   width: 150px;
   height: 150px;
   border-radius: 99px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 70%);
   pointer-events: none;
 }
 .surveyIcon {
@@ -239,8 +238,7 @@
   width: 46px;
   height: 46px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #fff;
   display: grid;
   place-items: center;
 }
@@ -257,7 +255,7 @@
   gap: 6px;
   font-size: 11px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--muted);
 }
 .surveyAi {
   font-size: 10px;
@@ -265,8 +263,8 @@
   letter-spacing: 0.5px;
   padding: 1px 6px;
   border-radius: 4px;
-  background: #fff;
-  color: var(--ink);
+  background: var(--ink);
+  color: #fff;
 }
 .surveyTitle {
   font-size: 16px;
@@ -275,7 +273,7 @@
 }
 .surveyDesc {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--muted);
 }
 /* 아래 줄: 단계 태그(왼쪽) + 시작 버튼(오른쪽) */
 .surveyFoot {
@@ -299,10 +297,10 @@
   height: 24px;
   padding: 0 9px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.1);
+  background: #fff;
   font-size: 11px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--sub);
 }
 .surveyGo {
   position: relative;
@@ -310,8 +308,8 @@
   height: 34px;
   padding: 0 10px 0 14px;
   border-radius: var(--radius-pill);
-  background: #fff;
-  color: var(--ink);
+  background: var(--ink);
+  color: #fff;
   display: inline-flex;
   align-items: center;
   gap: 2px;
