@@ -10,7 +10,7 @@ type Props = {
   bottom?: ReactNode
 }
 
-/** 구매자 모바일 웹 틀: 흰 배경 위 430px 가운데 컬럼 */
+/** 구매자 모바일 웹 틀: 흰 배경 위 가운데 컬럼 (PC에서는 조금 넓게) */
 export default function AppFrame({ children, tab, bottom }: Props) {
   return (
     <div className={styles.stage}>

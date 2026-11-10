@@ -1,7 +1,7 @@
 .hero {
   position: relative;
-  height: 430px;
-  max-height: 100vw;
+  /* 컬럼 폭에 맞춘 정사각형 (휴대폰 430 · PC 640px) */
+  aspect-ratio: 1 / 1;
   background: var(--surface);
 }
 .counter {

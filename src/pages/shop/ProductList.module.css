@@ -168,3 +168,10 @@
   justify-content: center;
   padding: 24px 16px 8px;
 }
+
+/* PC(1024px 이상)에서 컬럼이 넓어지면 3열 */
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
