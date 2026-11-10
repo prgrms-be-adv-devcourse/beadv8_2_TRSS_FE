@@ -55,29 +55,29 @@ export default function WalletPage() {
     <AppFrame>
       <PageHeader title="예치금" back="/mypage" />
       <section aria-label="예치금 잔액" className={s.balance}>
-        <span aria-hidden="true" className={s.balanceDeco} />
-        <div className={s.balanceTop}>
-          <span aria-hidden="true" className={s.balanceIcon}>
-            <Icon name="wallet" size={20} />
-          </span>
-          <p className={s.balanceLabel}>남은 예치금</p>
+        <div className={s.balanceMain}>
+          <div>
+            <p className={s.balanceLabel}>
+              <Icon name="wallet" size={16} />
+              남은 예치금
+            </p>
+            <p className={s.balanceAmount}>{wallet.data ? won(wallet.data.balance) : '-'}</p>
+          </div>
+          <div className={s.balanceActions}>
+            <Button to="/wallet/topups" variant="outline" size="sm">
+              충전 내역
+            </Button>
+            <Button to="/wallet/topup" size="sm">
+              충전하기
+            </Button>
+          </div>
         </div>
-        <p className={s.balanceAmount}>{wallet.data ? won(wallet.data.balance) : '-'}</p>
         <div className={s.balanceHeld}>
           <span className={s.balanceHeldLabel}>
-            <Icon name="clock" size={16} />
+            <Icon name="clock" size={14} />
             구매 확정을 기다리는 금액
           </span>
           <b>{wallet.data ? won(wallet.data.heldAmount) : '-'}</b>
-        </div>
-        <div className={s.balanceActions}>
-          <Button to="/wallet/topups" variant="outline" size="md" className={s.balanceBtnSub}>
-            충전 내역
-          </Button>
-          <Button to="/wallet/topup" size="md">
-            <Icon name="plus" size={16} strokeWidth={2.2} />
-            충전하기
-          </Button>
         </div>
       </section>
       {wallet.error && <ErrorView message={wallet.error} onRetry={wallet.reload} />}

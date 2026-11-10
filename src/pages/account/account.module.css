@@ -542,88 +542,63 @@
 }
 
 /* ── 예치금 ── */
-/* 예치금 카드: 라벤더→스카이 그라데이션 (홈 설문 배너와 같은 톤) */
+/* 예치금 카드: 흰 바탕 + 검정 테두리, 작게 */
 .balance {
-  position: relative;
-  overflow: hidden;
   margin: 4px 16px 0;
-  padding: 20px;
-  border-radius: 20px;
-  background: linear-gradient(120deg, #e9e4f8 0%, #dfeaf8 100%);
-  color: #042c53;
+  padding: 14px 16px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-card);
+  background: #fff;
+  color: var(--ink);
 }
 .balance p {
   margin: 0;
 }
-.balanceDeco {
-  position: absolute;
-  right: -50px;
-  top: -60px;
-  width: 180px;
-  height: 180px;
-  border-radius: 99px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 70%);
-  pointer-events: none;
-}
-.balanceTop {
-  position: relative;
+.balanceMain {
   display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.balanceIcon {
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
-  background: #fff;
-  color: #185fa5;
-  display: grid;
-  place-items: center;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
 }
 .balanceLabel {
-  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
   font-weight: 600;
-  color: #185fa5;
+  color: var(--muted);
 }
 .balanceAmount {
-  position: relative;
-  margin-top: 12px !important;
-  font-size: 30px;
+  margin-top: 4px !important;
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.4px;
   font-variant-numeric: tabular-nums;
 }
+.balanceActions {
+  flex: none;
+  display: flex;
+  gap: 6px;
+}
 .balanceHeld {
-  position: relative;
-  margin-top: 16px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.7);
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 12px;
 }
 .balanceHeldLabel {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  color: #0c447c;
+  gap: 5px;
+  color: var(--muted);
 }
 .balanceHeld b {
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
-}
-.balanceActions {
-  position: relative;
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-.balanceBtnSub {
-  border-color: transparent;
-  background: rgba(255, 255, 255, 0.85);
 }
 .ledger {
   list-style: none;
