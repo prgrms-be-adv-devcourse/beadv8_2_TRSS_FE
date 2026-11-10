@@ -111,6 +111,19 @@ const PATHS = {
   edit: <path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4" />,
   trash: <path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" />,
   download: <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />,
+  wallet: (
+    <>
+      <path d="M5 6.5V6a2 2 0 0 1 2-2h10" />
+      <rect x="2.5" y="6.5" width="19" height="13" rx="2.5" />
+      <path d="M21.5 10.5H18a2 2 0 0 0 0 4h3.5" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </>
+  ),
 } as const
 
 export type IconName = keyof typeof PATHS

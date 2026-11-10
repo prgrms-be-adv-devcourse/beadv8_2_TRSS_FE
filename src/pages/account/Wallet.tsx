@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import Button from '../../components/ui/Button'
+import Icon from '../../components/ui/Icon'
 import PageHeader from '../../components/ui/PageHeader'
 import { Chips, Empty, ErrorView, Loading, won } from '../../components/ui/Misc'
 import { getWallet, getWalletTransactions, type WalletTransactionType } from '../../lib/api/wallet'
@@ -53,19 +54,32 @@ export default function WalletPage() {
   return (
     <AppFrame>
       <PageHeader title="예치금" back="/mypage" />
-      <div className={s.balance}>
-        <p className={s.balanceLabel}>남은 예치금</p>
+      <section aria-label="예치금 잔액" className={s.balance}>
+        <span aria-hidden="true" className={s.balanceDeco} />
+        <div className={s.balanceTop}>
+          <span aria-hidden="true" className={s.balanceIcon}>
+            <Icon name="wallet" size={20} />
+          </span>
+          <p className={s.balanceLabel}>남은 예치금</p>
+        </div>
         <p className={s.balanceAmount}>{wallet.data ? won(wallet.data.balance) : '-'}</p>
-        <p className={s.balanceHeld}>
-          <span>구매 확정을 기다리는 금액</span>
+        <div className={s.balanceHeld}>
+          <span className={s.balanceHeldLabel}>
+            <Icon name="clock" size={16} />
+            구매 확정을 기다리는 금액
+          </span>
           <b>{wallet.data ? won(wallet.data.heldAmount) : '-'}</b>
-        </p>
+        </div>
         <div className={s.balanceActions}>
-          <Button to="/wallet/topup" variant="soft" size="sm">
+          <Button to="/wallet/topups" variant="outline" size="md" className={s.balanceBtnSub}>
+            충전 내역
+          </Button>
+          <Button to="/wallet/topup" size="md">
+            <Icon name="plus" size={16} strokeWidth={2.2} />
             충전하기
           </Button>
         </div>
-      </div>
+      </section>
       {wallet.error && <ErrorView message={wallet.error} onRetry={wallet.reload} />}
       <p className={s.note}>구매가 확정되면 판매자에게 넘어가고, 반품이 승인되면 예치금으로 돌아와요.</p>
 
