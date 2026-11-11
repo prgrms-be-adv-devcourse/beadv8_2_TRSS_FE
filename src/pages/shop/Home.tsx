@@ -8,7 +8,8 @@ import { ErrorView, Loading, Thumb } from '../../components/ui/Misc'
 import { useApi } from '../../lib/useApi'
 import { useAuth } from '../../lib/auth'
 import { ExampleNotice, MiniCard, SectionHead, imageOf, loadCategories, loadProducts } from './common'
-import { MOCK_NOTIFICATIONS, MOCK_PROFILE, MOCK_WHY } from './mock'
+import { useNotificationCount } from '../../lib/notificationCount'
+import { MOCK_PROFILE, MOCK_WHY } from './mock'
 import CategoryDrawer from './CategoryDrawer'
 import { SearchPanel } from './Search'
 import styles from './Home.module.css'
@@ -30,8 +31,7 @@ export default function HomePage() {
   const wishRecs = items.slice(6, 12).length ? items.slice(6, 12) : items.slice(0, 6)
   const recent = items.slice(0, 3)
   const viewRecs = [...items].reverse().slice(0, 6)
-  // TODO(API 미구현): GET /notifications — 안 읽은 알림이 있는지
-  const hasUnread = MOCK_NOTIFICATIONS.some((n) => n.unread)
+  const hasUnread = !!useNotificationCount()
   const quick = (categories.data ?? []).flatMap((g) => g.children).slice(0, 8)
 
   return (
