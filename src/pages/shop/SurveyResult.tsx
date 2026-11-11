@@ -19,7 +19,6 @@ export default function SurveyResultPage() {
 
   return (
     <AppFrame
-      footer={false}
       bottom={
         <BottomBar>
           <Button to="/">홈에서 추천 보기</Button>

@@ -78,7 +78,7 @@ export default function KakaoCallbackPage() {
   }, [ready, params, navigate])
 
   return (
-    <AppFrame footer={false}>
+    <AppFrame>
       <div aria-busy="true">
         <Loading label="카카오 계정을 확인하고 있어요" />
       </div>

@@ -3,7 +3,7 @@ import Icon from './Icon'
 import styles from './Footer.module.css'
 
 /**
- * 구매자 화면 공통 푸터 (AppFrame 맨 아래)
+ * 푸터 (메인 홈 맨 아래에만 보여요 — AppFrame footer)
  * 사업자 정보는 아직 정해지지 않아 예시 값이에요. 실제 값이 정해지면 COMPANY만 바꿔요.
  * 링크할 페이지가 아직 없는 메뉴는 '#'으로 두었어요.
  */

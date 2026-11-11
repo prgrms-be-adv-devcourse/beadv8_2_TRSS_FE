@@ -56,7 +56,6 @@ export default function SignupInfoPage() {
 
   return (
     <AppFrame
-      footer={false}
       bottom={
         <BottomBar plain>
           <div className={s.stack}>

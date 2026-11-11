@@ -149,9 +149,6 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
         <Link to="/mypage/reviews" className={s.menuItem}>
           내 리뷰<span className={s.menuRight}>{reviews.data ? `쓴 리뷰 ${reviews.data} ` : ''}›</span>
         </Link>
-        <Link to="/mypage/addresses" className={s.menuItem}>
-          배송지 관리<span className={s.menuRight}>›</span>
-        </Link>
         {sm && sellerView && (
           <Link to={sm.to} className={s.menuItem}>
             {sm.label}

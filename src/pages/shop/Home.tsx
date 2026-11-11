@@ -35,7 +35,7 @@ export default function HomePage() {
   const quick = (categories.data ?? []).flatMap((g) => g.children).slice(0, 8)
 
   return (
-    <AppFrame tab="home">
+    <AppFrame tab="home" footer>
       <PageHeader
         title={
           <Link to="/" aria-label="팔레트 홈" className={styles.logo}>
