@@ -21,6 +21,13 @@ export type NotificationItem = {
   read: boolean
   /** 서버 LocalDateTime (KST, 시간대 표기 없음) */
   createdAt: string
+  /** 대표 상품명 (주문 첫 상품). 필드 추가 전 알림이거나 값을 못 찾으면 null */
+  productName?: string | null
+  /** 주문 상품 줄 개수 (수량 합계 아님). "외 N개"는 itemCount - 1 */
+  itemCount?: number | null
+  /** 배송 시작 알림만. 이전에 저장된 알림이면 null */
+  carrierName?: string | null
+  trackingNumber?: string | null
 }
 
 /** BE NotificationListDto */

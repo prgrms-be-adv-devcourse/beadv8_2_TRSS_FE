@@ -31,19 +31,27 @@ function groupLabel(d: Date, now: Date) {
 }
 
 /**
- * 서버 문구 끝의 괄호를 아래 작은 줄로 분리
- * 예: "상품이 발송되었습니다. (CJ대한통운 1234)" → 제목 "상품이 발송되었습니다.", 부가 정보 "CJ대한통운 1234"
- * TODO(API 미구현): 택배사·송장번호 필드가 생기면 문구를 쪼개지 말고 필드를 쓴다
+ * 제목과 아래 작은 줄 (예: "라이트 윈드브레이커 외 2개 · CJ대한통운 1234")
+ * - 서버 문구 끝의 괄호(택배사·송장번호)는 제목에서 뗀다
+ * - 택배사 필드가 없는 이전 알림은 그 괄호 내용을 대신 쓴다
+ * - 상품명이 없으면 상품 부분을 뺀다
  */
-function splitMessage(message: string) {
-  const m = message.match(/^(.*?)\s*\(([^()]+)\)$/)
-  return m ? { title: m[1], desc: m[2] } : { title: message, desc: null }
+function textOf(n: NotificationItem) {
+  const m = n.message.match(/^(.*?)\s*\(([^()]+)\)$/)
+  const title = m ? m[1] : n.message
+  const product = n.productName
+    ? n.itemCount && n.itemCount > 1
+      ? `${n.productName} 외 ${n.itemCount - 1}개`
+      : n.productName
+    : null
+  const shipping = n.carrierName ? [n.carrierName, n.trackingNumber].filter(Boolean).join(' ') : (m?.[2] ?? null)
+  const desc = [product, shipping].filter(Boolean).join(' · ')
+  return { title, desc: desc || null }
 }
 
 /**
  * ①-1 알림
- * TODO(API 미구현): 유형 필터(type 파라미터), 상품명·썸네일·결제 금액·택배사 필드, 최근 30일 조건 — 백엔드 필드가 생기면
- * 탭(결제 완료·배송 시작·배송 완료), 상품 정보 줄, 오른쪽 썸네일, 목록 끝 "최근 30일 알림만 보여요"를 붙인다
+ * TODO(API 미구현): 유형 필터(type 파라미터) — 백엔드 배포 후 탭(결제 완료·배송 시작·배송 완료)을 붙이고 탭마다 커서를 따로 둔다
  */
 export default function NotificationsPage() {
   const unreadCount = useNotificationCount()
@@ -115,7 +123,7 @@ export default function NotificationsPage() {
           const d = new Date(n.createdAt)
           const group = groupLabel(d, now)
           const head = i === 0 || groupLabel(new Date(items[i - 1].createdAt), now) !== group
-          const text = splitMessage(n.message)
+          const text = textOf(n)
           return (
             <li key={n.id}>
               {head && <p className={styles.group}>{group}</p>}
@@ -147,6 +155,8 @@ export default function NotificationsPage() {
       ) : (
         hasNext && <div ref={sentinel}>{loading && <Loading />}</div>
       )}
+
+      {!hasNext && items.length > 0 && <p className={styles.foot}>최근 30일 알림만 보여요</p>}
     </AppFrame>
   )
 }
