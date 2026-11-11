@@ -31,6 +31,16 @@ function groupLabel(d: Date, now: Date) {
 }
 
 /**
+ * 서버 문구 끝의 괄호를 아래 작은 줄로 분리
+ * 예: "상품이 발송되었습니다. (CJ대한통운 1234)" → 제목 "상품이 발송되었습니다.", 부가 정보 "CJ대한통운 1234"
+ * TODO(API 미구현): 택배사·송장번호 필드가 생기면 문구를 쪼개지 말고 필드를 쓴다
+ */
+function splitMessage(message: string) {
+  const m = message.match(/^(.*?)\s*\(([^()]+)\)$/)
+  return m ? { title: m[1], desc: m[2] } : { title: message, desc: null }
+}
+
+/**
  * ①-1 알림
  * TODO(API 미구현): 유형 필터(type 파라미터), 상품명·썸네일·결제 금액·택배사 필드, 최근 30일 조건 — 백엔드 필드가 생기면
  * 탭(결제 완료·배송 시작·배송 완료), 상품 정보 줄, 오른쪽 썸네일, 목록 끝 "최근 30일 알림만 보여요"를 붙인다
@@ -105,6 +115,7 @@ export default function NotificationsPage() {
           const d = new Date(n.createdAt)
           const group = groupLabel(d, now)
           const head = i === 0 || groupLabel(new Date(items[i - 1].createdAt), now) !== group
+          const text = splitMessage(n.message)
           return (
             <li key={n.id}>
               {head && <p className={styles.group}>{group}</p>}
@@ -122,7 +133,8 @@ export default function NotificationsPage() {
                     <span>{`${pad(d.getHours())}:${pad(d.getMinutes())}`}</span>
                     {!n.read && <span aria-label="안 읽음" className={styles.dot} />}
                   </span>
-                  <span className={styles.title}>{n.message}</span>
+                  <span className={styles.title}>{text.title}</span>
+                  {text.desc && <span className={styles.desc}>{text.desc}</span>}
                 </span>
               </Link>
             </li>
