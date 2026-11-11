@@ -6,7 +6,6 @@ import SignupInfoPage from '../pages/account/SignupInfo'
 import KakaoCallbackPage from '../pages/account/KakaoCallback'
 import MyPagePage from '../pages/account/MyPage'
 import ProfilePage from '../pages/account/Profile'
-import AddressesPage from '../pages/account/Addresses'
 import MyReviewsPage from '../pages/account/MyReviews'
 import WithdrawPage from '../pages/account/Withdraw'
 import WalletPage from '../pages/account/Wallet'
@@ -23,7 +22,6 @@ export const buyerAccountScreens: ScreenRoute[] = [
   // ?sellerStatus=APPROVED, ?influencerStatus=APPROVED 로 상태별 화면을 볼 수 있어요
   { path: '/mypage', title: '마이페이지', auth: 'login', group: '구매자', element: <WithQuery page={MyPagePage} /> },
   { path: '/mypage/profile', title: '내 정보', auth: 'login', group: '구매자', element: <WithQuery page={ProfilePage} /> },
-  { path: '/mypage/addresses', title: '배송지 관리', auth: 'login', group: '구매자', element: <AddressesPage /> },
   { path: '/mypage/reviews', title: '내 리뷰', auth: 'login', group: '구매자', element: <MyReviewsPage /> },
   { path: '/mypage/withdraw', title: '회원 탈퇴', auth: 'login', group: '구매자', element: <WithdrawPage /> },
   { path: '/wallet', title: '예치금', auth: 'login', group: '구매자', element: <WalletPage /> },

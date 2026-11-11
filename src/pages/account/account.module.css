@@ -917,22 +917,6 @@
   font-weight: 700;
 }
 
-/* 배송지 */
-.addr {
-  margin: 12px 16px 0;
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-}
-.addrOn {
-  border-color: var(--ink);
-}
-.addr p {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: var(--sub);
-}
-
 /* 안내 모달 (NoticeView) */
 .noticeChip {
   display: inline-block;

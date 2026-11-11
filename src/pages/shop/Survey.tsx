@@ -59,7 +59,6 @@ export default function SurveyPage() {
 
   return (
     <AppFrame
-      footer={false}
       bottom={
         <BottomBar note={countText}>
           {last ? (
