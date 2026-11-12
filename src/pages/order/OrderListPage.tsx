@@ -71,7 +71,7 @@ export default function OrderListPage() {
   }
 
   return (
-    <AppFrame tab="orders">
+    <AppFrame tab="my">
       <div className={styles.top}>
         <PageHeader title={returnsTab ? '반품 내역' : '주문 내역'} back />
         <Segment label="기간" items={PERIODS} value={period} onChange={setPeriod} />

@@ -9,10 +9,11 @@ export type TabItem = { key: string; label: string; to: string; icon: IconName; 
 export const BUYER_TABS: TabItem[] = [
   { key: 'home', label: '홈', to: '/', icon: 'home' },
   { key: 'cart', label: '장바구니', to: '/cart', icon: 'bag' },
-  { key: 'orders', label: '주문', to: '/orders', icon: 'receipt' },
-  { key: 'my', label: '마이', to: '/mypage', icon: 'user' },
+  { key: 'category', label: '카테고리', to: '/category', icon: 'grid' },
+  { key: 'wish', label: '찜', to: '/wishlist', icon: 'heart' },
+  { key: 'my', label: '마이페이지', to: '/mypage', icon: 'user' },
 ]
-export type TabKey = 'home' | 'cart' | 'orders' | 'my'
+export type TabKey = 'home' | 'cart' | 'category' | 'wish' | 'my'
 
 /**
  * 관리자·물류 담당자는 장바구니·주문·마이(구매자 전용)를 쓸 수 없어요.
@@ -29,7 +30,7 @@ const LOGISTICS_TABS: TabItem[] = [
   { key: 'logout', label: '로그아웃', to: '/', icon: 'logout', state: { logout: true } },
 ]
 
-/** 하단 탭바. items를 주지 않으면 구매자 탭(홈·장바구니·주문·마이). 카테고리는 홈 검색창 왼쪽 버튼으로 가요 */
+/** 하단 탭바. items를 주지 않으면 구매자 탭(홈·장바구니·카테고리·찜·마이). 주문 내역은 마이에서 들어가요 */
 export default function TabBar({
   active,
   items: given,

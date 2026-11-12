@@ -10,7 +10,6 @@ import { getOrders, type OrderStatus } from '../../lib/api/order'
 import { getInfluencerPartnerships } from '../../lib/api/partnership'
 import { getMyReviews } from '../../lib/api/review'
 import { getWallet } from '../../lib/api/wallet'
-import { getWishlist } from '../../lib/api/wishlist'
 import { useAuth } from '../../lib/auth'
 import { useApi } from '../../lib/useApi'
 import { INFLUENCER_META, MOCK_PICKS, useInfluencerStatus } from '../influencer/mock'
@@ -50,7 +49,8 @@ const total = (p: Promise<{ totalElements: number }>) => p.then((r) => r.totalEl
 export default function MyPagePage(props: { sellerStatus?: SellerView; influencerStatus?: string }) {
   const { me } = useAuth()
   const seller = useMySeller(!props.sellerStatus)
-  const sellerView: SellerView | undefined = props.sellerStatus ?? (seller === undefined ? undefined : (seller?.status ?? '신청 전'))
+  const sellerView: SellerView | undefined =
+    props.sellerStatus ?? (seller === undefined ? undefined : (seller?.status ?? '신청 전'))
   const inf = useInfluencerStatus(props.influencerStatus)
   const approvedInfluencer = inf.view === 'APPROVED'
 
@@ -59,10 +59,10 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
     () => Promise.all(ORDER_CELLS.map(([, statuses]) => total(getOrders({ statuses, size: 1 })))),
     [],
   )
-  const wish = useApi(() => total(getWishlist({ size: 1 })), [])
   const reviews = useApi(() => total(getMyReviews({ size: 1 })), [])
   const requested = useApi(
-    () => (approvedInfluencer ? total(getInfluencerPartnerships({ status: 'REQUESTED', size: 1 })) : Promise.resolve(null)),
+    () =>
+      approvedInfluencer ? total(getInfluencerPartnerships({ status: 'REQUESTED', size: 1 })) : Promise.resolve(null),
     [approvedInfluencer],
   )
 
@@ -134,6 +134,9 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
       </section>
 
       <nav aria-label="마이페이지 메뉴" className={s.menu}>
+        <Link to="/orders" className={s.menuItem}>
+          주문 내역<span className={s.menuRight}>›</span>
+        </Link>
         <Link to="/orders?tab=returns" className={s.menuItem}>
           반품 내역<span className={s.menuRight}>›</span>
         </Link>
@@ -142,9 +145,6 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
         </Link>
         <Link to="/wallet/topups" className={s.menuItem}>
           충전 내역 · 충전 취소<span className={s.menuRight}>›</span>
-        </Link>
-        <Link to="/wishlist" className={s.menuItem}>
-          찜<span className={s.menuRight}>{wish.data ? `${wish.data} ` : ''}›</span>
         </Link>
         <Link to="/mypage/reviews" className={s.menuItem}>
           내 리뷰<span className={s.menuRight}>{reviews.data ? `쓴 리뷰 ${reviews.data} ` : ''}›</span>

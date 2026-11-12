@@ -23,7 +23,7 @@ export default function CategoryPage() {
   const banner = (cur && BANNERS[cur.name]) ?? { en: 'PALETTE', img: '/images/banner/influencer-pick.jpg' }
 
   return (
-    <AppFrame tab="home">
+    <AppFrame tab="category">
       <PageHeader
         title={
           <Link to="/" aria-label="팔레트 홈" className={styles.logo}>
