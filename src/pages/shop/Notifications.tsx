@@ -49,36 +49,54 @@ function textOf(n: NotificationItem) {
   return { title, desc: desc || null }
 }
 
-/**
- * ①-1 알림
- * TODO(API 미구현): 유형 필터(type 파라미터) — 백엔드 배포 후 탭(결제 완료·배송 시작·배송 완료)을 붙이고 탭마다 커서를 따로 둔다
- */
+type Tab = 'ALL' | NotificationType
+const TABS: Tab[] = ['ALL', 'ORDER_PAID', 'DELIVERY_STARTED', 'DELIVERY_COMPLETED']
+
+/** 탭 하나의 목록 상태. 커서는 유형별로 따로 이어진다 */
+type Feed = {
+  items: NotificationItem[]
+  cursor: number | null
+  hasNext: boolean
+  loading: boolean
+  error: string | null
+}
+const EMPTY_FEED: Feed = { items: [], cursor: null, hasNext: true, loading: false, error: null }
+
+/** ①-1 알림 */
 export default function NotificationsPage() {
   const unreadCount = useNotificationCount()
-  const [items, setItems] = useState<NotificationItem[]>([])
-  const [cursor, setCursor] = useState<number | null>(null)
-  const [hasNext, setHasNext] = useState(true)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const loadingRef = useRef(false)
+  const [tab, setTab] = useState<Tab>('ALL')
+  // 탭을 오가도 불러온 목록을 그대로 둔다
+  const [feeds, setFeeds] = useState<Partial<Record<Tab, Feed>>>({})
+  const loadingRef = useRef(new Set<Tab>())
+  const { items, hasNext, loading, error } = feeds[tab] ?? EMPTY_FEED
+
+  const patch = (t: Tab, next: (f: Feed) => Partial<Feed>) =>
+    setFeeds((prev) => {
+      const f = prev[t] ?? EMPTY_FEED
+      return { ...prev, [t]: { ...f, ...next(f) } }
+    })
 
   const loadMore = useCallback(async () => {
-    if (loadingRef.current || !hasNext) return
-    loadingRef.current = true
-    setLoading(true)
-    setError(null)
+    const t = tab
+    const f = feeds[t] ?? EMPTY_FEED
+    if (loadingRef.current.has(t) || !f.hasNext) return
+    loadingRef.current.add(t)
+    patch(t, () => ({ loading: true, error: null }))
     try {
-      const page = await getNotifications({ cursor, size: PAGE_SIZE })
-      setItems((prev) => [...prev, ...page.items])
-      setCursor(page.nextCursor)
-      setHasNext(page.hasNext)
+      const page = await getNotifications({ type: t === 'ALL' ? null : t, cursor: f.cursor, size: PAGE_SIZE })
+      patch(t, (cur) => ({
+        items: [...cur.items, ...page.items],
+        cursor: page.nextCursor,
+        hasNext: page.hasNext,
+        loading: false,
+      }))
     } catch (e) {
-      setError(errorMessage(e))
+      patch(t, () => ({ loading: false, error: errorMessage(e) }))
     } finally {
-      loadingRef.current = false
-      setLoading(false)
+      loadingRef.current.delete(t)
     }
-  }, [cursor, hasNext])
+  }, [tab, feeds])
 
   // 목록 끝이 보이면 다음 페이지를 불러온다 (오류가 나면 다시 불러오기 버튼으로만)
   const sentinel = useRef<HTMLDivElement>(null)
@@ -94,23 +112,37 @@ export default function NotificationsPage() {
 
   const onOpen = (n: NotificationItem) => {
     if (n.read) return
-    setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)))
+    // 같은 알림이 전체 탭과 유형 탭에 함께 있으므로 모든 탭에서 읽음으로 바꾼다
+    setFeeds((prev) => {
+      const next: typeof prev = {}
+      for (const [t, f] of Object.entries(prev) as Array<[Tab, Feed]>) {
+        next[t] = { ...f, items: f.items.map((x) => (x.id === n.id ? { ...x, read: true } : x)) }
+      }
+      return next
+    })
     readNotification(n.id).catch(() => {
       // 읽음 처리가 실패해도 주문 상세로는 이동한다. 다음 조회 때 다시 안 읽음으로 보인다
     })
   }
 
   const now = new Date()
-  const tabs: Array<[string, string]> = [['all', unreadCount ? `전체 ${unreadCount}` : '전체']]
+  const tabLabel = (t: Tab) => (t === 'ALL' ? (unreadCount ? `전체 ${unreadCount}` : '전체') : KIND[t].label)
 
   return (
     <AppFrame>
       <PageHeader back title="알림" />
 
       <div role="tablist" aria-label="알림 종류" className={styles.tabs}>
-        {tabs.map(([key, label]) => (
-          <button key={key} type="button" role="tab" aria-selected className={styles.chipOn}>
-            {label}
+        {TABS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            aria-selected={t === tab}
+            className={t === tab ? styles.chipOn : styles.chip}
+            onClick={() => setTab(t)}
+          >
+            {tabLabel(t)}
           </button>
         ))}
       </div>

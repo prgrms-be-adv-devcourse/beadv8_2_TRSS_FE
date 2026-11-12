@@ -1,8 +1,8 @@
 /**
  * 알림 API (notification-service, 구매자 USER)
  *
- * GET   /api/v1/notifications?cursor=&size=   내 알림 최신순 (커서 방식)
- * GET   /api/v1/notifications/unread-count    안 읽은 개수
+ * GET   /api/v1/notifications?type=&cursor=&size=   내 최근 30일 알림 최신순 (커서 방식, type 없으면 전체)
+ * GET   /api/v1/notifications/unread-count    최근 30일 안 읽은 개수 (유형과 관계없이 전체)
  * PATCH /api/v1/notifications/{id}/read       하나 읽음 (이미 읽었으면 그대로 성공)
  * PATCH /api/v1/notifications/read-all        전체 읽음
  */
@@ -42,8 +42,10 @@ export type NotificationList = {
 export const NOTIFICATIONS_CHANGED = 'palette:notifications-changed'
 const changed = () => window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED))
 
-export const getNotifications = (query: { cursor?: number | null; size?: number } = {}) =>
-  api<NotificationList>('/api/v1/notifications', { query })
+/** 다음 페이지도 같은 type으로 조회해야 한다 (커서는 유형별로 따로) */
+export const getNotifications = (
+  query: { type?: NotificationType | null; cursor?: number | null; size?: number } = {},
+) => api<NotificationList>('/api/v1/notifications', { query })
 export const getUnreadNotificationCount = () => api<number>('/api/v1/notifications/unread-count')
 /** 없거나 다른 회원 알림이면 404-NOTIFICATION_NOT_FOUND */
 export const readNotification = (id: number) =>
