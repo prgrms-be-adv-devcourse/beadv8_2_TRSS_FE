@@ -131,7 +131,7 @@ export default function AdminFailed() {
 
   const handle = (r: FailedRow) =>
     r.toSettlement ? (
-      <Button variant="outline" size="sm" to="/admin/settlements?status=MANUAL_REQUIRED">
+      <Button variant="outline" size="sm" to="/admin/settlements?group=ACTION_REQUIRED">
         월 정산으로
       </Button>
     ) : r.kind === 'delivery' ? (
@@ -211,7 +211,7 @@ export default function AdminFailed() {
                   </div>
                   <p className={s.meta}>원인 · {r.cause}</p>
                   {r.toSettlement ? (
-                    <Link to="/admin/settlements?status=MANUAL_REQUIRED" className={s.inlineLink}>
+                    <Link to="/admin/settlements?group=ACTION_REQUIRED" className={s.inlineLink}>
                       월 정산에서 다시 실행하기
                     </Link>
                   ) : (

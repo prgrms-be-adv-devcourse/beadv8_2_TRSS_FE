@@ -28,7 +28,7 @@ export const ADMIN_MENU: ConsoleMenuItem[] = [
   { key: 'products', label: '상품과 카테고리', to: '/admin/products' },
   { key: 'payments', label: '결제 조회', to: '/admin/payments' },
   { key: 'returns', label: '반품 심사', to: '/admin/returns' },
-  { key: 'settlements', label: '월 정산', to: '/admin/settlements' },
+  { key: 'settlements', label: '정산 내역', to: '/admin/settlements' },
   { key: 'failed', label: '실패 거래', to: '/admin/failed' },
   { key: 'reviews', label: '리뷰', to: '/admin/reviews' },
   { key: 'coupons', label: '쿠폰 · 협약', to: '/admin/coupons' },
