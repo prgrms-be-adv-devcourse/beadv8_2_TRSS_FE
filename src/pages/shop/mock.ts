@@ -1,5 +1,5 @@
 /**
- * 백엔드(ai-service·알림)에 아직 없는 API 자리를 채우는 목업 데이터예요.
+ * 백엔드(ai-service)에 아직 없는 API 자리를 채우는 목업 데이터예요.
  * 화면은 이 값으로만 그려지고, 저장 버튼 등은 화면 안 상태만 바꿔요.
  */
 
@@ -54,7 +54,18 @@ export const SURVEY_QUESTIONS: SurveyQuestion[] = [
     title: '좋아하거나 찾고 있는\n성분이 있나요?',
     help: '여러 개 골라도 돼요. 잘 모르면 넘어가도 괜찮아요.',
     max: 0,
-    opts: ['나이아신아마이드', '시카(병풀)', '비타민C', '히알루론산', '세라마이드', '레티놀', '판테놀', '티트리', '펩타이드', 'AHA · BHA'],
+    opts: [
+      '나이아신아마이드',
+      '시카(병풀)',
+      '비타민C',
+      '히알루론산',
+      '세라마이드',
+      '레티놀',
+      '판테놀',
+      '티트리',
+      '펩타이드',
+      'AHA · BHA',
+    ],
   },
   {
     key: 'avoid',
@@ -76,8 +87,22 @@ export const SURVEY_QUESTIONS: SurveyQuestion[] = [
 
 // TODO(API 미구현): AI 크리에이터 추천 — 피부가 비슷한 크리에이터 목록
 export const MOCK_CREATORS = [
-  { initial: 'A', name: '[크리에이터 A]', short: '지성 · 트러블', match: '지성 · 트러블 · 모공 일치', picks: 12, bg: '#e9e6e1' },
-  { initial: 'B', name: '[크리에이터 B]', short: '지성 · 모공', match: '지성 · 나이아신아마이드 선호', picks: 8, bg: '#e4e8e3' },
+  {
+    initial: 'A',
+    name: '[크리에이터 A]',
+    short: '지성 · 트러블',
+    match: '지성 · 트러블 · 모공 일치',
+    picks: 12,
+    bg: '#e9e6e1',
+  },
+  {
+    initial: 'B',
+    name: '[크리에이터 B]',
+    short: '지성 · 모공',
+    match: '지성 · 나이아신아마이드 선호',
+    picks: 8,
+    bg: '#e4e8e3',
+  },
   { initial: 'C', name: '[크리에이터 C]', short: '트러블', match: '복합성 · 트러블 일치', picks: 5, bg: '#e6e4ec' },
   { initial: 'D', name: '[크리에이터 D]', short: '무향료', match: '향료 없는 제품 위주', picks: 4, bg: '#ece6e1' },
 ]
@@ -91,28 +116,6 @@ export const MOCK_WHY = [
 ]
 /** 추천 성분 필터 (목업) */
 export const MOCK_REC_FILTERS = ['전체', '나이아신아마이드', '시카', '무향료', '선케어']
-
-// TODO(API 미구현): GET /notifications, PATCH /notifications/{id}/read — 알림 목록·읽음 처리
-export type NotiKind = 'pay' | 'ship' | 'done'
-export type Noti = {
-  id: number
-  kind: NotiKind
-  group: string
-  time: string
-  title: string
-  body: string
-  img: string
-  unread: boolean
-  to: string
-}
-export const MOCK_NOTIFICATIONS: Noti[] = [
-  { id: 1, kind: 'ship', group: '오늘', time: '09:12', title: '주문하신 상품의 배송이 시작됐어요', body: '라이트 윈드브레이커 외 2개 · [택배사]', img: '/images/windbreaker.jpg', unread: true, to: '/orders' },
-  { id: 2, kind: 'done', group: '오늘', time: '08:40', title: '상품이 도착했어요. 구매를 확정해 주세요', body: '저자극 데일리 선크림', img: '/images/sunscreen.jpg', unread: true, to: '/orders' },
-  { id: 3, kind: 'pay', group: '11.07', time: '14:22', title: '112,800원 결제를 완료했어요', body: '라이트 윈드브레이커 외 2개 · 예치금 결제', img: '/images/windbreaker.jpg', unread: false, to: '/orders' },
-  { id: 4, kind: 'done', group: '11.05', time: '17:03', title: '상품이 도착했어요. 구매를 확정해 주세요', body: '글로우 커버 쿠션', img: '/images/cushion.jpg', unread: false, to: '/orders' },
-  { id: 5, kind: 'ship', group: '11.04', time: '10:15', title: '주문하신 상품의 배송이 시작됐어요', body: '글로우 커버 쿠션 · [택배사]', img: '/images/cushion.jpg', unread: false, to: '/orders' },
-  { id: 6, kind: 'pay', group: '11.03', time: '21:47', title: '24,000원 결제를 완료했어요', body: '글로우 커버 쿠션 · 예치금 결제', img: '/images/cushion.jpg', unread: false, to: '/orders' },
-]
 
 /** 인기 급상승 검색어 (change: 지난 시간 대비 순위 변동, 'new'는 새로 진입) */
 // TODO(API 미구현): GET /api/v1/search/trending 이 생기면 이 목업을 지워요
