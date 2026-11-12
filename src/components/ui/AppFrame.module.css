@@ -34,3 +34,10 @@
   display: flex;
   flex-direction: column;
 }
+
+/* 하단 고정 버튼 + 탭바를 한 덩어리로 아래에 붙여요 (안쪽 sticky는 이 안에서 제자리) */
+.dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+}

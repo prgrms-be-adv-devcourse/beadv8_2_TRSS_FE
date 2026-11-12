@@ -136,8 +136,8 @@ export default function CartPage() {
     ) : undefined
 
   return (
-    <AppFrame bottom={bottom}>
-      <PageHeader title="장바구니" back />
+    <AppFrame tab="cart" bottom={bottom}>
+      <PageHeader title="장바구니" />
       {loading && !cart && <Loading label="장바구니를 불러오고 있어요" />}
       {error && !cart && <ErrorView message={error} onRetry={reload} />}
       {cart && items.length === 0 && (
