@@ -4,7 +4,10 @@
  * [관리자]
  * POST /api/v1/admin/settlements/runs                   월 정산 수동 실행 { settleMonth }
  * GET  /api/v1/admin/settlements/runs                   실행 결과 (PageResponse, 최신순)
- * GET  /api/v1/admin/settlements                        정산서 목록 ?month&status&sellerId (PageResponse)
+ * GET  /api/v1/admin/settlements                        정산서 목록 ?month | from&to, status | group, sellerId (PageResponse)
+ * GET  /api/v1/admin/settlements/summary                요약 카드 ?month | from&to, sellerId (상태별 건수, 지급 완료 금액)
+ * GET  /api/v1/admin/settlements/runs/runnable          수동 실행할 수 있는 달 (실패·중단, 실행 안 된 지난달)
+ * GET  /api/v1/admin/settlements/export                 지급 완료 정산서 엑셀 ?from&to&sellerId (월별은 from = to)
  * GET  /api/v1/admin/settlements/{id}                   정산서 상세 (묶인 후보 포함)
  * GET  /api/v1/admin/settlements/{id}/histories         처리 이력 (List, 처리 순서대로)
  * POST /api/v1/admin/settlements/{id}/retry             수동 재처리 { reason } (MANUAL_REQUIRED만)
@@ -14,11 +17,13 @@
  * POST /api/v1/admin/settlement-candidates/{id}/exclude 후보 제외 { reason }
  * POST /api/v1/admin/settlements/{id}/ledger-mismatch/confirm  원장 불일치 확인 { reason }
  * [판매자]
- * GET  /api/v1/seller/settlements ?month&status         내 정산서 목록 (PageResponse)
+ * GET  /api/v1/seller/settlements ?month | from&to&status  내 정산서 목록 (PageResponse, 기간은 최대 12개월)
  * GET  /api/v1/seller/settlements/expected              정산 예정 금액
+ * GET  /api/v1/seller/settlements/summary ?from&to      조회 기간 지급 완료 건수·금액, 가장 최근 지급 정산서
+ * GET  /api/v1/seller/settlements/export ?from&to       지급 완료 정산서 엑셀(.xlsx). 월별은 from = to
  * GET  /api/v1/seller/settlements/{id}                  내 정산서 상세 (품목별)
  */
-import { api, type PageQuery, type PageResponse } from '.'
+import { api, download, saveFile, type PageQuery, type PageResponse } from '.'
 
 /** 'yyyy-MM' 형식. 예: '2026-09' */
 export type YearMonth = string
@@ -165,8 +170,41 @@ export const runSettlement = (settleMonth: YearMonth) =>
   api<SettlementRun>('/api/v1/admin/settlements/runs', { method: 'POST', body: { settleMonth } })
 export const getSettlementRuns = (query: PageQuery = {}) =>
   api<PageResponse<SettlementRun>>('/api/v1/admin/settlements/runs', { query })
+/** 관리자 화면 상태 탭. ACTION_REQUIRED = 처리 필요(FAILED + MANUAL_REQUIRED) */
+export type SettlementAdminStatusGroup = 'ACTION_REQUIRED' | 'SCHEDULED' | 'PAID' | 'ON_HOLD'
+
+/** BE SettlementSummaryResponse (관리자 요약 카드, 상태 탭과 관계없이 모든 상태를 세요) */
+export type SettlementSummary = {
+  totalCount: number
+  paidCount: number
+  paidAmount: number
+  scheduledCount: number
+  /** 처리 필요 = retryingCount + manualRequiredCount */
+  actionRequiredCount: number
+  retryingCount: number
+  manualRequiredCount: number
+  onHoldCount: number
+}
+
+/** BE SettlementRunnableMonthResponse (수동 실행 확인 창의 "실행할 달") */
+export type SettlementRunnableMonth = {
+  settlementMonth: YearMonth
+  /** FAILED: 마지막 실행이 실패·중단 / NOT_RUN: 자동 실행 시각이 지났는데 실행 기록이 없음 */
+  reason: 'FAILED' | 'NOT_RUN'
+  lastStatus: string | null
+  lastRunAt: string | null
+}
+
+/** month(정산월 하나)와 from·to(기간) 중 하나만 넘겨요. status가 있으면 group보다 먼저 적용돼요. */
 export const getSettlements = (
-  query: PageQuery & { month?: YearMonth; status?: SettlementStatus; sellerId?: number } = {},
+  query: PageQuery & {
+    month?: YearMonth
+    from?: YearMonth
+    to?: YearMonth
+    status?: SettlementStatus
+    group?: SettlementAdminStatusGroup
+    sellerId?: number
+  } = {},
 ) => api<PageResponse<Settlement>>('/api/v1/admin/settlements', { query })
 export const getSettlement = (id: number) => api<SettlementDetail>(`/api/v1/admin/settlements/${id}`)
 export const getSettlementPreview = (month: YearMonth, query: PageQuery = {}) =>
@@ -264,9 +302,47 @@ export const excludeSettlementCandidate = (candidateId: number, reason: string) 
     body: { reason },
   })
 
+/** BE SellerSettlementSummaryResponse (판매자 정산 요약 카드) */
+export type SellerSettlementSummary = {
+  /** 조회 기간 지급 완료 건수 */
+  paidCount: number
+  /** 조회 기간 지급 완료 지급액 합 */
+  paidAmount: number
+  /** 가장 최근에 지급된 정산서. 없으면 null */
+  latestPaid: {
+    settlementId: number
+    settlementMonth: YearMonth
+    payoutAmount: number
+    paidAt: string | null
+  } | null
+}
+
+export const getSettlementSummary = (query: {
+  month?: YearMonth
+  from?: YearMonth
+  to?: YearMonth
+  sellerId?: number
+}) => api<SettlementSummary>('/api/v1/admin/settlements/summary', { query })
+export const getRunnableSettlementMonths = () =>
+  api<SettlementRunnableMonth[]>('/api/v1/admin/settlements/runs/runnable')
+/** 지급 완료 정산서 엑셀(관리자). 판매자 1명만 받으려면 sellerId, 한 달만 받으려면 from = to */
+export const downloadSettlementsExcel = async (from: YearMonth, to: YearMonth, sellerId?: number) => {
+  const file = await download('/api/v1/admin/settlements/export', { from, to, sellerId })
+  saveFile(file, from === to ? `palette-settlement-${from}.xlsx` : `palette-settlements-${from}_${to}.xlsx`)
+}
+
 // ── 판매자 ──
-export const getMySettlements = (query: PageQuery & { month?: YearMonth; status?: SettlementSellerStatus } = {}) =>
-  api<PageResponse<SellerSettlement>>('/api/v1/seller/settlements', { query })
+/** month(정산월 하나)와 from·to(기간) 중 하나만 넘겨요. 같이 넘기면 400이에요. */
+export const getMySettlements = (
+  query: PageQuery & { month?: YearMonth; from?: YearMonth; to?: YearMonth; status?: SettlementSellerStatus } = {},
+) => api<PageResponse<SellerSettlement>>('/api/v1/seller/settlements', { query })
+export const getMySettlementSummary = (from: YearMonth, to: YearMonth) =>
+  api<SellerSettlementSummary>('/api/v1/seller/settlements/summary', { query: { from, to } })
+/** 지급 완료 정산서 엑셀을 받아 바로 저장해요. 월별 하나만 받을 때는 from = to */
+export const downloadMySettlementsExcel = async (from: YearMonth, to: YearMonth) => {
+  const file = await download('/api/v1/seller/settlements/export', { from, to })
+  saveFile(file, from === to ? `palette-settlement-${from}.xlsx` : `palette-settlements-${from}_${to}.xlsx`)
+}
 export const getMySettlement = (id: number) => api<SellerSettlementDetail>(`/api/v1/seller/settlements/${id}`)
 export const getMyExpectedSettlement = () => api<SettlementExpected>('/api/v1/seller/settlements/expected')
 

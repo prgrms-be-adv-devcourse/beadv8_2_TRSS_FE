@@ -726,3 +726,18 @@
   display: flex;
   gap: 6px;
 }
+/* 정산 목록 대신 보이는 상태(빈 목록 등)도 카드처럼 네모 영역으로 (모바일) */
+.listStateBox {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+}
+/* 정산 화면 모바일 좌우 여백 (PC는 ConsoleShell 여백을 그대로 써요) */
+.settlementPage {
+  padding: 4px 16px 32px;
+}
+@media (min-width: 1024px) {
+  .settlementPage {
+    padding: 0;
+  }
+}

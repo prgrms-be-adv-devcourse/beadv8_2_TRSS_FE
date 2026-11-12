@@ -1,0 +1,291 @@
+/* 정산 화면 공통 (판매자 S5, 관리자 A6). PC 기준으로 그리고, 1023px 이하에서는 같은 순서로 세로로 쌓아요. */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.sectionTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+}
+/* 화면 제목(28px)보다 작고 구역 제목(17px)보다 큰 제목 (관리자 월 정산 내역) */
+.sectionTitleLg {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+/* 요약 카드 묶음: 칸이 좁아지면 저절로 줄을 바꿔요 */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  min-width: 0;
+}
+button.card {
+  cursor: pointer;
+}
+button.card:hover {
+  border-color: var(--ink);
+}
+.cardOn {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+.cardAlert {
+  border-color: var(--red-ink);
+}
+.cardAlert .cardLabel {
+  color: var(--red-ink);
+  font-weight: 700;
+}
+.cardLabel {
+  font-size: 13px;
+  color: var(--muted);
+}
+.cardValue {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+.cardSub {
+  font-size: 12px;
+  color: var(--muted);
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: none;
+}
+/* 기간, 판매자 같은 조건 줄 */
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+.filterLabel {
+  flex: none;
+  width: 52px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.filterRow input {
+  height: 44px;
+  min-width: 130px;
+  border: 1px solid var(--input-line);
+  border-radius: 10px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: #fff;
+}
+/* 기간 드롭다운 (SettlementParts의 Dropdown). 화살표는 오른쪽 여백 12px 안쪽에 둬요 */
+.dropdown {
+  position: relative;
+  min-width: 130px;
+}
+.dropdownBtn {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--input-line);
+  border-radius: 10px;
+  padding: 0 36px 0 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: left;
+  white-space: nowrap;
+  background: #fff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%23111' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E")
+    no-repeat right 12px center / 12px;
+  cursor: pointer;
+}
+.dropdownBtn[aria-expanded='true'] {
+  border-color: var(--ink);
+}
+/* 선택 목록: 항상 버튼 바로 아래, 버튼 폭 이상 */
+.dropdownList {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  max-height: 264px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  /* 회색 안내 글자(label) 안에 들어가도 항목은 본문 색으로 */
+  color: var(--ink);
+}
+.dropdownOption {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dropdownOption[aria-selected='true'] {
+  font-weight: 700;
+}
+.dropdownActive,
+.dropdownOption:hover {
+  background: var(--surface);
+}
+.filterRow input {
+  flex: 0 1 420px;
+}
+.tilde {
+  color: var(--muted);
+}
+/* 기간 줄 안에서 뒤에 붙는 조건 묶음 (판매자 검색) */
+.inlineFilter {
+  display: flex;
+  align-items: center;
+  gap: 8px 10px;
+  margin-left: 16px;
+  flex: 1 1 240px;
+  max-width: 420px;
+  min-width: 0;
+}
+.inlineFilter .filterLabel {
+  width: auto;
+}
+.inlineFilter input {
+  flex: 1 1 auto;
+  max-width: 360px;
+}
+.help {
+  margin: -4px 0 0 62px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.helpError {
+  color: var(--red-ink);
+}
+
+/* 탭이나 기간 줄 + 오른쪽 엑셀 버튼 */
+.toolbarRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+/* 상태 칩(Chips)은 자체 좌우 여백(16px)이 있어 화면 여백과 겹치므로, 이 줄 안에서는 빼서 다른 요소와 왼쪽을 맞춰요 */
+.toolbarRow > [role='group'] {
+  padding-left: 0;
+  padding-right: 0;
+}
+/* 모바일처럼 줄이 바뀌어 버튼이 혼자 다음 줄로 가도 PC처럼 오른쪽에 붙게 */
+.toolbarRow > :last-child:not(:first-child) {
+  margin-left: auto;
+}
+
+/* « ‹ 1 2 3 › » */
+.pages {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 14px 0 4px;
+}
+.pageBtn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.pageBtn:disabled {
+  color: var(--line);
+  cursor: default;
+}
+.pageBtn[aria-current='page'] {
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+}
+
+@media (max-width: 1023px) {
+  .section {
+    margin-bottom: 22px;
+  }
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cardValue {
+    font-size: 20px;
+  }
+  .filterLabel {
+    width: 100%;
+  }
+  .filterRow .dropdown {
+    flex: 1 1 120px;
+    min-width: 0;
+  }
+  /* 모바일: 빠른 기간은 한 줄을 다 쓰고, 시작 월 ~ 끝 월은 그 아래 한 줄에 */
+  .filterRow .quickSelect {
+    flex-basis: 100%;
+  }
+  .filterRow input {
+    flex: 1 1 100%;
+  }
+  .inlineFilter {
+    margin-left: 0;
+    flex: 1 1 100%;
+    max-width: none;
+    flex-wrap: wrap;
+  }
+  .inlineFilter input {
+    max-width: none;
+  }
+  .sectionTitleLg {
+    font-size: 20px;
+  }
+  .help {
+    margin-left: 0;
+  }
+  .toolbarRow > * {
+    max-width: 100%;
+  }
+}
+@media (max-width: 480px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
