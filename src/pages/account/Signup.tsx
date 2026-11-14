@@ -104,6 +104,7 @@ export default function SignupPage() {
 
   return (
     <AppFrame
+      tabBar={false}
       bottom={
         <BottomBar
           plain

@@ -1,0 +1,55 @@
+/* 로그인 화면 (디자인 A안): 로고 아래 컬러 점이 천천히 위아래로 움직여요 */
+.brand {
+  padding-top: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+/* 로고 영역은 공통 authLogo를 쓰고 위 여백만 brand가 맡아요 */
+.brand > h1 {
+  padding-top: 0;
+}
+
+.dots {
+  display: flex;
+  gap: 8px;
+}
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 99px;
+  animation: bob 2.4s ease-in-out infinite;
+}
+.dot:nth-child(1) {
+  background: #e8b4a8;
+}
+.dot:nth-child(2) {
+  background: #a9c4a0;
+  animation-delay: 0.3s;
+}
+.dot:nth-child(3) {
+  background: #9fb4d6;
+  animation-delay: 0.6s;
+}
+.dot:nth-child(4) {
+  background: #e7cf8e;
+  animation-delay: 0.9s;
+}
+
+.submit {
+  box-shadow: 0 10px 20px -12px rgba(14, 14, 16, 0.6);
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* 움직임 줄이기를 켠 사용자에게는 애니메이션 없이 바로 보여요 */
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    animation: none;
+  }
+}
