@@ -56,6 +56,7 @@ export default function SignupInfoPage() {
 
   return (
     <AppFrame
+      tabBar={false}
       bottom={
         <BottomBar plain>
           <div className={s.stack}>

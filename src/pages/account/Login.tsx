@@ -8,6 +8,7 @@ import { startKakao } from '../../lib/kakao'
 import type { KakaoLoginState } from './KakaoCallback'
 import { afterLoginPath } from './util'
 import s from './account.module.css'
+import m from './Login.module.css'
 
 /** 카카오 말풍선 심볼 (카카오 로그인 디자인 가이드) */
 export function KakaoSymbol() {
@@ -50,12 +51,20 @@ export default function LoginPage() {
   }
 
   return (
-    <AppFrame>
-      <h1 className={s.authLogo}>
-        <Link to="/">
-          <img src="/images/logo.png" alt="Palette" />
-        </Link>
-      </h1>
+    <AppFrame tabBar={false}>
+      <div className={m.brand}>
+        <h1 className={s.authLogo}>
+          <Link to="/">
+            <img src="/images/logo.png" alt="Palette" />
+          </Link>
+        </h1>
+        <div className={m.dots} aria-hidden="true">
+          <span className={m.dot} />
+          <span className={m.dot} />
+          <span className={m.dot} />
+          <span className={m.dot} />
+        </div>
+      </div>
       <form className={s.authForm} onSubmit={onSubmit}>
         <input
           id="login-email"
@@ -84,7 +93,7 @@ export default function LoginPage() {
             {error}
           </p>
         )}
-        <Button type="submit" size="lg" block className={s.authSubmit} disabled={pending}>
+        <Button type="submit" size="lg" block className={`${s.authSubmit} ${m.submit}`} disabled={pending}>
           {pending ? '로그인 중…' : '로그인'}
         </Button>
       </form>
