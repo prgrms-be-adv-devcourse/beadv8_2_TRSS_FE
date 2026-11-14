@@ -1,7 +1,8 @@
 import { defineConfig, type ProxyOptions } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const DEV_SERVER = 'http://3.37.14.205'
+// 개발 서버. 인증서가 도메인 이름으로 발급돼 있어서 IP가 아니라 도메인으로 적어요.
+const DEV_SERVER = 'https://palette-shop.duckdns.org'
 // localhost는 Node에서 IPv6(::1)로 먼저 풀려 Spring(IPv4)과 연결이 안 될 수 있어요.
 const LOCAL_HOST = 'http://127.0.0.1'
 
