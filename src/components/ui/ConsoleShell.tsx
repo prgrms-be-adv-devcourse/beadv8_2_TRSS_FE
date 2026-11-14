@@ -87,11 +87,7 @@ export default function ConsoleShell({
           </nav>
           {variant === 'logistics' ? (
             <>
-              <div className={styles.who}>
-                {account}
-                <br />
-                <span>물류 담당자 · 배송 기능만 사용</span>
-              </div>
+              <div className={styles.who}>{account}</div>
               <Link to="/" state={{ logout: true }} className={styles.sideLink}>
                 로그아웃
               </Link>

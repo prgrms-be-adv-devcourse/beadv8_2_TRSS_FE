@@ -13,6 +13,7 @@ import { useAuth } from '../../lib/auth'
 import { useApi } from '../../lib/useApi'
 import { ExampleNotice, HeartButton, Stars, imageOf, loadProduct, useRequireLogin, useWishes } from './common'
 import styles from './ProductDetail.module.css'
+import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '../../lib/shipping'
 
 /** 백엔드 장바구니 최대 수량 (custom.order.cartMaxQuantity) */
 const CART_MAX_QTY = 99
@@ -187,7 +188,14 @@ export default function ProductDetailPage() {
       </section>
 
       <dl className={styles.ship}>
-        {/* TODO(API 미구현): 배송비 정책 — 시안의 "2,500원 · 30,000원 이상 무료" 값이 API에 없어 배송 안내만 보여요 */}
+        {/* 배송비 정책은 상품 API에 없어 lib/shipping.ts 상수(백엔드 설정과 같은 값)로 안내해요 */}
+        <div>
+          <dt>배송비</dt>
+          <dd>
+            <b>{won(SHIPPING_FEE)}</b>
+            <span>한 주문 {won(FREE_SHIPPING_THRESHOLD)} 이상이면 무료 · 판매자가 여럿이어도 한 번만 받아요</span>
+          </dd>
+        </div>
         <div>
           <dt>배송</dt>
           <dd>

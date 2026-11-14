@@ -149,6 +149,8 @@ export type OrderSummary = {
   remainingSeconds: number
   /** 결제 일시. 결제 전이면 null */
   paidAt: string | null
+  /** 결제 금액 (쿠폰 할인 후, 배송비 포함). 배송비 도입 전 서버면 없어요 → totalPrice */
+  payAmount?: number
 }
 
 export type OrderListQuery = PageQuery & {

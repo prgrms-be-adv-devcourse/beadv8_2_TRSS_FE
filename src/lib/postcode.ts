@@ -4,7 +4,7 @@
  * - 문서: https://postcode.map.daum.net/guide
  */
 
-const SCRIPT_URL = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+const SCRIPT_URL = 'https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
 
 /** 검색 결과 중 화면에서 쓰는 값만 */
 export type PostcodeResult = {

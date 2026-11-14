@@ -31,6 +31,7 @@ import {
 import { NoticeModal, toTopupLinks, topupUrl, useProductThumbs, type Notice } from './common'
 import type { ProgressState } from './PayPages'
 import styles from './Checkout.module.css'
+import { shippingFeeFor } from '../../lib/shipping'
 
 /** 장바구니에서 넘겨주는 값 (CartPage의 order) */
 type FromCart = { cartItemIds: number[]; expectedTotalPrice?: number; idempotencyKey?: string }
@@ -95,7 +96,11 @@ const EMPTY_ADDRESS: AddressForm = { name: '', phone: '', zip: '', addr: '', add
 function addressErrors(a: AddressForm) {
   const phone = a.phone.replace(/\D/g, '')
   return {
-    name: !a.name.trim() ? '받는 분 이름을 입력해 주세요.' : a.name.trim().length > 50 ? '50자까지 입력할 수 있어요.' : '',
+    name: !a.name.trim()
+      ? '받는 분 이름을 입력해 주세요.'
+      : a.name.trim().length > 50
+        ? '50자까지 입력할 수 있어요.'
+        : '',
     phone: !/^0\d{8,10}$/.test(phone) ? '연락처는 0으로 시작하는 숫자 9~11자리로 입력해 주세요.' : '',
     zip: !/^\d{5}$/.test(a.zip) ? '주소 검색으로 우편번호와 주소를 넣어 주세요.' : '',
     addr: !a.addr.trim() ? '주소 검색으로 우편번호와 주소를 넣어 주세요.' : '',
@@ -133,7 +138,8 @@ function AddressFormSection({
 }) {
   const [search, setSearch] = useState(false)
   const err = showErrors ? addressErrors(value) : { name: '', phone: '', zip: '', addr: '' }
-  const set = (k: keyof AddressForm) => (e: { target: { value: string } }) => onChange({ ...value, [k]: e.target.value })
+  const set = (k: keyof AddressForm) => (e: { target: { value: string } }) =>
+    onChange({ ...value, [k]: e.target.value })
   return (
     <section aria-labelledby="ship" className={styles.firstSection}>
       <div className={styles.sectionHead}>
@@ -375,7 +381,15 @@ function AddressReadOnly({ a }: { a: ShippingAddress | null | undefined }) {
 
 // ── 주문 상품 ───────────────────────────────────────────
 
-type Row = { key: number; img: string | null; name: string; option: string; qty: number; line: number; discount?: number }
+type Row = {
+  key: number
+  img: string | null
+  name: string
+  option: string
+  qty: number
+  line: number
+  discount?: number
+}
 
 function ItemsSection({ rows }: { rows: Row[] }) {
   const [open, setOpen] = useState(false)
@@ -425,11 +439,13 @@ function AmountList({
   subtotal,
   couponDiscount,
   promoDiscount,
+  shipping,
   pay,
 }: {
   subtotal: number
   couponDiscount: number
   promoDiscount: number
+  shipping: number
   pay: number
 }) {
   return (
@@ -440,16 +456,19 @@ function AmountList({
       </div>
       <div>
         <dt>쿠폰 할인</dt>
-        <dd className={couponDiscount ? styles.minus : styles.zero}>{couponDiscount ? `−${won(couponDiscount)}` : '0원'}</dd>
+        <dd className={couponDiscount ? styles.minus : styles.zero}>
+          {couponDiscount ? `−${won(couponDiscount)}` : '0원'}
+        </dd>
       </div>
       <div>
         <dt>프로모션 할인</dt>
-        <dd className={promoDiscount ? styles.minus : styles.zero}>{promoDiscount ? `−${won(promoDiscount)}` : '0원'}</dd>
+        <dd className={promoDiscount ? styles.minus : styles.zero}>
+          {promoDiscount ? `−${won(promoDiscount)}` : '0원'}
+        </dd>
       </div>
       <div>
         <dt>배송비</dt>
-        {/* 백엔드에 배송비가 아직 없어요 (주문 생성 유스케이스 주석: 배송비 작업에서 추가 예정) */}
-        <dd className={styles.free}>무료</dd>
+        {shipping ? <dd>{won(shipping)}</dd> : <dd className={styles.free}>무료</dd>}
       </div>
       <div className={styles.total}>
         <dt>결제 금액</dt>
@@ -714,7 +733,11 @@ function DraftCheckout({ from }: { from: FromCart }) {
   const base = subtotal - productDisc
   const selectedCoupon = coupons.data?.coupons.find((c) => c.couponId === couponId) ?? null
   const cartDisc = selectedCoupon ? cartCouponDiscount(selectedCoupon, base) : 0
-  const pay = Math.max(0, base - cartDisc)
+  /** 쿠폰 할인 후 금액 (배송비 제외) — 주문 생성 때 expectedTotalPrice로 보내요 */
+  const payBeforeShipping = Math.max(0, base - cartDisc)
+  /** 배송비: 상품 쿠폰 할인 후 상품 금액(base) 기준. 장바구니 쿠폰은 기준에 영향 없어요 */
+  const shipping = items.some((i) => i.orderable) ? shippingFeeFor(base) : 0
+  const pay = payBeforeShipping + shipping
   const balance = wallet.data?.balance ?? 0
   const short = !!wallet.data && balance < pay
   const usable = (coupons.data?.coupons ?? []).filter((c) => cartCouponDiscount(c, base) > 0).length
@@ -749,9 +772,11 @@ function DraftCheckout({ from }: { from: FromCart }) {
   function create(next: 'pay' | 'topup', renewed = false) {
     const body: OrderCreateBody = {
       cartItemIds: items.map((i) => i.itemId),
-      expectedTotalPrice: pay,
+      expectedTotalPrice: payBeforeShipping,
       shippingAddress: toShippingAddress(address),
-      ...(productCoupon ? { productCoupons: [{ cartItemId: productCoupon.cartItemId, code: productCoupon.code }] } : {}),
+      ...(productCoupon
+        ? { productCoupons: [{ cartItemId: productCoupon.cartItemId, code: productCoupon.code }] }
+        : {}),
       ...(cartDisc > 0 && couponId ? { cartCouponId: couponId } : {}),
     }
     setBusy(true)
@@ -811,7 +836,9 @@ function DraftCheckout({ from }: { from: FromCart }) {
         // 주문이 만들어지지 않았으니 장바구니에서 고칠 수 있게 해요
         setNotice({
           ...n,
-          actions: n.actions.some((a) => a.to) ? n.actions : [{ label: '닫기' }, { label: '장바구니로 가기', to: '/cart', primary: true }],
+          actions: n.actions.some((a) => a.to)
+            ? n.actions
+            : [{ label: '닫기' }, { label: '장바구니로 가기', to: '/cart', primary: true }],
         })
       })
   }
@@ -880,14 +907,19 @@ function DraftCheckout({ from }: { from: FromCart }) {
         <div className={styles.page}>
           <div className={styles.timerBox}>
             <div className={styles.timerHead}>
-              <span>결제 가능 시간</span>
-              <b>15:00</b>
+              <span className={styles.timerIcon}>
+                <Icon name="clock" size={15} />
+              </span>
+              <span className={styles.timerText}>
+                <b>결제 가능 시간</b>
+                <span>결제하기를 누르면 15분 동안 상품이 예약돼요</span>
+              </span>
+              <b className={styles.timerClock}>15:00</b>
             </div>
-            <p className={styles.timerNote}>결제하기를 누르면 주문이 만들어지고, 15분 동안 재고를 잡아 둬요.</p>
           </div>
           {blocked && (
             <p role="alert" className={styles.alert}>
-              주문할 수 없는 상품이 있어요. <Link to="/cart">장바구니</Link>에서 확인해 주세요.
+              주문할 수 없는 상품이 있어요. <Link to="/cart">장바구니</Link>에서 확인해 주세요
             </p>
           )}
           <AddressFormSection value={address} onChange={setAddress} showErrors={showErrors} />
@@ -946,7 +978,13 @@ function DraftCheckout({ from }: { from: FromCart }) {
                 {promoError && <p className={f.error}>{promoError}</p>}
               </>
             )}
-            <AmountList subtotal={subtotal} couponDiscount={cartDisc} promoDiscount={productDisc} pay={pay} />
+            <AmountList
+              subtotal={subtotal}
+              couponDiscount={cartDisc}
+              promoDiscount={productDisc}
+              shipping={shipping}
+              pay={pay}
+            />
           </section>
           <PaySection balance={balance} pay={pay} walletReady={!!wallet.data} otherTopupUrl={null} />
         </div>
@@ -1081,20 +1119,37 @@ function OrderCheckout({ orderId }: { orderId: number }) {
       {order.error && !o && <ErrorView message={order.error} onRetry={order.reload} />}
       {ready && (
         <div className={styles.page}>
-          <div className={styles.timerBox}>
+          <div
+            className={`${styles.timerBox} ${expired ? styles.timerExpired : remaining <= 180 ? styles.timerLow : ''}`}
+          >
             {expired ? (
-              <>
-                <div className={styles.timerHead}>
-                  <span>결제 시간이 지났어요</span>
-                  <b>00:00</b>
-                </div>
-                <p className={styles.timerNote}>주문이 취소되고 예약한 재고가 풀렸어요. 장바구니에서 다시 주문해 주세요.</p>
-              </>
+              <div className={styles.timerHead}>
+                <span className={styles.timerIcon}>
+                  <Icon name="clock" size={15} />
+                </span>
+                <span className={styles.timerText}>
+                  <b>결제 시간이 지났어요</b>
+                  <span>주문이 취소되고 예약한 재고가 풀렸어요. 장바구니에서 다시 주문해 주세요</span>
+                </span>
+                <b className={styles.timerClock}>00:00</b>
+              </div>
             ) : (
               <>
                 <div className={styles.timerHead}>
-                  <span>결제 가능 시간</span>
-                  <b role="timer">{mmss(remaining)}</b>
+                  <span className={styles.timerIcon}>
+                    <Icon name="clock" size={15} />
+                  </span>
+                  <span className={styles.timerText}>
+                    <b>결제 가능 시간</b>
+                    <span>
+                      {remaining <= 180
+                        ? '곧 주문이 취소돼요. 서둘러 결제해 주세요'
+                        : '시간 안에 결제하지 않으면 주문이 취소돼요'}
+                    </span>
+                  </span>
+                  <b role="timer" className={styles.timerClock}>
+                    {mmss(remaining)}
+                  </b>
                 </div>
                 <div
                   role="progressbar"
@@ -1108,8 +1163,8 @@ function OrderCheckout({ orderId }: { orderId: number }) {
                 </div>
               </>
             )}
+            <p className={styles.orderNo}>주문번호 {o.orderNumber}</p>
           </div>
-          <p className={styles.orderNo}>주문번호 {o.orderNumber}</p>
           <AddressReadOnly a={o.shippingAddress} />
           <ItemsSection
             rows={o.items.map((r) => ({
@@ -1130,7 +1185,13 @@ function OrderCheckout({ orderId }: { orderId: number }) {
               {productDisc || cartDisc ? '주문할 때 고른 쿠폰이 적용돼 있어요.' : '쿠폰 없이 만든 주문이에요.'} 주문을
               만든 뒤에는 쿠폰을 바꿀 수 없어요.
             </p>
-            <AmountList subtotal={o.totalPrice} couponDiscount={cartDisc} promoDiscount={productDisc} pay={pay} />
+            <AmountList
+              subtotal={o.totalPrice}
+              couponDiscount={cartDisc}
+              promoDiscount={productDisc}
+              shipping={o.shippingFee ?? 0}
+              pay={pay}
+            />
           </section>
           <PaySection
             balance={balance}
