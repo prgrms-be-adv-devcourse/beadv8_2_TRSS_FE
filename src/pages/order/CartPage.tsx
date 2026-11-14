@@ -23,6 +23,7 @@ import { productImage } from '../../lib/products'
 import { useApi } from '../../lib/useApi'
 import { NoticeModal, type Notice } from './common'
 import styles from './Cart.module.css'
+import { remainingForFreeShipping, shippingFeeFor } from '../../lib/shipping'
 
 /** 백엔드 custom.order.cartMaxQuantity */
 const MAX_QTY = 99
@@ -44,11 +45,16 @@ const fixable = (r: UnorderableReason | null) => r === 'STOCK_INSUFFICIENT'
 /** 선택한 항목 기준으로 개수·합계를 다시 계산해요. (서버 응답을 기다리는 동안 화면에 먼저 반영) */
 function recalc(items: CartItem[]): Cart {
   const selected = items.filter((i) => i.selected)
+  const expectedTotalPrice = selected.filter((i) => i.orderable).reduce((s, i) => s + i.lineAmount, 0)
+  const shippingFee = shippingFeeFor(expectedTotalPrice)
   return {
     items,
     selectedCount: selected.length,
-    expectedTotalPrice: selected.filter((i) => i.orderable).reduce((s, i) => s + i.lineAmount, 0),
+    expectedTotalPrice,
     orderable: selected.length > 0 && selected.every((i) => i.orderable),
+    shippingFee,
+    expectedPayAmount: expectedTotalPrice + shippingFee,
+    remainingForFreeShipping: remainingForFreeShipping(expectedTotalPrice),
   }
 }
 
@@ -80,7 +86,12 @@ export default function CartPage() {
   // 주문할 수 없는 항목은 선택돼 있어도 체크를 꺼서 보여주고 주문·합계에서 빼요.
   const orderableItems = items.filter((i) => i.orderable)
   const targets = orderableItems.filter((i) => i.selected)
+  /** 상품 금액 합계 (배송비 제외) — 주문 생성 때 expectedTotalPrice로 보내요 */
   const sum = cart?.expectedTotalPrice ?? 0
+  const shipping = cart?.shippingFee ?? 0
+  /** 결제 예정 금액 (배송비 포함, 쿠폰 할인 전) */
+  const payTotal = cart?.expectedPayAmount ?? sum + shipping
+  const toFree = cart?.remainingForFreeShipping ?? 0
   const balance = wallet.data?.balance ?? 0
   const allOn = orderableItems.length > 0 && targets.length === orderableItems.length
 
@@ -130,7 +141,7 @@ export default function CartPage() {
     items.length > 0 ? (
       <BottomBar>
         <Button size="lg" onClick={order} disabled={targets.length === 0}>
-          {targets.length ? `${won(sum)} 주문하기` : '주문할 상품을 골라 주세요'}
+          {targets.length ? `${won(payTotal)} 주문하기` : '주문할 상품을 골라 주세요'}
         </Button>
       </BottomBar>
     ) : undefined
@@ -264,24 +275,33 @@ export default function CartPage() {
               <dt>상품 금액</dt>
               <dd>{won(sum)}</dd>
             </div>
+            <div>
+              <dt>배송비</dt>
+              <dd>{shipping ? won(shipping) : '무료'}</dd>
+            </div>
             <div className={styles.sumTotal}>
               <dt>결제 예정 금액</dt>
-              <dd>{won(sum)}</dd>
+              <dd>{won(payTotal)}</dd>
             </div>
           </dl>
+          {toFree > 0 && (
+            <p className={styles.freeShip}>
+              <b>{won(toFree)}</b> 더 담으면 무료 배송이에요
+            </p>
+          )}
           {wallet.data && (
             <div className={styles.wallet}>
               <span>예치금 {won(balance)}</span>
-              {sum <= balance ? (
+              {payTotal <= balance ? (
                 <span>
-                  결제 후 <b>{won(balance - sum)}</b> 남아요
+                  결제 후 <b>{won(balance - payTotal)}</b> 남아요
                 </span>
               ) : (
-                <span className={styles.short}>{won(sum - balance)} 모자라요 · 주문한 뒤 충전할 수 있어요</span>
+                <span className={styles.short}>{won(payTotal - balance)} 모자라요</span>
               )}
             </div>
           )}
-          <p className={styles.note}>가격과 재고는 주문할 때 한 번 더 확인해요. 주문하면 15분 동안 재고가 예약돼요.</p>
+          <p className={styles.note}>주문하면 15분 동안 재고가 예약돼요</p>
         </>
       )}
       {optionFor && (

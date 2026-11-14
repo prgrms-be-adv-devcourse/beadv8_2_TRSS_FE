@@ -47,6 +47,12 @@ export type Cart = {
   expectedTotalPrice: number
   /** 선택한 항목이 1개 이상이고 모두 주문할 수 있는지 */
   orderable: boolean
+  /** 예상 배송비. 선택한 주문 가능 항목이 없으면 0 */
+  shippingFee: number
+  /** 예상 결제 금액 = expectedTotalPrice + shippingFee (쿠폰 할인 전) */
+  expectedPayAmount: number
+  /** 무료 배송까지 남은 금액. 이미 무료 배송이거나 선택한 주문 가능 항목이 없으면 0 */
+  remainingForFreeShipping: number
 }
 
 export const getCart = () => api<Cart>('/api/v1/cart')

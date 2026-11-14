@@ -202,6 +202,14 @@
   font-size: 16px;
   font-weight: 800;
 }
+.freeShip {
+  margin: -4px 16px 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #e8f5ee;
+  color: #1f6e44;
+  font-size: 13px;
+}
 .wallet {
   margin: 0 16px;
   padding: 12px 14px;

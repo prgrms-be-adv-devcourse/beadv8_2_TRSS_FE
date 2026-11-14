@@ -6,7 +6,8 @@
  * - OrderCreateRequest: shippingAddress, productCoupons(최대 1개), cartCouponId
  * - OrderCreateResponse: productDiscountAmount, cartCouponDiscountAmount, payAmount
  * - OrderDetailResponse: shippingAddress, deliveredAt, delivery, deliveryUnavailable, 할인액, payAmount, items[].discountAmount
- * - OrderSummaryResponse: deliveredAt (totalPrice는 쿠폰 할인 후 결제 금액)
+ * - OrderSummaryResponse: deliveredAt, payAmount (배송비 포함 결제 금액)
+ * - 배송비(TRSS-206): OrderCreateResponse·OrderDetailResponse의 shippingFee
  */
 import { api, type PageResponse } from '../../lib/api'
 import {
@@ -60,8 +61,10 @@ export type OrderDetailX = Omit<OrderDetail, 'items'> & {
   deliveryUnavailable?: boolean
   productDiscountAmount?: number
   cartCouponDiscountAmount?: number
-  /** 결제 금액 = 상품 금액 합계 - 상품 쿠폰 할인 - 장바구니 쿠폰 할인 */
+  /** 결제 금액 = 상품 금액 합계 - 상품 쿠폰 할인 - 장바구니 쿠폰 할인 + 배송비 */
   payAmount?: number
+  /** 배송비 (배송비 도입 전 주문은 0) */
+  shippingFee?: number
 }
 
 /** 주문 내역 한 줄 (lib 타입 + 배송 완료 시각) */
@@ -76,12 +79,13 @@ export const payAmountOf = (o: OrderDetailX) => o.payAmount ?? o.totalPrice
 export type OrderCreateResponseX = OrderCreateResponse & {
   productDiscountAmount?: number
   cartCouponDiscountAmount?: number
+  shippingFee?: number
   payAmount?: number
 }
 
 export type OrderCreateBody = {
   cartItemIds: number[]
-  /** 쿠폰을 쓰면 할인 후 금액 (주문서에 보여 준 결제 금액) */
+  /** 쿠폰을 쓰면 할인 후 금액. 배송비는 빼고 보내요 (서버가 배송비를 뺀 금액과 비교) */
   expectedTotalPrice: number
   shippingAddress?: ShippingAddress
   /** 한 주문에 1개까지 */

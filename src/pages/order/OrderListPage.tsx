@@ -172,10 +172,15 @@ function OrderCards({ filter, months }: { filter: Filter; months: number }) {
               {note && <span className={note.warn ? styles.warn : styles.note}>{note.text}</span>}
             </p>
             <Link to={url} className={styles.product}>
-              <Thumb src={o.thumbnailUrl || productImage(o.representativeProductName)} width={60} height={64} radius={6} />
+              <Thumb
+                src={o.thumbnailUrl || productImage(o.representativeProductName)}
+                width={60}
+                height={64}
+                radius={6}
+              />
               <div>
                 <p className={styles.name}>{name}</p>
-                <p className={styles.amount}>{won(o.totalPrice)}</p>
+                <p className={styles.amount}>{won(o.payAmount ?? o.totalPrice)}</p>
               </div>
             </Link>
             {pending && left > 0 && (
@@ -232,7 +237,9 @@ function ReturnList() {
             <div className={styles.product}>
               <Thumb src={r.img} width={60} height={64} radius={6} />
               <div>
-                <p className={styles.name}>{r.itemCount > 1 ? `${r.productName} 외 ${r.itemCount - 1}개` : r.productName}</p>
+                <p className={styles.name}>
+                  {r.itemCount > 1 ? `${r.productName} 외 ${r.itemCount - 1}개` : r.productName}
+                </p>
                 <p className={styles.amount}>{won(r.refundAmount)}</p>
               </div>
             </div>

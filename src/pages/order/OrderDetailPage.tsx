@@ -16,7 +16,11 @@ import { NoticeModal, mdhm, useProductThumbs, ymd, type Notice } from './common'
 import styles from './OrderDetail.module.css'
 
 const SHIP_STEPS = ['결제 완료', '상품 준비', '배송 중', '배송 완료']
-const DELIVERY_LABEL: Record<DeliveryStatus, string> = { READY: '상품 준비 중', SHIPPED: '배송 중', DELIVERED: '배송 완료' }
+const DELIVERY_LABEL: Record<DeliveryStatus, string> = {
+  READY: '상품 준비 중',
+  SHIPPED: '배송 중',
+  DELIVERED: '배송 완료',
+}
 const DELIVERY_AT: Record<DeliveryStatus, number> = { READY: 1, SHIPPED: 2, DELIVERED: 3 }
 
 /** 배송 단계 위치 (0 결제 완료 ~ 3 배송 완료) */
@@ -207,6 +211,10 @@ export default function OrderDetailPage() {
                   <dd>−{won(o.cartCouponDiscountAmount)}</dd>
                 </div>
               )}
+              <div>
+                <dt>배송비</dt>
+                <dd>{o.shippingFee ? won(o.shippingFee) : '무료'}</dd>
+              </div>
               <div className={styles.payTotal}>
                 <dt>결제 금액</dt>
                 <dd>{won(payAmountOf(o))}</dd>
@@ -227,7 +235,9 @@ export default function OrderDetailPage() {
                   ({o.shippingAddress.zipCode}) {o.shippingAddress.address}
                   {o.shippingAddress.addressDetail ? ` ${o.shippingAddress.addressDetail}` : ''}
                 </span>
-                {o.shippingAddress.requestMessage && <span className={styles.muted}>{o.shippingAddress.requestMessage}</span>}
+                {o.shippingAddress.requestMessage && (
+                  <span className={styles.muted}>{o.shippingAddress.requestMessage}</span>
+                )}
               </div>
             </section>
           )}
@@ -276,7 +286,8 @@ function StatusSection({
   const step = shipStep(o)
   const d = o.delivery
   let title = st.label
-  if (o.status === 'PAID' && o.shippingAddress) title = d ? DELIVERY_LABEL[d.status] : o.deliveredAt ? '배송 완료' : '결제 완료'
+  if (o.status === 'PAID' && o.shippingAddress)
+    title = d ? DELIVERY_LABEL[d.status] : o.deliveredAt ? '배송 완료' : '결제 완료'
   const autoAt = o.paidAt ? autoConfirmDate(o.paidAt) : null
 
   // TODO(API 미구현): 배송 추적 이력(지점·시각 목록) — 지금은 주문 상세의 시각(결제·출고·배송 완료)으로만 이동 내역을 만들어요
@@ -319,7 +330,6 @@ function StatusSection({
               <div>
                 <b>{d.carrierName ?? '택배사'}</b>
                 <span>{d.trackingNumber}</span>
-                <small>주문 상품 {o.items.length}개가 한 상자로 출발했어요</small>
               </div>
               <button type="button" onClick={() => onCopy(d.trackingNumber!)}>
                 {copied ? '복사됨' : '복사'}
@@ -338,25 +348,27 @@ function StatusSection({
               ))}
             </ol>
           )}
-          {autoAt && <p className={styles.hint}>{md(autoAt)}에 자동으로 구매 확정돼요.</p>}
+          {autoAt && <p className={styles.hint}>{md(autoAt)}에 자동으로 구매 확정돼요</p>}
         </>
       )}
 
       {!shipping && o.status === 'PAID' && autoAt && (
-        <p className={styles.box}>구매를 확정하기 전까지 팔레트가 보관해요. {md(autoAt)}에 자동으로 확정돼요.</p>
+        <p className={styles.box}>구매를 확정하기 전까지 팔레트가 보관해요 {md(autoAt)}에 자동으로 확정돼요</p>
       )}
       {o.status === 'CONFIRMED' && o.confirmedAt && (
-        <p className={styles.box}>{mdhm(o.confirmedAt)}에 구매를 확정했어요. 주문 상품을 펼쳐 리뷰를 쓸 수 있어요.</p>
+        <p className={styles.box}>{mdhm(o.confirmedAt)}에 구매를 확정했어요 주문 상품을 펼쳐 리뷰를 쓸 수 있어요</p>
       )}
       {isPayable(o.status) &&
         (remaining > 0 ? (
           <p className={styles.warnBox}>
-            <b>{mmss(remaining)}</b> 안에 결제하지 않으면 주문이 취소돼요.
+            <b>{mmss(remaining)}</b> 안에 결제하지 않으면 주문이 취소돼요
           </p>
         ) : (
-          <p className={styles.box}>결제 가능 시간이 지났어요. 이 주문은 곧 자동으로 취소돼요.</p>
+          <p className={styles.box}>결제 가능 시간이 지났어요. 이 주문은 곧 자동으로 취소돼요</p>
         ))}
-      {o.status === 'CANCELED' && o.canceledAt && <p className={styles.box}>{mdhm(o.canceledAt)}에 취소된 주문이에요.</p>}
+      {o.status === 'CANCELED' && o.canceledAt && (
+        <p className={styles.box}>{mdhm(o.canceledAt)}에 취소된 주문이에요</p>
+      )}
       {(o.status === 'RETURN_REQUESTED' || o.status === 'RETURNED') && (
         <p className={styles.box}>
           {o.status === 'RETURN_REQUESTED'
