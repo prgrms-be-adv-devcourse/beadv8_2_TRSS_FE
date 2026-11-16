@@ -4,15 +4,19 @@ import ConsoleShell from '../../components/ui/ConsoleShell'
 import BottomBar from '../../components/ui/BottomBar'
 import Button from '../../components/ui/Button'
 import Icon from '../../components/ui/Icon'
-import { Empty, ErrorView, Loading, Segment } from '../../components/ui/Misc'
+import { Empty, ErrorView, Loading, Segment, won } from '../../components/ui/Misc'
 import f from '../../components/ui/form.module.css'
 import { ApiError, errorMessage } from '../../lib/api'
 import {
+  addProductOption,
   createProduct,
+  deleteProductOption,
   getCategories,
   getSellerProductForm,
   modifyProduct,
+  modifyProductOption,
   type ProductModifyRequest,
+  type SellerOption,
   type SellerProductForm,
 } from '../../lib/api/product'
 import { useApi } from '../../lib/useApi'
@@ -26,10 +30,17 @@ const NAME_MAX = 100
 const DETAIL_MAX = 10
 const IMAGE_MAX_BYTES = 5 * 1024 * 1024
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-/** 옵션 그룹 최대 개수 (TRSS-201 확정: 2개) */
-const GROUP_MAX = 2
-/** 한 그룹의 값 최대 개수 */
+/** 옵션 이름 최대 개수·길이 (Product.MAX_OPTION_NAMES, MAX_OPTION_NAME_LENGTH) */
+const GROUP_MAX = 3
+const GROUP_NAME_MAX = 20
+/** 옵션 값 최대 길이 (ProductOption.MAX_VALUE_LENGTH) */
+const VALUE_LEN_MAX = 14
+/** 한 그룹의 값 최대 개수 (화면 제한) */
 const VALUE_MAX = 10
+/** 옵션 조합 최대 개수 (ProductOption.MAX_OPTIONS_PER_PRODUCT) */
+const COMBO_MAX = 100
+/** 옵션 재고 최대 (OptionStock.MAX_STOCK) */
+const STOCK_MAX_DIGITS = 6
 
 type Field = 'name' | 'categoryId' | 'price' | 'stock' | 'description' | 'thumbnail' | 'detailImages' | 'options'
 type Errors = Partial<Record<Field, string>>
@@ -41,6 +52,11 @@ type OptionGroup = { key: string; name: string; values: string[] }
 
 /** 백엔드 오류 코드 → 오류를 붙일 칸 */
 const CODE_FIELD: Record<string, Field> = {
+  OPTION_NAME_INVALID: 'options',
+  OPTION_VALUE_INVALID: 'options',
+  OPTION_DUPLICATED: 'options',
+  OPTION_LIMIT_EXCEEDED: 'options',
+  PRICE_LOCKED_BY_DISCOUNT: 'price',
   THUMBNAIL_REQUIRED: 'thumbnail',
   IMAGE_TYPE_NOT_ALLOWED: 'detailImages',
   DETAIL_IMAGE_LIMIT_EXCEEDED: 'detailImages',
@@ -58,14 +74,13 @@ function imageProblem(file: File) {
 let keySeq = 0
 const nextKey = () => `n${++keySeq}`
 
-/** 옵션 값 조합 (블랙 / M …) */
+/** 옵션 값 조합. key는 표시 이름(블랙 / M)이고 values는 옵션 순서대로의 값이에요. */
 function combosOf(groups: OptionGroup[]) {
   const used = groups.filter((g) => g.values.length > 0)
   if (used.length === 0) return []
-  return used.reduce<string[]>(
-    (acc, g) => (acc.length === 0 ? [...g.values] : acc.flatMap((a) => g.values.map((v) => `${a} / ${v}`))),
-    [],
-  )
+  return used
+    .reduce<string[][]>((acc, g) => (acc.length === 0 ? g.values.map((v) => [v]) : acc.flatMap((a) => g.values.map((v) => [...a, v]))), [])
+    .map((values) => ({ key: values.join(' / '), values }))
 }
 
 /**
@@ -104,6 +119,7 @@ export default function SellerProductFormPage() {
   const [groups, setGroups] = useState<OptionGroup[]>([{ key: nextKey(), name: '', values: [] }])
   const [valueInputs, setValueInputs] = useState<Record<string, string>>({})
   const [comboStock, setComboStock] = useState<Record<string, string>>({})
+  const [comboPrice, setComboPrice] = useState<Record<string, string>>({})
   // 뷰티 성분
   const [perOption, setPerOption] = useState(false)
   const [ingredients, setIngredients] = useState<Record<string, string>>({})
@@ -177,11 +193,10 @@ export default function SellerProductFormPage() {
 
   // ── 옵션 ──
   const combos = combosOf(groups)
-  const optionTotal = combos.reduce((sum, k) => sum + (Number(comboStock[k]) || 0), 0)
   const changeGroupName = (key: string, v: string) =>
-    setGroups((gs) => gs.map((g) => (g.key === key ? { ...g, name: v.slice(0, 20) } : g)))
+    setGroups((gs) => gs.map((g) => (g.key === key ? { ...g, name: v.slice(0, GROUP_NAME_MAX) } : g)))
   const addValue = (key: string) => {
-    const v = (valueInputs[key] ?? '').trim().slice(0, 30)
+    const v = (valueInputs[key] ?? '').trim().slice(0, VALUE_LEN_MAX)
     if (!v) return
     setGroups((gs) =>
       gs.map((g) =>
@@ -192,10 +207,11 @@ export default function SellerProductFormPage() {
     clearError('options')
   }
   const onValueKey = (key: string) => (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      addValue(key)
-    }
+    if (e.key !== 'Enter') return
+    e.preventDefault()
+    // 한글 조합 중 Enter는 조합을 끝내는 키 입력이라 한 번 더 들어와요. 조합 중일 때는 건너뛰어야 '파랑', '랑'처럼 두 번 들어가지 않아요.
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return
+    addValue(key)
   }
   const removeValue = (key: string, v: string) =>
     setGroups((gs) => gs.map((g) => (g.key === key ? { ...g, values: g.values.filter((x) => x !== v) } : g)))
@@ -220,9 +236,14 @@ export default function SellerProductFormPage() {
     if (!editing) {
       if (optionMode === 'none' && !(Number(stock) > 0)) e.stock = '처음 재고는 1개 이상이어야 해요.'
       if (optionMode === 'use') {
-        if (groups.some((g) => g.values.length > 0 && !g.name.trim())) e.options = '옵션 이름을 입력해 주세요.'
+        const used = groups.filter((g) => g.values.length > 0)
+        const names = used.map((g) => g.name.trim())
+        if (names.some((n) => !n)) e.options = '옵션 이름을 입력해 주세요.'
+        else if (new Set(names).size !== names.length) e.options = '옵션 이름이 서로 달라야 해요.'
         else if (combos.length === 0) e.options = '옵션 값을 하나 이상 추가해 주세요.'
-        else if (optionTotal <= 0) e.options = '옵션별 처음 재고를 1개 이상 입력해 주세요.'
+        else if (combos.length > COMBO_MAX) e.options = `옵션 조합은 ${COMBO_MAX}개까지 만들 수 있어요.`
+        else if (combos.some((c) => !(Number(comboStock[c.key]) > 0)))
+          e.options = '조합마다 처음 재고를 1개 이상 입력해 주세요.'
       }
     }
     if (!description.trim()) e.description = '상품 설명을 입력해 주세요.'
@@ -250,9 +271,11 @@ export default function SellerProductFormPage() {
       const next: Errors = {}
       const rest: string[] = []
       for (const fe of fieldErrors) {
-        const key = (['name', 'categoryId', 'price', 'stock', 'description'] as Field[]).find((k) => fe.field === k)
+        const key = (['name', 'categoryId', 'price', 'description'] as Field[]).find((k) => fe.field === k)
         if (key) next[key] = fe.reason
         else if (fe.field === 'detailImageIds') next.detailImages = fe.reason
+        else if (fe.field.startsWith('options') || fe.field.startsWith('optionNames'))
+          next[optionMode === 'none' ? 'stock' : 'options'] = fe.reason
         else rest.push(fe.reason)
       }
       setErrors(next)
@@ -288,12 +311,23 @@ export default function SellerProductFormPage() {
         await modifyProduct(productId!, req, { thumbnail: thumbnail?.file, detailImages: newDetails })
         navigate('/seller/products', { state: { done: `‘${name.trim()}’을(를) 수정했어요.` } })
       } else {
-        // TODO(API 미구현): 옵션 그룹(최대 2개)·조합별 재고 등록 — 지금 백엔드는 상품마다 기본 옵션 1개(stock 하나)만 받아요.
-        //   옵션을 쓰면 조합별 재고 합계를 기본 옵션 재고로 보내고, 옵션 그룹·값은 보내지 않아요.
         // TODO(API 미구현): 뷰티 전성분 저장 — ProductCreateRequest에 성분 필드가 없어 화면에만 둬요.
-        const initialStock = optionMode === 'use' ? optionTotal : Number(stock)
+        const useOptions = optionMode === 'use'
         await createProduct(
-          { name: name.trim(), price: Number(price), categoryId: categoryId!, description, stock: initialStock },
+          {
+            name: name.trim(),
+            price: Number(price),
+            categoryId: categoryId!,
+            description,
+            optionNames: useOptions ? groups.filter((g) => g.values.length > 0).map((g) => g.name.trim()) : [],
+            options: useOptions
+              ? combos.map((c) => ({
+                  values: c.values,
+                  additionalPrice: Number(comboPrice[c.key]) || 0,
+                  stock: Number(comboStock[c.key]),
+                }))
+              : [{ values: [], additionalPrice: 0, stock: Number(stock) }],
+          },
           { thumbnail: thumbnail?.file, detailImages: newDetails },
         )
         navigate('/seller/products', { state: { done: `‘${name.trim()}’을(를) 등록했어요. 바로 판매중으로 보여요.` } })
@@ -320,6 +354,8 @@ export default function SellerProductFormPage() {
   const notFound = editing && !loaded.loading && !loaded.error && !original
   const ready = !loading && !loadError && !notFound
   const firstNew = details.findIndex((d) => d.file)
+  /** 예정·진행 중인 할인이 있으면 정가를 바꿀 수 없어요 (409-PRICE_LOCKED_BY_DISCOUNT). */
+  const priceLocked = editing && !!original?.discounts.length
 
   const submitBtn = (
     <Button type="submit" form="product-form" size={desktop ? 'md' : 'lg'} disabled={saving || locked || !ready}>
@@ -414,6 +450,7 @@ export default function SellerProductFormPage() {
               inputMode="numeric"
               placeholder="0"
               value={price ? Number(price).toLocaleString('ko-KR') : ''}
+              disabled={priceLocked}
               onChange={(e) => {
                 setPrice(digits(e.target.value).slice(0, 10))
                 clearError('price')
@@ -424,6 +461,11 @@ export default function SellerProductFormPage() {
             <span>원</span>
           </div>
           {err('price')}
+          {priceLocked && (
+            <p className={f.help}>
+              할인이 잡혀 있어 정가를 바꿀 수 없어요. <Link to={`/seller/discounts?productId=${productId}`}>할인</Link>
+            </p>
+          )}
         </div>
       </div>
       {beauty && !editing && <p className={f.help}>뷰티를 고르면 성분 입력이 나타나요.</p>}
@@ -528,10 +570,7 @@ export default function SellerProductFormPage() {
         <span className={f.help}>옵션은 최대 {GROUP_MAX}개</span>
       </div>
       {editing ? (
-        <p className={pf.para}>
-          재고는 등록한 뒤에는 <Link to={`/seller/stock?productId=${productId}`}>재고 화면</Link>에서 옵션별로만 바꿀 수
-          있어요. 저장해도 재고는 바뀌지 않아요.
-        </p>
+        original && <EditOptions productId={productId!} form={original} locked={locked} />
       ) : (
         <>
           {beauty && <p className={f.help}>예: 색상(호수) · 종류 · 용량 · 구성</p>}
@@ -561,7 +600,7 @@ export default function SellerProductFormPage() {
                   placeholder="0"
                   value={stock}
                   onChange={(e) => {
-                    setStock(digits(e.target.value).slice(0, 6))
+                    setStock(digits(e.target.value).slice(0, STOCK_MAX_DIGITS))
                     clearError('stock')
                   }}
                   aria-invalid={!!errors.stock}
@@ -618,37 +657,51 @@ export default function SellerProductFormPage() {
                 + 옵션 추가 ({groups.length}/{GROUP_MAX})
               </button>
               <h3 className={pf.h3}>
-                옵션별 처음 재고 <span>{combos.length}개 조합</span>
+                옵션별 추가금 · 처음 재고 <span>{combos.length}개 조합</span>
               </h3>
               {combos.length === 0 ? (
-                <p className={f.help}>옵션 값을 추가하면 조합별로 재고를 넣을 수 있어요.</p>
+                <p className={f.help}>옵션 값을 추가하면 조합별로 추가금과 재고를 넣을 수 있어요.</p>
               ) : (
                 <ul className={pf.combos}>
-                  {combos.map((k) => (
+                  {combos.map(({ key: k }) => (
                     <li key={k}>
-                      <span>{k}</span>
-                      <span className={pf.unitInput}>
-                        <input
-                          aria-label={`${k} 재고`}
-                          className={f.input}
-                          inputMode="numeric"
-                          placeholder="0"
-                          value={comboStock[k] ?? ''}
-                          onChange={(e) => {
-                            setComboStock((m) => ({ ...m, [k]: digits(e.target.value).slice(0, 6) }))
-                            clearError('options')
-                          }}
-                        />
-                        <span>개</span>
+                      <span className={pf.comboName}>{k}</span>
+                      <span className={pf.comboInputs}>
+                        <span className={pf.unitInput}>
+                          <input
+                            aria-label={`${k} 추가금`}
+                            className={f.input}
+                            inputMode="numeric"
+                            placeholder="+0"
+                            value={comboPrice[k] ? Number(comboPrice[k]).toLocaleString('ko-KR') : ''}
+                            onChange={(e) => setComboPrice((m) => ({ ...m, [k]: digits(e.target.value).slice(0, 9) }))}
+                          />
+                          <span>원</span>
+                        </span>
+                        <span className={pf.unitInput}>
+                          <input
+                            aria-label={`${k} 재고`}
+                            className={f.input}
+                            inputMode="numeric"
+                            placeholder="0"
+                            value={comboStock[k] ?? ''}
+                            onChange={(e) => {
+                              setComboStock((m) => ({ ...m, [k]: digits(e.target.value).slice(0, STOCK_MAX_DIGITS) }))
+                              clearError('options')
+                            }}
+                          />
+                          <span>개</span>
+                        </span>
                       </span>
                     </li>
                   ))}
                 </ul>
               )}
               {err('options')}
-              <Notice tone="info">
-                옵션별 등록은 준비 중이에요. 지금은 조합별 재고 합계({optionTotal}개)가 한 번에 등록돼요.
-              </Notice>
+              <p className={f.help}>
+                추가금은 비워 두면 0원이에요. 할인 중에는 할인가에 추가금이 그대로 더해져요. 옵션 이름 {GROUP_NAME_MAX}자, 값{' '}
+                {VALUE_LEN_MAX}자까지 쓸 수 있어요.
+              </p>
             </div>
           )}
           <p className={`${f.help} ${pf.mt}`}>재고는 등록한 뒤에는 재고 화면에서 옵션별로만 바꿀 수 있어요.</p>
@@ -754,5 +807,177 @@ export default function SellerProductFormPage() {
         </form>
       )}
     </ConsoleShell>
+  )
+}
+
+/**
+ * 수정 모드의 옵션 관리. 옵션은 상품 저장과 따로, 버튼을 누르면 바로 반영돼요.
+ * - 추가금 수정 · 옵션 삭제(마지막 1개는 불가) · 새 조합 추가(처음 재고 포함)
+ * - 재고는 재고 화면에서만 바꿔요.
+ */
+function EditOptions({ productId, form, locked }: { productId: string; form: SellerProductForm; locked: boolean }) {
+  const [options, setOptions] = useState<SellerOption[]>(form.options)
+  const [prices, setPrices] = useState<Record<number, string>>(() =>
+    Object.fromEntries(form.options.map((o) => [o.optionId, String(o.additionalPrice)])),
+  )
+  const [newValues, setNewValues] = useState<string[]>(() => form.optionNames.map(() => ''))
+  const [newPrice, setNewPrice] = useState('')
+  const [newStock, setNewStock] = useState('')
+  const [busy, setBusy] = useState<string | null>(null)
+  const [msg, setMsg] = useState<{ tone: 'done' | 'error'; text: string } | null>(null)
+  const hasOptions = form.optionNames.length > 0
+
+  const run = async (key: string, job: () => Promise<string>) => {
+    if (busy) return
+    setBusy(key)
+    setMsg(null)
+    try {
+      setMsg({ tone: 'done', text: await job() })
+    } catch (e) {
+      setMsg({ tone: 'error', text: errorMessage(e) })
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const savePrice = (o: SellerOption) =>
+    run(`p${o.optionId}`, async () => {
+      const additionalPrice = Number(prices[o.optionId]) || 0
+      await modifyProductOption(productId, o.optionId, additionalPrice)
+      setOptions((os) =>
+        os.map((x) => (x.optionId === o.optionId ? { ...x, additionalPrice, price: form.price + additionalPrice } : x)),
+      )
+      return `‘${o.name}’ 추가금을 바꿨어요.`
+    })
+
+  const remove = (o: SellerOption) =>
+    run(`d${o.optionId}`, async () => {
+      await deleteProductOption(productId, o.optionId)
+      setOptions((os) => os.filter((x) => x.optionId !== o.optionId))
+      return `‘${o.name}’ 옵션을 지웠어요.`
+    })
+
+  const add = () => {
+    const values = newValues.map((v) => v.trim())
+    if (values.some((v) => !v)) return setMsg({ tone: 'error', text: '옵션 값을 모두 입력해 주세요.' })
+    if (!(Number(newStock) > 0)) return setMsg({ tone: 'error', text: '처음 재고는 1개 이상이어야 해요.' })
+    const additionalPrice = Number(newPrice) || 0
+    const stock = Number(newStock)
+    run('add', async () => {
+      const { optionId } = await addProductOption(productId, { values, additionalPrice, stock })
+      const name = values.join(' / ')
+      setOptions((os) => [...os, { optionId, name, values, additionalPrice, price: form.price + additionalPrice, stock }])
+      setPrices((m) => ({ ...m, [optionId]: String(additionalPrice) }))
+      setNewValues(form.optionNames.map(() => ''))
+      setNewPrice('')
+      setNewStock('')
+      return `‘${name}’ 옵션을 추가했어요.`
+    })
+  }
+
+  return (
+    <>
+      <p className={pf.para}>
+        {hasOptions ? `옵션: ${form.optionNames.join(' · ')}` : '옵션 없는 상품이에요.'} 옵션 변경은 저장 버튼과 따로 바로
+        반영돼요. 재고는 <Link to={`/seller/stock?productId=${productId}`}>재고 화면</Link>에서 바꿔요.
+      </p>
+      {msg && (
+        <div className={pf.mt}>
+          <Notice tone={msg.tone} onClose={() => setMsg(null)}>
+            {msg.text}
+          </Notice>
+        </div>
+      )}
+      <h3 className={pf.h3}>
+        지금 옵션 <span>{options.length}개</span>
+      </h3>
+      <ul className={pf.combos}>
+        {options.map((o) => {
+          const changed = (Number(prices[o.optionId]) || 0) !== o.additionalPrice
+          return (
+            <li key={o.optionId}>
+              <span className={pf.comboName}>
+                {o.name}
+                <small>
+                  {won(o.price)} · 재고 {o.stock}개
+                </small>
+              </span>
+              <span className={pf.comboInputs}>
+                <span className={pf.unitInput}>
+                  <input
+                    aria-label={`${o.name} 추가금`}
+                    className={f.input}
+                    inputMode="numeric"
+                    value={prices[o.optionId] ? Number(prices[o.optionId]).toLocaleString('ko-KR') : ''}
+                    placeholder="+0"
+                    disabled={locked}
+                    onChange={(e) => setPrices((m) => ({ ...m, [o.optionId]: digits(e.target.value).slice(0, 9) }))}
+                  />
+                  <span>원</span>
+                </span>
+                <Button size="sm" variant="outline" disabled={locked || !changed || !!busy} onClick={() => savePrice(o)}>
+                  {busy === `p${o.optionId}` ? '바꾸는 중' : '추가금 저장'}
+                </Button>
+                {hasOptions && (
+                  <button
+                    type="button"
+                    className={pf.textBtn}
+                    disabled={locked || options.length <= 1 || !!busy}
+                    onClick={() => remove(o)}
+                    aria-label={`${o.name} 옵션 삭제`}
+                  >
+                    삭제
+                  </button>
+                )}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+      {hasOptions && !locked && options.length < COMBO_MAX && (
+        <>
+          <h3 className={pf.h3}>새 조합 추가</h3>
+          <div className={pf.addCombo}>
+            {form.optionNames.map((n, i) => (
+              <input
+                key={n}
+                aria-label={`${n} 값`}
+                className={f.input}
+                placeholder={n}
+                value={newValues[i]}
+                onChange={(e) =>
+                  setNewValues((vs) => vs.map((v, j) => (j === i ? e.target.value.slice(0, VALUE_LEN_MAX) : v)))
+                }
+              />
+            ))}
+            <span className={pf.unitInput}>
+              <input
+                aria-label="새 조합 추가금"
+                className={f.input}
+                inputMode="numeric"
+                placeholder="추가금"
+                value={newPrice ? Number(newPrice).toLocaleString('ko-KR') : ''}
+                onChange={(e) => setNewPrice(digits(e.target.value).slice(0, 9))}
+              />
+              <span>원</span>
+            </span>
+            <span className={pf.unitInput}>
+              <input
+                aria-label="새 조합 처음 재고"
+                className={f.input}
+                inputMode="numeric"
+                placeholder="재고"
+                value={newStock}
+                onChange={(e) => setNewStock(digits(e.target.value).slice(0, STOCK_MAX_DIGITS))}
+              />
+              <span>개</span>
+            </span>
+            <Button size="sm" disabled={!!busy} onClick={add}>
+              {busy === 'add' ? '추가하는 중' : '조합 추가'}
+            </Button>
+          </div>
+        </>
+      )}
+    </>
   )
 }
