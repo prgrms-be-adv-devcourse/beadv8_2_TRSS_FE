@@ -11,14 +11,17 @@ import s from './account.module.css'
 /** [배지 색, 배지 글자, 안내 문구] */
 const TOPUP_STATUS: Record<TopupStatus, [Tone, string, string]> = {
   READY: ['neutral', '결제 전', '결제를 진행하지 않았어요'],
-  PROCESSING: ['amber', '확인 중', '토스 승인을 기다리고 있어요'],
+  PROCESSING: ['amber', '확인 중', '결제 승인을 기다리고 있어요'],
   DONE: ['green', '충전 완료', ''],
+  CANCELING: ['amber', '취소 중', '충전 취소를 처리하고 있어요'],
   CANCELED: ['neutral', '취소됨', '충전을 취소했어요'],
+  METHOD_CANCELING: ['amber', '취소 중', '충전할 수 없는 결제 수단이라 결제를 취소하고 있어요'],
   FAILED_USER_CANCEL: ['neutral', '실패', '결제를 취소했어요'],
   FAILED_PG_DECLINED: ['red', '실패', '카드사에서 승인하지 않았어요'],
   FAILED_AMOUNT_MISMATCH: ['red', '실패', '금액이 맞지 않아요'],
   FAILED_EXPIRED: ['neutral', '실패', '결제 시간이 지났어요'],
   FAILED_SYSTEM_ERROR: ['red', '실패', '일시적인 오류예요'],
+  FAILED_METHOD_NOT_ALLOWED: ['neutral', '실패', '충전할 수 없는 결제 수단이라 결제를 취소했어요'],
 }
 
 /** ⑩-3 충전 내역 · 충전 취소 */
@@ -58,7 +61,8 @@ export default function TopupHistoryPage() {
       <ul className={s.list}>
         {list.items.map((t) => {
           const status: TopupStatus = canceled.has(t.topupId) ? 'CANCELED' : t.status
-          const [tone, label, note] = TOPUP_STATUS[status]
+          // 백엔드에 새 상태가 생겨도 화면이 깨지지 않게 enum 값을 그대로 보여 준다
+          const [tone, label, note] = TOPUP_STATUS[status] ?? ['neutral', status, '']
           const done = status === 'DONE'
           const cancellable = done && t.remainingAmount === t.amount
           return (

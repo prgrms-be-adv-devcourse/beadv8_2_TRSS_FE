@@ -15,7 +15,11 @@ import s from './account.module.css'
 export const LEDGER_LABEL: Record<WalletTransactionType, string> = {
   CHARGE: '충전',
   CHARGE_CANCEL: '충전 취소',
+  CHARGE_CANCEL_RESTORE: '충전 취소 철회',
   PAYMENT: '주문 결제',
+  PAYMENT_CANCEL: '결제 취소',
+  SHIPPING_FEE: '배송비',
+  SHIPPING_FEE_CANCEL: '배송비 반환',
   REFUND: '반품 환불',
   SETTLEMENT: '정산 지급',
   FEE: '정산 수수료',

@@ -105,6 +105,19 @@ const payExpired = (): Notice => ({
   body: '결제창에서 결제를 마치지 않아 충전되지 않았어요. 빠져나간 돈은 없어요. 다시 충전해 주세요.',
   actions: RETRY_TOPUP,
 })
+/** 허용하지 않은 결제 수단으로 승인된 충전 건. 예치금에 넣지 않고 PG에서 전액 취소한다 (pending: 아직 취소 중) */
+const methodNotAllowed = (pending: boolean): Notice => ({
+  title: '충전할 수 없는 결제 수단이에요',
+  body: pending
+    ? '이 결제 수단으로는 충전할 수 없어 결제를 취소하고 있어요. 취소가 끝나면 결제한 수단으로 돌아가요. 다른 결제 수단으로 다시 충전해 주세요.'
+    : '이 결제 수단으로는 충전할 수 없어 결제를 취소했어요. 결제한 금액은 결제한 수단으로 돌아가요. 다른 결제 수단으로 다시 충전해 주세요.',
+  actions: RETRY_TOPUP,
+})
+const canceling = (): Notice => ({
+  title: '충전 취소를 처리하고 있어요',
+  body: '취소가 끝나면 결제한 수단으로 돌아가요. 충전 내역에서 확인해 주세요.',
+  actions: [{ label: '예치금 보기', primary: true }],
+})
 
 /** 충전이 끝났는데 돌아갈 주문이 이미 취소된 경우 (디자인: 충전 완료 · 409 ORDER_EXPIRED) */
 export const orderExpiredAfterTopup = (amount: number, orderNumber: string | null): Notice => ({
@@ -156,6 +169,12 @@ export function topupStatusNotice(status: TopupStatus, reason: string | null | u
       return userCanceled()
     case 'FAILED_EXPIRED':
       return payExpired()
+    case 'CANCELING':
+      return canceling()
+    case 'METHOD_CANCELING':
+      return methodNotAllowed(true)
+    case 'FAILED_METHOD_NOT_ALLOWED':
+      return methodNotAllowed(false)
   }
 }
 

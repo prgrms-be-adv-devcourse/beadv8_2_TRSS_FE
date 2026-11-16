@@ -40,12 +40,15 @@ const TOPUP_STATUS: Record<TopupStatus, [string, Tone]> = {
   READY: ['결제 전', 'neutral'],
   PROCESSING: ['확인 중', 'amber'],
   DONE: ['충전 완료', 'green'],
+  CANCELING: ['취소 중', 'amber'],
   CANCELED: ['취소됨', 'neutral'],
+  METHOD_CANCELING: ['결제 수단 취소 중', 'amber'],
   FAILED_USER_CANCEL: ['사용자 취소', 'neutral'],
   FAILED_PG_DECLINED: ['승인 거절', 'red'],
   FAILED_AMOUNT_MISMATCH: ['금액 불일치', 'red'],
   FAILED_EXPIRED: ['시간 만료', 'neutral'],
   FAILED_SYSTEM_ERROR: ['시스템 오류', 'red'],
+  FAILED_METHOD_NOT_ALLOWED: ['허용 외 결제 수단', 'neutral'],
 }
 
 /** 보관 금액 상태. 실패 건은 null → '-' */
