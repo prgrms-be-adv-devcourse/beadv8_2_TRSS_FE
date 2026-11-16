@@ -7,6 +7,7 @@ import c from '../../components/ui/console.module.css'
 import { errorMessage, toPageParam } from '../../lib/api'
 import {
   adjustStock,
+  getSellerProductForm,
   getSellerProducts,
   getStockHistory,
   type SellerProductSummary,
@@ -23,8 +24,6 @@ const HISTORY_PAGE_SIZE = 20
 const PRODUCT_LIMIT = 100
 const OPT_COLS = '1fr .7fr .7fr 1.3fr 1.3fr .8fr'
 const HIST_COLS = '1fr 1fr 1.4fr .6fr .7fr'
-/** 지금은 상품마다 기본 옵션 1개라 옵션 이름을 '기본'으로 보여줘요. */
-const BASE_OPTION = '기본'
 
 const CHANGE_TYPE: Record<StockChangeType, string> = {
   INIT: '상품 등록',
@@ -38,7 +37,7 @@ const orderNote = (orderId: number | null) => (orderId != null ? ` · 주문 #${
 /**
  * S3 재고 (옵션별)
  * 대상 상품은 URL 쿼리(productId)로 받아요. 상품 관리 목록의 재고 버튼이 이 주소로 보내요.
- * TODO(API 미구현): 옵션 그룹 구조 — 지금 백엔드는 상품마다 기본 옵션 1개라 옵션 표에 한 줄만 보여요.
+ * 옵션 목록·옵션별 재고는 수정 폼 조회(getSellerProductForm)의 options로 받아요. 이력은 고른 옵션 것만 보여요.
  */
 export default function SellerStockPage() {
   const desktop = useIsDesktop()
@@ -48,7 +47,15 @@ export default function SellerStockPage() {
   const products = useApi(() => getSellerProducts({ size: PRODUCT_LIMIT }), [])
   const all = products.data?.items ?? []
   const product = all.find((p) => p.productId === productId) ?? (productId == null ? all[0] : undefined)
-  const optionId = product?.optionId ?? null
+
+  const form = useApi(
+    () => (product ? getSellerProductForm(product.productId) : Promise.resolve(null)),
+    [product?.productId],
+  )
+  const options = form.data?.options ?? []
+  const [pickedOption, setPickedOption] = useState<number | null>(null)
+  const option = options.find((o) => o.optionId === pickedOption) ?? options[0]
+  const optionId = option?.optionId ?? null
 
   const [historyPage, setHistoryPage] = useState(1)
   const history = useApi(
@@ -73,9 +80,20 @@ export default function SellerStockPage() {
     setError('')
     setDone('')
     setHistoryPage(1)
+    setPickedOption(null)
   }, [product?.productId])
 
-  const stock = product?.stock ?? 0
+  const pickOption = (id: number) => {
+    if (id === optionId) return
+    setPickedOption(id)
+    setDeltaText('0')
+    setMemo('')
+    setError('')
+    setDone('')
+    setHistoryPage(1)
+  }
+
+  const stock = option?.stock ?? 0
   const stopped = product?.status === 'STOPPED'
   const delta = Number(deltaText) || 0
   const after = stock + delta
@@ -98,8 +116,12 @@ export default function SellerStockPage() {
     setDone('')
     try {
       const res = await adjustStock(product.productId, optionId, delta)
-      setDone(`재고를 ${stock}개에서 ${res.stock}개로 ${delta > 0 ? '늘렸어요' : '줄였어요'}.`)
-      // 목록의 재고도 바로 바꿔요 (재고가 0이 되면 품절, 다시 채우면 판매중)
+      setDone(`‘${option!.name}’ 재고를 ${stock}개에서 ${res.stock}개로 ${delta > 0 ? '늘렸어요' : '줄였어요'}.`)
+      const diff = res.stock - stock
+      form.setData((d) =>
+        d ? { ...d, options: d.options.map((o) => (o.optionId === optionId ? { ...o, stock: res.stock } : o)) } : d,
+      )
+      // 목록의 재고 합계도 바로 바꿔요 (합계가 0이 되면 품절, 다시 채우면 판매중)
       products.setData((d) =>
         d
           ? {
@@ -109,8 +131,8 @@ export default function SellerStockPage() {
                   p.productId === product.productId
                     ? {
                         ...p,
-                        stock: res.stock,
-                        status: p.status === 'STOPPED' ? p.status : res.stock > 0 ? 'ON_SALE' : 'SOLD_OUT',
+                        stock: p.stock + diff,
+                        status: p.status === 'STOPPED' ? p.status : p.stock + diff > 0 ? 'ON_SALE' : 'SOLD_OUT',
                       }
                     : p,
               ),
@@ -129,9 +151,12 @@ export default function SellerStockPage() {
   }
 
   const pick = (id: number) => update({ productId: String(id) })
-  const stateBadge = product ? (
-    <Badge tone={PRODUCT_STATUS[product.status][1]}>{PRODUCT_STATUS[product.status][0]}</Badge>
-  ) : null
+  /** 옵션 상태: 판매 중지 상품이면 판매 중지, 아니면 옵션 재고로 판매중·품절 */
+  const badgeOf = (optionStock: number) => {
+    const status = stopped ? 'STOPPED' : optionStock > 0 ? 'ON_SALE' : 'SOLD_OUT'
+    return <Badge tone={PRODUCT_STATUS[status][1]}>{PRODUCT_STATUS[status][0]}</Badge>
+  }
+  const optionName = option?.name ?? ''
 
   const stepper = (
     <span className={st.step}>
@@ -194,7 +219,7 @@ export default function SellerStockPage() {
             {hist.map((h) => (
               <div role="row" key={h.historyId} className={c.tr} style={{ gridTemplateColumns: HIST_COLS }}>
                 <span className={c.num}>{fmtMDHM(h.createdAt)}</span>
-                <span>{BASE_OPTION}</span>
+                <span>{optionName}</span>
                 <span>
                   {CHANGE_TYPE[h.changeType]}
                   {orderNote(h.orderId)}
@@ -213,7 +238,7 @@ export default function SellerStockPage() {
                 <span className={st.histMain}>
                   <b>{CHANGE_TYPE[h.changeType]}</b>
                   <span className={s.faint}>
-                    {BASE_OPTION} · {fmtMDHM(h.createdAt)}
+                    {optionName} · {fmtMDHM(h.createdAt)}
                     {orderNote(h.orderId)}
                   </span>
                 </span>
@@ -255,6 +280,9 @@ export default function SellerStockPage() {
         삭제된 상품일 수 있어요.
       </Empty>
     )
+  else if (form.error)
+    content = <ErrorView message={`옵션을 불러오지 못했어요. ${form.error}`} onRetry={form.reload} />
+  else if (!option) content = <Loading label="옵션을 불러오고 있어요" />
   else if (desktop)
     content = (
       <div className={st.pc}>
@@ -288,30 +316,47 @@ export default function SellerStockPage() {
               <span>사유</span>
               <span />
             </div>
-            <div role="row" className={c.tr} style={{ gridTemplateColumns: OPT_COLS }}>
-              <span className={c.strong}>{BASE_OPTION}</span>
-              <span className={c.num}>
-                <b>{stock}개</b>
-              </span>
-              <span>{stateBadge}</span>
-              <span>{stepper}</span>
-              <span>
-                <input
-                  aria-label="조정 사유"
-                  className={st.memo}
-                  placeholder="예: 입고"
-                  value={memo}
-                  maxLength={50}
-                  disabled={stopped}
-                  onChange={(e) => setMemo(e.target.value)}
-                />
-              </span>
-              <span>
-                <Button size="sm" onClick={adjust} disabled={!canAdjust}>
-                  {pending ? '조정 중' : '조정하기'}
-                </Button>
-              </span>
-            </div>
+            {options.map((o) =>
+              o.optionId === optionId ? (
+                <div key={o.optionId} role="row" className={c.tr} style={{ gridTemplateColumns: OPT_COLS }}>
+                  <span className={c.strong}>{o.name}</span>
+                  <span className={c.num}>
+                    <b>{o.stock}개</b>
+                  </span>
+                  <span>{badgeOf(o.stock)}</span>
+                  <span>{stepper}</span>
+                  <span>
+                    <input
+                      aria-label="조정 사유"
+                      className={st.memo}
+                      placeholder="예: 입고"
+                      value={memo}
+                      maxLength={50}
+                      disabled={stopped}
+                      onChange={(e) => setMemo(e.target.value)}
+                    />
+                  </span>
+                  <span>
+                    <Button size="sm" onClick={adjust} disabled={!canAdjust}>
+                      {pending ? '조정 중' : '조정하기'}
+                    </Button>
+                  </span>
+                </div>
+              ) : (
+                <div key={o.optionId} role="row" className={c.tr} style={{ gridTemplateColumns: OPT_COLS }}>
+                  <span>{o.name}</span>
+                  <span className={c.num}>{o.stock}개</span>
+                  <span>{badgeOf(o.stock)}</span>
+                  <span />
+                  <span />
+                  <span>
+                    <Button size="sm" variant="outline" onClick={() => pickOption(o.optionId)}>
+                      고르기
+                    </Button>
+                  </span>
+                </div>
+              ),
+            )}
           </div>
           {afterLine}
           {results}
@@ -338,7 +383,7 @@ export default function SellerStockPage() {
             </span>
           </label>
           <p className={st.pickMeta}>
-            {product.categoryName} · 전체 재고 <b>{stock}개</b>
+            {product.categoryName} · 옵션 {options.length}종 · 전체 재고 <b>{product.stock}개</b>
           </p>
         </div>
         <section className={st.mSection} aria-labelledby="opts">
@@ -346,17 +391,26 @@ export default function SellerStockPage() {
             옵션별 재고
           </h2>
           <div role="radiogroup" aria-label="조정할 옵션" className={st.opts}>
-            <button type="button" role="radio" aria-checked="true" className={`${st.opt} ${st.optOn}`}>
-              <span className={st.radio} />
-              <span className={st.optName}>{BASE_OPTION}</span>
-              {stateBadge}
-              <b>{stock}개</b>
-            </button>
+            {options.map((o) => (
+              <button
+                key={o.optionId}
+                type="button"
+                role="radio"
+                aria-checked={o.optionId === optionId}
+                className={`${st.opt} ${o.optionId === optionId ? st.optOn : ''}`}
+                onClick={() => pickOption(o.optionId)}
+              >
+                <span className={st.radio} />
+                <span className={st.optName}>{o.name}</span>
+                {badgeOf(o.stock)}
+                <b>{o.stock}개</b>
+              </button>
+            ))}
           </div>
         </section>
         <section className={st.mSection} aria-labelledby="adj">
           <h2 id="adj" className={s.h2}>
-            재고 조정 <span className={s.faint}>· {BASE_OPTION}</span>
+            재고 조정 <span className={s.faint}>· {optionName}</span>
           </h2>
           <div className={st.adjRow}>
             {stepper}
