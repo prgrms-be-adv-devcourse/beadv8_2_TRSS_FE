@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import Button from '../../components/ui/Button'
 import { Chips, Empty, ErrorView, Loading, Segment, Thumb, won } from '../../components/ui/Misc'
@@ -11,17 +11,19 @@ import { productImage } from '../../lib/products'
 import { useApi } from '../../lib/useApi'
 import { getOrderList, type OrderSummaryX } from './api'
 import { NoticeModal, ymd, type Notice } from './common'
-import { MOCK_RETURNS, RETURN_STATUS, type ReturnRecord } from './returns'
 import styles from './OrderList.module.css'
 
 type Filter = 'all' | 'pending' | 'paid' | 'confirmed' | 'returns'
-/** 상태 필터. 백엔드에 상태를 여러 개 보내면 그중 하나라도 해당하는 주문이 와요. '반품'은 반품 내역 탭(?tab=returns)이에요 */
+/**
+ * 상태 필터. 백엔드에 상태를 여러 개 보내면 그중 하나라도 해당하는 주문이 와요.
+ * '반품'은 반품 내역 탭(?tab=returns): 반품 요청 중·반품 완료 주문이에요. 거절된 반품은 주문이 결제 완료·구매 확정으로 돌아가서 주문 상세에서 보여요.
+ */
 const FILTERS: Array<{ value: Filter; label: string; statuses: OrderStatus[] }> = [
   { value: 'all', label: '전체', statuses: [] },
   { value: 'pending', label: '결제 대기', statuses: ['CREATED', 'PAYMENT_FAILED'] },
   { value: 'paid', label: '결제 완료', statuses: ['PAID'] },
   { value: 'confirmed', label: '구매 확정', statuses: ['CONFIRMED'] },
-  { value: 'returns', label: '반품', statuses: [] },
+  { value: 'returns', label: '반품', statuses: ['RETURN_REQUESTED', 'RETURNED'] },
 ]
 const PERIODS = [
   { value: '1', label: '최근 1개월' },
@@ -84,7 +86,11 @@ export default function OrderListPage() {
           />
         </div>
       </div>
-      {returnsTab ? <ReturnList /> : <OrderCards key={`${filter}-${period}`} filter={filter} months={Number(period)} />}
+      {returnsTab ? (
+        <OrderCards key={`returns-${period}`} filter="returns" months={Number(period)} />
+      ) : (
+        <OrderCards key={`${filter}-${period}`} filter={filter} months={Number(period)} />
+      )}
     </AppFrame>
   )
 }
@@ -132,7 +138,7 @@ function OrderCards({ filter, months }: { filter: Filter; months: number }) {
   if (!items?.length)
     return (
       <Empty
-        title="이 기간에 주문이 없어요"
+        title={filter === 'returns' ? '이 기간에 반품한 주문이 없어요' : '이 기간에 주문이 없어요'}
         action={
           <Button to="/" variant="outline">
             쇼핑하러 가기
@@ -209,47 +215,6 @@ function OrderCards({ filter, months }: { filter: Filter; months: number }) {
         </div>
       )}
       <NoticeModal notice={notice} onClose={() => setNotice(null)} />
-    </div>
-  )
-}
-
-/**
- * 반품 내역
- * TODO(API 미구현): GET /api/v1/returns 내 반품 내역 — 지금은 목업 데이터예요. 반품 요청 화면에서 막 보낸 요청(state.submitted)은 맨 위에 붙여요
- */
-function ReturnList() {
-  const submitted = (useLocation().state as { submitted?: ReturnRecord } | null)?.submitted
-  const list = submitted ? [submitted, ...MOCK_RETURNS] : MOCK_RETURNS
-  return (
-    <div className={styles.list}>
-      {list.map((r) => {
-        const st = RETURN_STATUS[r.status]
-        return (
-          <article key={r.returnId} className={styles.card}>
-            <div className={styles.cardHead}>
-              <span>{ymd(r.requestedAt)} 요청</span>
-              {r.orderId > 0 && <Link to={`/orders/${r.orderId}`}>주문 상세 ›</Link>}
-            </div>
-            <p className={styles.status}>
-              {st.label}
-              <span className={styles.note}>{st.note}</span>
-            </p>
-            <div className={styles.product}>
-              <Thumb src={r.img} width={60} height={64} radius={6} />
-              <div>
-                <p className={styles.name}>
-                  {r.itemCount > 1 ? `${r.productName} 외 ${r.itemCount - 1}개` : r.productName}
-                </p>
-                <p className={styles.amount}>{won(r.refundAmount)}</p>
-              </div>
-            </div>
-            <p className={styles.reason}>
-              사유 · {r.reason}
-              {r.rejectReason && <span>반려 사유 · {r.rejectReason}</span>}
-            </p>
-          </article>
-        )
-      })}
     </div>
   )
 }

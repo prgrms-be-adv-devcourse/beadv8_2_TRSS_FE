@@ -344,3 +344,36 @@
 .payments li > span {
   font-variant-numeric: tabular-nums;
 }
+
+/* 반품 진행 */
+.returnBox b {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink);
+}
+.returnBox p {
+  margin: 6px 0 0;
+}
+.returnDl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.returnDl div {
+  display: flex;
+  gap: 10px;
+}
+.returnDl dt {
+  flex: none;
+  width: 28px;
+  color: var(--muted);
+}
+.returnDl dd {
+  margin: 0;
+}
+.returnDl dd span {
+  display: block;
+  margin-top: 2px;
+  color: var(--sub);
+}

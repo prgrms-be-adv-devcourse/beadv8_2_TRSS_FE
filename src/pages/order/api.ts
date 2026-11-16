@@ -10,6 +10,7 @@
  * - 배송비(TRSS-206): OrderCreateResponse·OrderDetailResponse의 shippingFee
  */
 import { api, type PageResponse } from '../../lib/api'
+import type { RefundStatus, ReturnReasonCode } from '../../lib/api/returns'
 import {
   getOrder,
   getOrders,
@@ -65,6 +66,15 @@ export type OrderDetailX = Omit<OrderDetail, 'items'> & {
   payAmount?: number
   /** 배송비 (배송비 도입 전 주문은 0) */
   shippingFee?: number
+  // 반품 (TRSS-222). 반품을 요청하지 않은 주문은 모두 null, refundStatus는 NONE
+  returnRequestedAt?: string | null
+  returnReasonCode?: ReturnReasonCode | null
+  returnReason?: string | null
+  /** 거절되면 주문은 PAID(또는 기준일이 지나 CONFIRMED)로 돌아가고 이 값과 거절 사유가 남아요 */
+  returnRejectedAt?: string | null
+  returnRejectReason?: string | null
+  returnedAt?: string | null
+  refundStatus?: RefundStatus
 }
 
 /** 주문 내역 한 줄 (lib 타입 + 배송 완료 시각) */

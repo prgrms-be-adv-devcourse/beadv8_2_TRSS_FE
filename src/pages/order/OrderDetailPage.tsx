@@ -7,6 +7,7 @@ import Icon from '../../components/ui/Icon'
 import { ErrorView, Loading, Thumb, won } from '../../components/ui/Misc'
 import PageHeader from '../../components/ui/PageHeader'
 import { cancelOrder, confirmOrder, isPayable } from '../../lib/api/order'
+import { RETURN_REASON_LABEL, type RefundStatus } from '../../lib/api/returns'
 import { orderNotice } from '../../lib/notices/order'
 import { ORDER_STATUS, PAYMENT_STATUS, autoConfirmDate, md } from '../../lib/orderStatus'
 import { useApi } from '../../lib/useApi'
@@ -29,6 +30,55 @@ function shipStep(o: OrderDetailX) {
   if (o.delivery) return DELIVERY_AT[o.delivery.status]
   if (o.deliveredAt) return 3
   return 0
+}
+
+const REFUND_LABEL: Record<RefundStatus, string> = {
+  NONE: '',
+  PENDING: '예치금으로 환불하고 있어요',
+  COMPLETED: '예치금으로 환불했어요',
+  UNKNOWN: '환불 상태를 불러오지 못했어요. 잠시 후 다시 확인해 주세요',
+}
+
+/** 반품 진행 (요청·승인·거절). 거절되면 주문은 결제 완료·구매 확정으로 돌아가지만 거절 사유는 계속 보여 줘요 */
+function ReturnInfo({ o }: { o: OrderDetailX }) {
+  const rejected = !!o.returnRejectedAt
+  const title =
+    o.status === 'RETURNED' ? '반품을 승인했어요' : rejected ? '반품 요청이 거절됐어요' : '반품 요청을 확인하고 있어요'
+  return (
+    <div className={`${styles.box} ${styles.returnBox}`}>
+      <b>{title}</b>
+      <dl className={styles.returnDl}>
+        <div>
+          <dt>요청</dt>
+          <dd>
+            {mdhm(o.returnRequestedAt!)} · {o.returnReasonCode ? RETURN_REASON_LABEL[o.returnReasonCode] : '사유 없음'}
+            {o.returnReason && <span>{o.returnReason}</span>}
+          </dd>
+        </div>
+        {rejected && (
+          <div>
+            <dt>거절</dt>
+            <dd>
+              {mdhm(o.returnRejectedAt!)}
+              {o.returnRejectReason && <span>{o.returnRejectReason}</span>}
+            </dd>
+          </div>
+        )}
+        {o.status === 'RETURNED' && o.returnedAt && (
+          <div>
+            <dt>승인</dt>
+            <dd>
+              {mdhm(o.returnedAt)} · 결제 금액 {won(payAmountOf(o))}
+              {o.refundStatus && o.refundStatus !== 'NONE' && <span>{REFUND_LABEL[o.refundStatus]}</span>}
+            </dd>
+          </div>
+        )}
+      </dl>
+      {!rejected && o.status === 'RETURN_REQUESTED' && (
+        <p>승인되면 배송비를 포함한 결제 금액을 예치금으로 돌려드려요.</p>
+      )}
+    </div>
+  )
 }
 
 /** 결제 내역 줄 (결제 시도 오래된 순, 실패 포함). payments가 없는 예전 서버 응답이면 결제 완료 한 줄만 만들어요 */
@@ -101,12 +151,24 @@ export default function OrderDetailPage() {
   }
 
   let bottom: ReactNode = undefined
+  // 반품은 결제 완료 주문에서 배송 완료(배송지 없는 주문은 결제 완료) 뒤, 주문당 한 번만 요청할 수 있어요
+  const returnable =
+    !!o &&
+    o.status === 'PAID' &&
+    !o.returnRequestedAt &&
+    (!o.shippingAddress || !!o.deliveredAt || o.delivery?.status === 'DELIVERED')
   if (o?.status === 'PAID')
-    bottom = (
+    bottom = returnable ? (
       <BottomBar equal note="구매를 확정하면 반품을 요청할 수 없어요">
         <Button size="lg" variant="outline" to={`/orders/${orderId}/return`}>
           반품 요청
         </Button>
+        <Button size="lg" onClick={askConfirm} disabled={busy}>
+          구매 확정하기
+        </Button>
+      </BottomBar>
+    ) : (
+      <BottomBar>
         <Button size="lg" onClick={askConfirm} disabled={busy}>
           구매 확정하기
         </Button>
@@ -369,14 +431,7 @@ function StatusSection({
       {o.status === 'CANCELED' && o.canceledAt && (
         <p className={styles.box}>{mdhm(o.canceledAt)}에 취소된 주문이에요</p>
       )}
-      {(o.status === 'RETURN_REQUESTED' || o.status === 'RETURNED') && (
-        <p className={styles.box}>
-          {o.status === 'RETURN_REQUESTED'
-            ? '반품 요청을 관리자가 확인하고 있어요. 승인되면 예치금으로 돌려드려요.'
-            : st.hold}{' '}
-          <Link to="/orders?tab=returns">반품 내역 보기</Link>
-        </p>
-      )}
+      {o.returnRequestedAt && <ReturnInfo o={o} />}
     </section>
   )
 }

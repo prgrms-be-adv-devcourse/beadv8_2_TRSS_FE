@@ -96,8 +96,13 @@ export default function ConsoleShell({
             <>
               <div className={styles.who}>
                 {account}
-                <br />
-                <span>{badge}</span>
+                {/* 계정 이름이 역할 이름과 같으면(예: 관리자 계정 이름 '관리자') 한 번만 보여요 */}
+                {account !== badge && (
+                  <>
+                    <br />
+                    <span>{badge}</span>
+                  </>
+                )}
               </div>
               <Link to="/" className={styles.sideLink}>
                 구매 화면으로 ↗

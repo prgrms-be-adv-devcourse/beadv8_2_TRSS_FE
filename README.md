@@ -18,7 +18,7 @@ npm run build    # 타입 검사 후 dist/ 에 빌드
 
 | 명령 | `/api`가 가는 곳 | 언제 |
 | --- | --- | --- |
-| `npm run dev` | 개발 서버 (`http://3.37.14.205`) | 백엔드를 띄우지 않고 프론트만 작업할 때 |
+| `npm run dev` | 개발 서버 (`https://palette-shop.duckdns.org`) | 백엔드를 띄우지 않고 프론트만 작업할 때 |
 | `npm run dev:local` | 내 PC의 백엔드 (`http://127.0.0.1:8080`) | 백엔드(`beadv8_2_TRSS_BE`)를 직접 띄워서 같이 테스트할 때 |
 
 - `dev:local`은 백엔드를 `8080`에 먼저 띄운 뒤 실행해요. 백엔드가 꺼져 있으면 API 요청이 `ECONNREFUSED`로 실패해요.
