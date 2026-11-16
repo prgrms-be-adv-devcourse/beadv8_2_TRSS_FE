@@ -196,6 +196,10 @@
 }
 .recentThumb {
   display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
   border-radius: 8px;
   overflow: hidden;
   line-height: 0;
@@ -478,4 +482,8 @@
   .searchHint {
     animation: none;
   }
+}
+.recentName {
+  color: var(--ink);
+  font-weight: 700;
 }

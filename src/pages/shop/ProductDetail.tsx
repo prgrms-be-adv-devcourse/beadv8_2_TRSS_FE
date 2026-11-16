@@ -11,17 +11,9 @@ import { addCartItem } from '../../lib/api/cart'
 import { getProductReviews, getReviewSummary } from '../../lib/api/review'
 import { useAuth } from '../../lib/auth'
 import { useApi } from '../../lib/useApi'
+import { recordRecentView } from '../../lib/recentViewed'
 import type { ProductOption } from '../../lib/api/product'
-import {
-  ExampleNotice,
-  HeartButton,
-  PriceTag,
-  Stars,
-  imageOf,
-  loadProduct,
-  useRequireLogin,
-  useWishes,
-} from './common'
+import { ExampleNotice, HeartButton, PriceTag, Stars, imageOf, loadProduct, useRequireLogin, useWishes } from './common'
 import styles from './ProductDetail.module.css'
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '../../lib/shipping'
 
@@ -77,6 +69,22 @@ export default function ProductDetailPage() {
     setImgIndex(0)
   }, [product, seedWish])
 
+  // 최근 본 상품에 넣어요. 예시 상품은 넣지 않아요.
+  const memberId = me?.memberId ?? null
+  useEffect(() => {
+    if (!product || product.example) return
+    recordRecentView(memberId, {
+      productId: product.productId,
+      name: product.name,
+      price: product.price,
+      salePrice: product.salePrice,
+      discountRate: product.discountRate,
+      thumbnailUrl: product.thumbnailUrl,
+      businessName: product.businessName,
+      categoryId: product.categoryId,
+    })
+  }, [product, memberId])
+
   if (loaded.loading && !product)
     return (
       <AppFrame>
@@ -115,7 +123,11 @@ export default function ProductDetailPage() {
   const disabled = soldOut || !!busy || isAdmin || product.example
   const showOptions = product.optionNames.length > 0
   /** i번째 옵션에서 값 v를 고르면 될 조합 (다른 옵션은 지금 고른 값 그대로) */
-  const optionWith = (i: number, v: string) => matchOption(product.options, picked.map((x, j) => (j === i ? v : x)))
+  const optionWith = (i: number, v: string) =>
+    matchOption(
+      product.options,
+      picked.map((x, j) => (j === i ? v : x)),
+    )
   const valuesOf = (i: number) => Array.from(new Set(product.options.map((o) => o.values[i])))
   const reviewCount = summary.data?.reviewCount ?? 0
   const wished = wishes.has(product.productId)
@@ -252,8 +264,16 @@ export default function ProductDetailPage() {
                   const on = picked[i] === v
                   // 마지막 옵션에서만 품절·남은 수량·추가금을 붙여요 (앞 옵션은 뒤 옵션에 따라 달라져서)
                   const last = i === product.optionNames.length - 1
-                  const note = !last || !o ? '' : o.soldOut ? ' · 품절' : o.remainingStock != null ? ` · ${o.remainingStock}개 남음` : ''
-                  const extra = last && o && o.additionalPrice > 0 ? ` +${o.additionalPrice.toLocaleString('ko-KR')}` : ''
+                  const note =
+                    !last || !o
+                      ? ''
+                      : o.soldOut
+                        ? ' · 품절'
+                        : o.remainingStock != null
+                          ? ` · ${o.remainingStock}개 남음`
+                          : ''
+                  const extra =
+                    last && o && o.additionalPrice > 0 ? ` +${o.additionalPrice.toLocaleString('ko-KR')}` : ''
                   return (
                     <button
                       key={v}

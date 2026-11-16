@@ -11,6 +11,7 @@ import { ExampleNotice, MiniCard, SectionHead, imageOf, loadProducts } from './c
 import { useNotificationCount } from '../../lib/notificationCount'
 import { MOCK_PROFILE, MOCK_WHY, POPULAR_KEYWORDS } from './mock'
 import CategoryDrawer from './CategoryDrawer'
+import HomeRecent from './HomeRecent'
 import { HOME_TABS, HomeTabList, type HomeTab } from './HomeTabs'
 import { SearchPanel } from './Search'
 import styles from './Home.module.css'
@@ -42,13 +43,11 @@ export default function HomePage() {
   const [searching, setSearching] = useState(false)
   const searchHint = useSearchHint()
   const closeSearch = useCallback(() => setSearching(false), [])
-  // TODO(API 미구현): AI 추천(회원 맞춤 · 찜 기반 · 최근 본 상품 기반) — ai-service 추천 API가 없어 최신 상품으로 자리를 채워요
+  // TODO(API 미구현): AI 추천(회원 맞춤 · 찜 기반) — ai-service 추천 API가 없어 최신 상품으로 자리를 채워요. 최근 본 상품은 HomeRecent
   const products = useApi(() => loadProducts({ size: 12 }), [])
   const items = products.data?.items ?? []
   const recs = items.slice(0, 6)
   const wishRecs = items.slice(6, 12).length ? items.slice(6, 12) : items.slice(0, 6)
-  const recent = items.slice(0, 3)
-  const viewRecs = [...items].reverse().slice(0, 6)
   const hasUnread = !!useNotificationCount()
   // 헤더 탭은 URL(?tab=)에 두어 뒤로 가기·새로고침해도 유지돼요. 추천이 기본이에요.
   const [params] = useSearchParams()
@@ -175,32 +174,7 @@ export default function HomePage() {
             </section>
           )}
 
-          {recent.length > 0 && (
-            <section aria-label="최근 본 상품과 함께 많이 봤어요" className={`${styles.sec} ${styles.divided}`}>
-              <div className={styles.secPad}>
-                <h2 className={styles.h2}>최근 본 상품과 함께 많이 봤어요</h2>
-                {/* TODO(API 미구현): 최근 본 상품 기록·함께 본 상품 추천 */}
-                <div className={styles.recent}>
-                  <span>최근 본</span>
-                  {recent.map((p, i) => (
-                    <Link
-                      key={p.productId}
-                      to={`/product/${p.productId}`}
-                      aria-label={p.name}
-                      className={`${styles.recentThumb} ${i === 0 ? styles.recentOn : ''}`}
-                    >
-                      <Thumb src={imageOf(p)} width={36} height={36} radius={8} />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-              <div className={styles.row}>
-                {viewRecs.map((p) => (
-                  <MiniCard key={p.productId} p={p} />
-                ))}
-              </div>
-            </section>
-          )}
+          <HomeRecent />
 
           {/* TODO(API 미구현): 설문 여부 조회 — 설문 전 회원에게만 보여줘요. 지금은 항상 보여요 */}
           <Link to="/survey" className={styles.surveyCard}>
