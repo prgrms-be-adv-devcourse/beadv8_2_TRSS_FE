@@ -61,7 +61,11 @@ export const getWallet = () => api<Wallet>('/api/v1/wallet')
 export type WalletTransactionType =
   | 'CHARGE' // 충전
   | 'CHARGE_CANCEL' // 미사용 충전 취소
+  | 'CHARGE_CANCEL_RESTORE' // 충전 취소가 PG에서 거절돼 되돌림
   | 'PAYMENT' // 주문 결제
+  | 'PAYMENT_CANCEL' // 결제 취소 (구매자)
+  | 'SHIPPING_FEE' // 결제 중 배송비 (관리자)
+  | 'SHIPPING_FEE_CANCEL' // 결제 취소 시 배송비 반환 (관리자)
   | 'REFUND' // 반품 환불
   | 'SETTLEMENT' // 정산 지급 (판매자)
   | 'FEE' // 정산 수수료 (관리자)
