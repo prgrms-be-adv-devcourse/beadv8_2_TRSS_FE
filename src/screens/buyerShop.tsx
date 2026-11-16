@@ -49,6 +49,6 @@ export const buyerShopScreens: ScreenRoute[] = [
   { path: '/survey', title: '뷰티 설문 소개', group: '구매자', element: <SurveyIntroPage />, auth: 'login' },
   { path: '/survey/questions', title: '뷰티 설문', group: '구매자', element: <SurveyPage />, auth: 'login' },
   { path: '/survey/result', title: '내 뷰티 프로필', group: '구매자', element: <SurveyResultPage />, auth: 'login' },
-  { path: '/recommend', title: '맞춤 추천', group: '구매자', element: <RecommendPage />, auth: 'login' },
+  { path: '/recommend', title: '맞춤 추천', group: '구매자', element: <RecommendPage /> },
   { path: '/chatbot', title: '팔레트 챗봇', group: '구매자', element: <ChatbotPage />, auth: 'login' },
 ]

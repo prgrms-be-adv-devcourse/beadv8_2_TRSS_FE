@@ -5,6 +5,7 @@ import Button from '../../components/ui/Button'
 import Icon from '../../components/ui/Icon'
 import PageHeader, { HeaderIcon } from '../../components/ui/PageHeader'
 import { won } from '../../components/ui/Misc'
+import { basisText, getMySurvey } from '../../lib/api/ai'
 import { getMySeller, type MySeller } from '../../lib/api/member'
 import { getOrders, type OrderStatus } from '../../lib/api/order'
 import { getInfluencerPartnerships } from '../../lib/api/partnership'
@@ -55,6 +56,8 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
   const approvedInfluencer = inf.view === 'APPROVED'
 
   const wallet = useApi(getWallet, [])
+  // 설문 안 했으면 null, 못 불러오면 error
+  const survey = useApi(getMySurvey, [])
   const counts = useApi(
     () => Promise.all(ORDER_CELLS.map(([, statuses]) => total(getOrders({ statuses, size: 1 })))),
     [],
@@ -105,12 +108,13 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
         </div>
       </div>
 
-      {/* TODO(API 미구현): AI 뷰티 프로필 요약 — AI 설문 결과 API가 생기면 실제 요약으로 */}
-      <Link to="/survey/result" className={s.aiCard}>
+      <Link to={survey.data ? '/survey/result' : '/survey'} className={s.aiCard}>
         <span className={s.aiTag}>AI</span>
         <span className={s.aiText}>
           <b>내 뷰티 프로필</b>
-          <span>설문으로 피부 타입과 고민을 알려 주세요</span>
+          <span>
+            {survey.data ? `${basisText(survey.data)} 기준으로 추천해요` : '설문으로 피부 타입과 고민을 알려 주세요'}
+          </span>
         </span>
         <span className={s.aiMore}>보기 ›</span>
       </Link>

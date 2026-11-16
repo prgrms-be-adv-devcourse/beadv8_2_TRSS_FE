@@ -16,6 +16,7 @@ import {
   type ProductSearchQuery,
 } from '../../lib/api/product'
 import { addWishlist, getWishlist, removeWishlist } from '../../lib/api/wishlist'
+import { getProductRecommendations, type ProductRecommendations } from '../../lib/api/ai'
 import { useAuth } from '../../lib/auth'
 import {
   EXAMPLE_CATEGORIES,
@@ -44,6 +45,29 @@ export const loadProducts = (query: ProductSearchQuery) =>
   searchProducts(query).then(
     (r) => ({ ...r, example: false }),
     (e) => (isServerUnreachable(e) ? { ...searchExampleProducts(query), example: true } : Promise.reject(e)),
+  )
+
+/**
+ * AI 맞춤 상품 추천 (비회원·설문 전이면 personalized=false, 뷰티 최신순).
+ * 서버에 닿지 못하면 예시 뷰티 상품 (example: true)
+ */
+export const loadRecommendations = (size: number): Promise<ProductRecommendations & { example: boolean }> =>
+  getProductRecommendations(size).then(
+    (r) => ({ ...r, example: false }),
+    (e) => {
+      if (!isServerUnreachable(e)) return Promise.reject(e)
+      const beauty = EXAMPLE_CATEGORIES.find((g) => g.name === '뷰티')
+      const items = searchExampleProducts({ categoryId: beauty?.categoryId, size }).items.map((p) => ({
+        productId: p.productId,
+        name: p.name,
+        price: p.price,
+        thumbnailUrl: p.thumbnailUrl,
+        categoryName: '',
+        reason: null,
+        matchedIngredients: [],
+      }))
+      return { personalized: false, basis: null, items, example: true }
+    },
   )
 
 /**
@@ -254,9 +278,7 @@ export function ProductCard({
         <span className={styles.cardImg}>
           <Thumb src={imageOf(p)} width="100%" height="100%" radius={6} />
           {badge}
-          {p.remainingStock != null && !p.soldOut && (
-            <span className={styles.low}>{p.remainingStock}개 남음</span>
-          )}
+          {p.remainingStock != null && !p.soldOut && <span className={styles.low}>{p.remainingStock}개 남음</span>}
           {p.soldOut && <span className={styles.soldOut}>품절</span>}
         </span>
         {p.businessName && <span className={styles.brand}>{p.businessName}</span>}

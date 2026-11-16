@@ -3,7 +3,7 @@ import BottomBar from '../../components/ui/BottomBar'
 import Button from '../../components/ui/Button'
 import Icon, { type IconName } from '../../components/ui/Icon'
 import PageHeader from '../../components/ui/PageHeader'
-import { SURVEY_QUESTIONS } from './mock'
+import { SURVEY_QUESTIONS } from './surveyQuestions'
 import styles from './Survey.module.css'
 
 const POINTS: Array<{ icon: IconName; title: string; desc: string }> = [

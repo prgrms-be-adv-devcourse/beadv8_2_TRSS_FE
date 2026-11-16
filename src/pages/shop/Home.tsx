@@ -7,9 +7,10 @@ import PageHeader, { HeaderIcon } from '../../components/ui/PageHeader'
 import { ErrorView, Loading, Thumb } from '../../components/ui/Misc'
 import { useApi } from '../../lib/useApi'
 import { useAuth } from '../../lib/auth'
-import { ExampleNotice, MiniCard, SectionHead, imageOf, loadProducts } from './common'
+import { ExampleNotice, MiniCard, SectionHead, imageOf, loadProducts, loadRecommendations } from './common'
 import { useNotificationCount } from '../../lib/notificationCount'
-import { MOCK_PROFILE, MOCK_WHY, POPULAR_KEYWORDS } from './mock'
+import { MOCK_WHY, POPULAR_KEYWORDS } from './mock'
+import { basisText } from '../../lib/api/ai'
 import CategoryDrawer from './CategoryDrawer'
 import HomeRecent from './HomeRecent'
 import { HOME_TABS, HomeTabList, type HomeTab } from './HomeTabs'
@@ -43,10 +44,12 @@ export default function HomePage() {
   const [searching, setSearching] = useState(false)
   const searchHint = useSearchHint()
   const closeSearch = useCallback(() => setSearching(false), [])
-  // TODO(API 미구현): AI 추천(회원 맞춤 · 찜 기반) — ai-service 추천 API가 없어 최신 상품으로 자리를 채워요. 최근 본 상품은 HomeRecent
+  // 회원 맞춤 추천: GET /api/v1/ai/recommendations (비회원·설문 전이면 뷰티 최신순)
+  const rec = useApi(() => loadRecommendations(6), [loggedIn])
+  const recs = rec.data?.items ?? []
+  // TODO(API 미구현): 찜 기반 추천 — API가 없어 최신 상품으로 자리를 채워요. 최근 본 상품은 HomeRecent
   const products = useApi(() => loadProducts({ size: 12 }), [])
   const items = products.data?.items ?? []
-  const recs = items.slice(0, 6)
   const wishRecs = items.slice(6, 12).length ? items.slice(6, 12) : items.slice(0, 6)
   const hasUnread = !!useNotificationCount()
   // 헤더 탭은 URL(?tab=)에 두어 뒤로 가기·새로고침해도 유지돼요. 추천이 기본이에요.
@@ -129,25 +132,37 @@ export default function HomePage() {
             </span>
           </Link>
 
-          {products.data?.example && <ExampleNotice />}
+          {(products.data?.example || rec.data?.example) && <ExampleNotice />}
           {products.loading && !products.data && <Loading />}
           {products.error && <ErrorView message={products.error} onRetry={products.reload} />}
 
           {recs.length > 0 && (
             <section aria-label="회원님을 위한 추천" className={styles.sec}>
-              <SectionHead
-                title="회원님을 위한 추천"
-                ai
-                desc={
-                  <>
-                    {MOCK_PROFILE.type[0]} · {MOCK_PROFILE.like[0]} 기준이에요 · <Link to="/survey/result">바꾸기</Link>
-                  </>
-                }
-                more={{ to: '/recommend' }}
-              />
+              {rec.data?.personalized && rec.data.basis ? (
+                <SectionHead
+                  title="회원님을 위한 추천"
+                  ai
+                  desc={
+                    <>
+                      {basisText(rec.data.basis)} 기준이에요 · <Link to="/survey/result">바꾸기</Link>
+                    </>
+                  }
+                  more={{ to: '/recommend' }}
+                />
+              ) : (
+                <SectionHead
+                  title="새로 들어온 뷰티"
+                  desc={
+                    <>
+                      설문하면 내 피부 맞춤으로 바뀌어요 · <Link to="/survey">설문하기</Link>
+                    </>
+                  }
+                  more={{ to: '/recommend' }}
+                />
+              )}
               <div className={styles.row}>
                 {recs.map((p) => (
-                  <MiniCard key={p.productId} p={p} />
+                  <MiniCard key={p.productId} p={p} why={p.reason ?? undefined} />
                 ))}
               </div>
             </section>
@@ -176,33 +191,35 @@ export default function HomePage() {
 
           <HomeRecent />
 
-          {/* TODO(API 미구현): 설문 여부 조회 — 설문 전 회원에게만 보여줘요. 지금은 항상 보여요 */}
-          <Link to="/survey" className={styles.surveyCard}>
-            <span aria-hidden="true" className={styles.surveyDeco} />
-            <span aria-hidden="true" className={styles.surveyIcon}>
-              <Icon name="sparkle" size={22} />
-            </span>
-            <span className={styles.surveyText}>
-              <span className={styles.surveyEyebrow}>
-                <span className={styles.surveyAi}>AI</span>뷰티 설문
+          {/* 설문 전(맞춤 추천이 아닐 때)에만 보여줘요 */}
+          {!rec.loading && !rec.data?.personalized && (
+            <Link to="/survey" className={styles.surveyCard}>
+              <span aria-hidden="true" className={styles.surveyDeco} />
+              <span aria-hidden="true" className={styles.surveyIcon}>
+                <Icon name="sparkle" size={22} />
               </span>
-              <b className={styles.surveyTitle}>30초 설문하고 맞춤 추천 받기</b>
-              <span className={styles.surveyDesc}>피부 타입과 성분 취향을 알려주세요</span>
-            </span>
-            <span className={styles.surveyFoot}>
-              <span aria-hidden="true" className={styles.surveySteps}>
-                {['피부 타입', '피부 고민', '성분 취향'].map((t) => (
-                  <span key={t} className={styles.surveyStep}>
-                    {t}
-                  </span>
-                ))}
+              <span className={styles.surveyText}>
+                <span className={styles.surveyEyebrow}>
+                  <span className={styles.surveyAi}>AI</span>뷰티 설문
+                </span>
+                <b className={styles.surveyTitle}>30초 설문하고 맞춤 추천 받기</b>
+                <span className={styles.surveyDesc}>피부 타입과 성분 취향을 알려주세요</span>
               </span>
-              <span className={styles.surveyGo}>
-                시작
-                <Icon name="chevron" size={14} strokeWidth={2.2} />
+              <span className={styles.surveyFoot}>
+                <span aria-hidden="true" className={styles.surveySteps}>
+                  {['피부 타입', '피부 고민', '성분 취향'].map((t) => (
+                    <span key={t} className={styles.surveyStep}>
+                      {t}
+                    </span>
+                  ))}
+                </span>
+                <span className={styles.surveyGo}>
+                  시작
+                  <Icon name="chevron" size={14} strokeWidth={2.2} />
+                </span>
               </span>
-            </span>
-          </Link>
+            </Link>
+          )}
         </>
       )}
 
