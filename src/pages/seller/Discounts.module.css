@@ -1,0 +1,220 @@
+/* S14 할인 */
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.headRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.headRow h2 {
+  margin: 0;
+}
+.h3 {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.prices {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.prices p {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+.prices b {
+  font-size: 22px;
+  font-weight: 800;
+}
+.prices small {
+  font-size: 14px;
+}
+.activeRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.static {
+  margin: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.preview {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 6px 16px;
+}
+.preview li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.preview li b {
+  margin-left: auto;
+}
+.submitRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.editBox {
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.mItem:first-child {
+  border-top: 0;
+}
+.mItemHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mItem .actions {
+  justify-content: flex-start;
+}
+.mWrap {
+  padding: 16px;
+}
+
+/* 할인가 줄: PC는 기본가 · 할인가 · 할인율, 모바일은 할인가 · 할인율 */
+.priceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.unit {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.unit input {
+  padding-right: 36px;
+}
+.unit > span {
+  position: absolute;
+  right: 14px;
+  font-size: 14px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--input-line);
+  background: #fff;
+  color: var(--sub);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.chipOn {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+@media (max-width: 1023px) {
+  .grid,
+  .grid2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .priceGrid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+  .card {
+    padding: 16px;
+  }
+  .prices {
+    gap: 20px;
+  }
+  .prices b {
+    font-size: 18px;
+  }
+  .submitRow {
+    display: block;
+  }
+  .activeRow > :global(a),
+  .activeRow > button {
+    width: 100%;
+    justify-content: center;
+  }
+  .mWrap {
+    padding: 12px 16px 24px;
+  }
+}

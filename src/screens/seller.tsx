@@ -6,6 +6,7 @@ import SellerProductsPage from '../pages/seller/Products'
 import SellerProductFormPage from '../pages/seller/ProductForm'
 import SellerStopRequestPage from '../pages/seller/StopRequest'
 import SellerStockPage from '../pages/seller/Stock'
+import SellerDiscountsPage from '../pages/seller/Discounts'
 import SellerOrdersPage from '../pages/seller/Orders'
 import SellerSettlementsPage from '../pages/seller/Settlements'
 import SellerInfoPage from '../pages/seller/Info'
@@ -56,6 +57,7 @@ export const sellerScreens: ScreenRoute[] = [
     element: <SellerStopRequestPage />,
   },
   { path: '/seller/stock', title: '재고 (S3)', auth: 'SELLER', group: '판매자', element: <SellerStockPage /> },
+  { path: '/seller/discounts', title: '할인 (S14)', auth: 'SELLER', group: '판매자', element: <SellerDiscountsPage /> },
   { path: '/seller/orders', title: '주문 (S4)', auth: 'SELLER', group: '판매자', element: <SellerOrdersPage /> },
   {
     path: '/seller/settlements',

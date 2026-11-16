@@ -222,6 +222,12 @@ export default function SellerInfoPage() {
           {counts.partners !== undefined && `진행 중 ${counts.partners}`} <Icon name="chevron" size={16} />
         </span>
       </Link>
+      <Link to="/seller/discounts" className={s.menuLink}>
+        기간 할인
+        <span>
+          <Icon name="chevron" size={16} />
+        </span>
+      </Link>
       <Link to="/seller/coupons" className={s.menuLink}>
         상품 쿠폰
         <span>

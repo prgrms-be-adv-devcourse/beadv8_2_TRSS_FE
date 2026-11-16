@@ -13,6 +13,7 @@ export type ConsoleMenuItem = {
 export const SELLER_MENU: ConsoleMenuItem[] = [
   { key: 'products', label: '상품 관리', to: '/seller/products', tabIcon: 'box', tabLabel: '상품' },
   { key: 'stock', label: '재고', to: '/seller/stock', tabIcon: 'stock', tabLabel: '재고' },
+  { key: 'discounts', label: '할인', to: '/seller/discounts' },
   { key: 'orders', label: '주문', to: '/seller/orders', tabIcon: 'receipt', tabLabel: '주문' },
   { key: 'settlements', label: '정산', to: '/seller/settlements', tabIcon: 'won', tabLabel: '정산' },
   { key: 'partners', label: '인플루언서 협약', to: '/seller/partners' },
