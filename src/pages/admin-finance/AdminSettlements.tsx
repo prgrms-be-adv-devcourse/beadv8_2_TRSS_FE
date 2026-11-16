@@ -665,10 +665,12 @@ function ManualRunSheet({
     if (!selected || !checked || running) return
     setRunning(true)
     try {
-      // 서버가 Job이 끝날 때까지 기다렸다가 응답해요 (판매자가 많으면 몇 초 걸려요)
+      // 서버는 실행을 접수만 하고 바로 응답해요(202). 결과는 실행 기록에서 확인해요
       const r = await runSettlement(selected)
       onDone(
-        `${fmtMonth(selected)} 정산을 실행했어요. 지급 ${r.paidCount}건, 실패 ${r.failedCount + r.manualRequiredCount}건`,
+        r.status === 'QUEUED'
+          ? `${fmtMonth(selected)} 정산 실행을 접수했어요. 진행 중인 다른 달 실행이 끝나면 시작돼요. 결과는 실행 기록에서 확인해 주세요.`
+          : `${fmtMonth(selected)} 정산 실행을 시작했어요. 실행 기록에서 결과를 확인해 주세요. 지급은 지급 예정일부터 진행돼요.`,
       )
       onClose()
     } catch (e) {

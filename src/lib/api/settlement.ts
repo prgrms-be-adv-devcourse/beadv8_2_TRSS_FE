@@ -80,12 +80,13 @@ export type SettlementRun = {
   aggregatedSellerCount: number
   aggregatedCandidateCount: number
   failedSellerCount: number
-  paidCount: number
-  failedCount: number
-  manualRequiredCount: number
-  skippedCount: number
-  payoutTotal: number
-  feeTotal: number
+  // 지급 건수, 금액은 Job이 지급하던 이전 실행에만 있고 지금 실행은 null (지급은 지급 스케줄러가 해요)
+  paidCount: number | null
+  failedCount: number | null
+  manualRequiredCount: number | null
+  skippedCount: number | null
+  payoutTotal: number | null
+  feeTotal: number | null
 }
 
 export type SettlementPreviewSeller = {
@@ -166,8 +167,16 @@ export type SettlementExpected = {
 }
 
 // ── 관리자 ──
+/**
+ * 월 정산 수동 실행 접수(202). Job은 서버에서 따로 돌고, 결과는 실행 기록(getSettlementRuns)으로 본다
+ * STARTED: 바로 시작, QUEUED: 다른 달 수동 실행이 끝난 뒤 시작
+ */
+export interface SettlementRunStart {
+  targetMonth: YearMonth
+  status: 'STARTED' | 'QUEUED'
+}
 export const runSettlement = (settleMonth: YearMonth) =>
-  api<SettlementRun>('/api/v1/admin/settlements/runs', { method: 'POST', body: { settleMonth } })
+  api<SettlementRunStart>('/api/v1/admin/settlements/runs', { method: 'POST', body: { settleMonth } })
 export const getSettlementRuns = (query: PageQuery = {}) =>
   api<PageResponse<SettlementRun>>('/api/v1/admin/settlements/runs', { query })
 /** 관리자 화면 상태 탭. ACTION_REQUIRED = 처리 필요(FAILED + MANUAL_REQUIRED) */
@@ -253,13 +262,14 @@ export const SETTLEMENT_HISTORY_RESULT_LABEL: Record<SettlementHistoryResult, st
   SKIPPED: '건너뜀',
 }
 /** 처리를 시작한 경로 (BE SettlementTrigger) */
-export type SettlementTrigger = 'EVENT' | 'MONTHLY_JOB' | 'RETRY_SCHEDULER' | 'ADMIN' | 'LEDGER_RECHECK'
+export type SettlementTrigger = 'EVENT' | 'MONTHLY_JOB' | 'RETRY_SCHEDULER' | 'ADMIN' | 'LEDGER_RECHECK' | 'PREJUDGE'
 export const SETTLEMENT_TRIGGER_LABEL: Record<SettlementTrigger, string> = {
   EVENT: '이벤트',
   MONTHLY_JOB: '월 정산',
   RETRY_SCHEDULER: '재시도',
   ADMIN: '관리자',
   LEDGER_RECHECK: '원장 재대조',
+  PREJUDGE: '사전 판별',
 }
 
 /** BE SettlementHistoryResponse */
