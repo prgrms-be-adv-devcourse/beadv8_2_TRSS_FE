@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 import styles from './BottomBar.module.css'
 
 type Props = {
-  children: ReactNode
+  /** 버튼. 없으면 안내 문구만 보여요 */
+  children?: ReactNode
   /** 버튼 위 안내 문구 */
   note?: ReactNode
   /** 나란한 버튼을 같은 폭으로 */
@@ -16,7 +17,7 @@ export default function BottomBar({ children, note, equal, plain }: Props) {
   return (
     <div className={`${styles.bar} ${plain ? styles.plain : ''}`}>
       {note && <p className={styles.note}>{note}</p>}
-      <div className={`${styles.row} ${equal ? styles.equal : ''}`}>{children}</div>
+      {children && <div className={`${styles.row} ${equal ? styles.equal : ''}`}>{children}</div>}
     </div>
   )
 }

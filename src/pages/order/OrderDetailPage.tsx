@@ -151,13 +151,12 @@ export default function OrderDetailPage() {
   }
 
   let bottom: ReactNode = undefined
-  // 반품은 결제 완료 주문에서 배송 완료(배송지 없는 주문은 결제 완료) 뒤, 주문당 한 번만 요청할 수 있어요
-  const returnable =
-    !!o &&
-    o.status === 'PAID' &&
-    !o.returnRequestedAt &&
-    (!o.shippingAddress || !!o.deliveredAt || o.delivery?.status === 'DELIVERED')
-  if (o?.status === 'PAID')
+  // 구매 확정·반품은 배송 완료(배송지 없는 주문은 결제 완료) 뒤에만 할 수 있어요 (백엔드 409-ORDER_NOT_DELIVERED)
+  const delivered = !!o && (!o.shippingAddress || !!o.deliveredAt || o.delivery?.status === 'DELIVERED')
+  // 반품은 주문당 한 번만 요청할 수 있어요
+  const returnable = !!o && o.status === 'PAID' && !o.returnRequestedAt && delivered
+  if (o?.status === 'PAID' && !delivered) bottom = <BottomBar note="상품을 받은 뒤 구매 확정할 수 있어요" />
+  else if (o?.status === 'PAID')
     bottom = returnable ? (
       <BottomBar equal note="구매를 확정하면 반품을 요청할 수 없어요">
         <Button size="lg" variant="outline" to={`/orders/${orderId}/return`}>
