@@ -27,6 +27,8 @@ import pf from './ProductForm.module.css'
 
 /** 백엔드 제약 (ProductCreateRequest·이미지 검사) */
 const NAME_MAX = 100
+/** 전성분 최대 길이 (Product.MAX_INGREDIENTS_TEXT_LENGTH) */
+const INGREDIENTS_MAX = 5000
 const DETAIL_MAX = 10
 const IMAGE_MAX_BYTES = 5 * 1024 * 1024
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -42,7 +44,16 @@ const COMBO_MAX = 100
 /** 옵션 재고 최대 (OptionStock.MAX_STOCK) */
 const STOCK_MAX_DIGITS = 6
 
-type Field = 'name' | 'categoryId' | 'price' | 'stock' | 'description' | 'thumbnail' | 'detailImages' | 'options'
+type Field =
+  | 'name'
+  | 'categoryId'
+  | 'price'
+  | 'stock'
+  | 'description'
+  | 'thumbnail'
+  | 'detailImages'
+  | 'options'
+  | 'ingredientsText'
 type Errors = Partial<Record<Field, string>>
 
 /** 상세 이미지 한 장. 기존 이미지는 imageId, 새로 고른 이미지는 file이 있어요. */
@@ -63,6 +74,7 @@ const CODE_FIELD: Record<string, Field> = {
   DETAIL_IMAGE_NOT_FOUND: 'detailImages',
   CATEGORY_NOT_SELECTABLE: 'categoryId',
   CATEGORY_NOT_FOUND: 'categoryId',
+  INGREDIENTS_REQUIRED: 'ingredientsText',
 }
 
 function imageProblem(file: File) {
@@ -79,7 +91,10 @@ function combosOf(groups: OptionGroup[]) {
   const used = groups.filter((g) => g.values.length > 0)
   if (used.length === 0) return []
   return used
-    .reduce<string[][]>((acc, g) => (acc.length === 0 ? g.values.map((v) => [v]) : acc.flatMap((a) => g.values.map((v) => [...a, v]))), [])
+    .reduce<string[][]>(
+      (acc, g) => (acc.length === 0 ? g.values.map((v) => [v]) : acc.flatMap((a) => g.values.map((v) => [...a, v]))),
+      [],
+    )
     .map((values) => ({ key: values.join(' / '), values }))
 }
 
@@ -120,9 +135,8 @@ export default function SellerProductFormPage() {
   const [valueInputs, setValueInputs] = useState<Record<string, string>>({})
   const [comboStock, setComboStock] = useState<Record<string, string>>({})
   const [comboPrice, setComboPrice] = useState<Record<string, string>>({})
-  // 뷰티 성분
-  const [perOption, setPerOption] = useState(false)
-  const [ingredients, setIngredients] = useState<Record<string, string>>({})
+  // 뷰티 전성분 (상품마다 하나)
+  const [ingredients, setIngredients] = useState('')
 
   const [errors, setErrors] = useState<Errors>({})
   const [formError, setFormError] = useState('')
@@ -138,6 +152,7 @@ export default function SellerProductFormPage() {
     setDescription(original.description)
     setThumbnail(original.thumbnail ? { url: original.thumbnail.url } : null)
     setDetails(original.detailImages.map((d) => ({ key: `i${d.imageId}`, url: d.url, imageId: d.imageId })))
+    setIngredients(original.ingredientsText ?? '')
   }, [original])
 
   // 새로 고른 파일의 미리보기 주소는 화면을 떠날 때 정리해요.
@@ -223,9 +238,8 @@ export default function SellerProductFormPage() {
   // ── 카테고리 ──
   const tree = categories.data ?? []
   const parent = tree.find((g) => g.categoryId === parentId)
-  const beauty = !!parent && parent.name.includes('뷰티')
-  const firstGroup = groups.find((g) => g.values.length > 0)
-  const ingredientKeys = optionMode === 'use' && perOption && firstGroup ? firstGroup.values : ['all']
+  // 백엔드 Category.isBeauty(): 대분류 이름이 '뷰티'인 소분류
+  const beauty = !!parent && parent.name === '뷰티'
 
   const validate = (): Errors => {
     const e: Errors = {}
@@ -248,6 +262,11 @@ export default function SellerProductFormPage() {
     }
     if (!description.trim()) e.description = '상품 설명을 입력해 주세요.'
     if (!thumbnail) e.thumbnail = '대표 이미지를 올려 주세요.'
+    if (beauty) {
+      if (!ingredients.trim()) e.ingredientsText = '뷰티 상품은 전성분을 입력해 주세요.'
+      else if (ingredients.trim().length > INGREDIENTS_MAX)
+        e.ingredientsText = `전성분은 ${INGREDIENTS_MAX.toLocaleString()}자까지 쓸 수 있어요.`
+    }
     return e
   }
 
@@ -261,6 +280,8 @@ export default function SellerProductFormPage() {
     const kept = details.filter((d) => d.imageId != null).map((d) => d.imageId!)
     const before = original.detailImages.map((d) => d.imageId)
     if (kept.join(',') !== before.join(',')) req.detailImageIds = kept
+    // 뷰티면 바뀐 전성분만 보내요 (뷰티가 아닌 카테고리로 옮기면 백엔드가 지워요)
+    if (beauty && ingredients.trim() !== (original.ingredientsText ?? '')) req.ingredientsText = ingredients.trim()
     return req
   }
 
@@ -271,7 +292,9 @@ export default function SellerProductFormPage() {
       const next: Errors = {}
       const rest: string[] = []
       for (const fe of fieldErrors) {
-        const key = (['name', 'categoryId', 'price', 'description'] as Field[]).find((k) => fe.field === k)
+        const key = (['name', 'categoryId', 'price', 'description', 'ingredientsText'] as Field[]).find(
+          (k) => fe.field === k,
+        )
         if (key) next[key] = fe.reason
         else if (fe.field === 'detailImageIds') next.detailImages = fe.reason
         else if (fe.field.startsWith('options') || fe.field.startsWith('optionNames'))
@@ -311,7 +334,6 @@ export default function SellerProductFormPage() {
         await modifyProduct(productId!, req, { thumbnail: thumbnail?.file, detailImages: newDetails })
         navigate('/seller/products', { state: { done: `‘${name.trim()}’을(를) 수정했어요.` } })
       } else {
-        // TODO(API 미구현): 뷰티 전성분 저장 — ProductCreateRequest에 성분 필드가 없어 화면에만 둬요.
         const useOptions = optionMode === 'use'
         await createProduct(
           {
@@ -327,6 +349,7 @@ export default function SellerProductFormPage() {
                   stock: Number(comboStock[c.key]),
                 }))
               : [{ values: [], additionalPrice: 0, stock: Number(stock) }],
+            ingredientsText: beauty ? ingredients.trim() : undefined,
           },
           { thumbnail: thumbnail?.file, detailImages: newDetails },
         )
@@ -699,8 +722,8 @@ export default function SellerProductFormPage() {
               )}
               {err('options')}
               <p className={f.help}>
-                추가금은 비워 두면 0원이에요. 할인 중에는 할인가에 추가금이 그대로 더해져요. 옵션 이름 {GROUP_NAME_MAX}자, 값{' '}
-                {VALUE_LEN_MAX}자까지 쓸 수 있어요.
+                추가금은 비워 두면 0원이에요. 할인 중에는 할인가에 추가금이 그대로 더해져요. 옵션 이름 {GROUP_NAME_MAX}
+                자, 값 {VALUE_LEN_MAX}자까지 쓸 수 있어요.
               </p>
             </div>
           )}
@@ -711,7 +734,6 @@ export default function SellerProductFormPage() {
   )
 
   /* ── 섹션: 성분 (뷰티) ── */
-  // TODO(API 미구현): 상품 전성분 저장·조회 — 백엔드에 성분 필드가 없어 입력값은 화면에만 남아요.
   const ingredientSection = beauty ? (
     <section className={pf.card} aria-labelledby="pf-ing">
       <div className={pf.between}>
@@ -720,29 +742,29 @@ export default function SellerProductFormPage() {
         </h2>
         <span className={pf.req}>필수</span>
       </div>
-      {optionMode === 'use' && firstGroup && (
-        <label className={f.check}>
-          <input type="checkbox" checked={perOption} onChange={(e) => setPerOption(e.target.checked)} />
-          옵션 1({firstGroup.name || '옵션'})마다 전성분이 달라요
+      <div className={f.field}>
+        <label htmlFor="ing" className={f.label}>
+          전성분
         </label>
-      )}
-      {ingredientKeys.map((k) => (
-        <div key={k} className={f.field}>
-          <label htmlFor={`ing-${k}`} className={f.label}>
-            {k === 'all' ? '전성분' : `${k} 전성분`}
-          </label>
-          <textarea
-            id={`ing-${k}`}
-            className={f.textarea}
-            rows={4}
-            placeholder="정제수, 병풀추출물, 나이아신아마이드, …"
-            value={ingredients[k] ?? ''}
-            onChange={(e) => setIngredients((m) => ({ ...m, [k]: e.target.value }))}
-          />
-        </div>
-      ))}
+        <textarea
+          id="ing"
+          className={f.textarea}
+          rows={5}
+          maxLength={INGREDIENTS_MAX}
+          placeholder="정제수, 병풀추출물, 나이아신아마이드, …"
+          value={ingredients}
+          aria-invalid={!!errors.ingredientsText}
+          aria-describedby={describedBy('ingredientsText')}
+          onChange={(e) => {
+            setIngredients(e.target.value)
+            clearError('ingredientsText')
+          }}
+        />
+        {err('ingredientsText')}
+      </div>
       <p className={f.help}>
-        패키지에 적힌 순서대로 쉼표로 구분해 붙여넣어 주세요. 상품 상세 “전성분 보기”에 선택한 옵션 기준으로 보여요.
+        패키지에 적힌 순서대로 쉼표로 구분해 붙여넣어 주세요. AI 맞춤 추천이 이 전성분으로 성분을 찾아요(옵션이 여러
+        개면 대표 옵션 기준으로 하나만 넣어요).
       </p>
     </section>
   ) : null
@@ -866,7 +888,10 @@ function EditOptions({ productId, form, locked }: { productId: string; form: Sel
     run('add', async () => {
       const { optionId } = await addProductOption(productId, { values, additionalPrice, stock })
       const name = values.join(' / ')
-      setOptions((os) => [...os, { optionId, name, values, additionalPrice, price: form.price + additionalPrice, stock }])
+      setOptions((os) => [
+        ...os,
+        { optionId, name, values, additionalPrice, price: form.price + additionalPrice, stock },
+      ])
       setPrices((m) => ({ ...m, [optionId]: String(additionalPrice) }))
       setNewValues(form.optionNames.map(() => ''))
       setNewPrice('')
@@ -878,8 +903,8 @@ function EditOptions({ productId, form, locked }: { productId: string; form: Sel
   return (
     <>
       <p className={pf.para}>
-        {hasOptions ? `옵션: ${form.optionNames.join(' · ')}` : '옵션 없는 상품이에요.'} 옵션 변경은 저장 버튼과 따로 바로
-        반영돼요. 재고는 <Link to={`/seller/stock?productId=${productId}`}>재고 화면</Link>에서 바꿔요.
+        {hasOptions ? `옵션: ${form.optionNames.join(' · ')}` : '옵션 없는 상품이에요.'} 옵션 변경은 저장 버튼과 따로
+        바로 반영돼요. 재고는 <Link to={`/seller/stock?productId=${productId}`}>재고 화면</Link>에서 바꿔요.
       </p>
       {msg && (
         <div className={pf.mt}>
@@ -915,7 +940,12 @@ function EditOptions({ productId, form, locked }: { productId: string; form: Sel
                   />
                   <span>원</span>
                 </span>
-                <Button size="sm" variant="outline" disabled={locked || !changed || !!busy} onClick={() => savePrice(o)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={locked || !changed || !!busy}
+                  onClick={() => savePrice(o)}
+                >
                   {busy === `p${o.optionId}` ? '바꾸는 중' : '추가금 저장'}
                 </Button>
                 {hasOptions && (

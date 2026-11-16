@@ -148,6 +148,8 @@ export type ProductDetail = DiscountFields & {
   options: ProductOption[]
   /** 로그인한 회원이 찜했는지. 비로그인이면 false */
   wished: boolean
+  /** 전성분 (판매자 입력 원문). 뷰티가 아니거나 아직 넣지 않았으면 null */
+  ingredientsText: string | null
 }
 
 /** 판매 중지·삭제·카테고리 사용 중지 상품은 404-PRODUCT_NOT_FOUND */
@@ -205,6 +207,8 @@ export type SellerProductForm = {
   options: SellerOption[]
   /** 끝나지 않은 할인 (예정·진행 중) */
   discounts: SellerDiscount[]
+  /** 전성분. 뷰티가 아니거나 아직 넣지 않았으면 null */
+  ingredientsText: string | null
 }
 
 export type SellerOption = {
@@ -253,9 +257,12 @@ export type ProductCreateRequest = {
   optionNames?: string[]
   /** 옵션 조합 1~100개. 옵션 없는 상품은 [{ values: [], stock }] */
   options: ProductOptionRequest[]
+  /** 전성분 (용기에 적힌 그대로, 최대 5000자). 뷰티 소분류면 필수(없으면 400-INGREDIENTS_REQUIRED), 그 외는 무시 */
+  ingredientsText?: string | null
 }
 
-/** 수정은 보낸 값만 바뀌어요. 옵션·재고·할인은 각각의 API로 바꿔요. 할인 중에는 정가(price)를 바꿀 수 없어요. */
+/** 수정은 보낸 값만 바뀌어요. 옵션·재고·할인은 각각의 API로 바꿔요. 할인 중에는 정가(price)를 바꿀 수 없어요.
+ * ingredientsText를 안 보내면 그대로 두고, 뷰티가 아닌 카테고리로 옮기면 전성분은 지워져요. */
 export type ProductModifyRequest = Partial<Omit<ProductCreateRequest, 'optionNames' | 'options'>> & {
   /** 남길 기존 상세 이미지 ID (원하는 순서대로) */
   detailImageIds?: number[]
