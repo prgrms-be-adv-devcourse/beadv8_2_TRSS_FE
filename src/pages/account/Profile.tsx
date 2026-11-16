@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import Button from '../../components/ui/Button'
+import ProfileAvatar from '../../components/ui/ProfileAvatar'
 import PageHeader from '../../components/ui/PageHeader'
 import { Badge, won } from '../../components/ui/Misc'
 import { Modal, Sheet } from '../../components/ui/Overlay'
@@ -203,9 +204,7 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
 
       <section aria-labelledby="pf-basic" className={s.card}>
         <div className={s.cardHead}>
-          <span aria-hidden="true" className={s.avatar}>
-            {me?.name?.slice(0, 1) ?? 'P'}
-          </span>
+          <ProfileAvatar me={me} className={s.avatar} />
           <h2 id="pf-basic">{me?.name ?? '…'}</h2>
           <Badge>{typeLabel}</Badge>
         </div>

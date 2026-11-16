@@ -12,6 +12,8 @@ export type Me = {
   createdAt: string
   /** 카카오 계정 연결 여부 (연결하면 카카오로 로그인할 수 있다) */
   kakaoLinked: boolean
+  /** 카카오 프로필 이미지 주소 (https). 카카오 미연결·미동의·기본 이미지면 null, 백엔드 배포 전에는 없음 */
+  profileImageUrl?: string | null
 }
 
 /** 화면에 보여 줄 회원 유형. 역할에는 판매자가 없으므로 판매자 상태가 판매 중(APPROVED)이면 '판매자'로 보여 준다 */

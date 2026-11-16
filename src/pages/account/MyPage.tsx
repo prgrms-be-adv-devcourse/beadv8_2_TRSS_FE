@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import Button from '../../components/ui/Button'
 import Icon from '../../components/ui/Icon'
+import ProfileAvatar from '../../components/ui/ProfileAvatar'
 import PageHeader, { HeaderIcon } from '../../components/ui/PageHeader'
 import { won } from '../../components/ui/Misc'
 import { basisText, getMySurvey } from '../../lib/api/ai'
@@ -77,9 +78,7 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
       <PageHeader title="마이페이지" right={<HeaderIcon to="/notifications" icon="bell" label="알림" />} />
 
       <div className={s.me}>
-        <span aria-hidden="true" className={s.avatar}>
-          {me?.name?.slice(0, 1) ?? 'P'}
-        </span>
+        <ProfileAvatar me={me} className={s.avatar} />
         <div className={s.meText}>
           <p className={s.meName}>{me ? `${me.name}님` : '…'}</p>
           <p className={s.meMail}>{me?.email}</p>
