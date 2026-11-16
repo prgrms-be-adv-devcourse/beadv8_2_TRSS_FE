@@ -11,7 +11,12 @@ import { api, type PageQuery, type PageResponse } from '.'
 export type WishlistItem = {
   productId: number
   name: string
+  /** 정가 */
   price: number
+  /** 진행 중인 할인가. 할인 중이 아니면 null */
+  salePrice: number | null
+  /** 할인율(%). 할인 중이 아니면 null */
+  discountRate: number | null
   thumbnailUrl: string | null
   /** 삭제되지 않은 옵션의 재고가 모두 0 */
   soldOut: boolean

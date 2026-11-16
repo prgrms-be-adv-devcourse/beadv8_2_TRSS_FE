@@ -104,6 +104,7 @@ export default function SellerProductsPage() {
   const stopTo = (p: SellerProductSummary) => `/seller/products/${p.productId}/stop`
   const editTo = (p: SellerProductSummary) => `/seller/products/${p.productId}/edit`
   const stockTo = (p: SellerProductSummary) => `/seller/stock?productId=${p.productId}`
+  const discountTo = (p: SellerProductSummary) => `/seller/discounts?productId=${p.productId}`
   const canAct = (p: SellerProductSummary) => p.status !== 'STOPPED' && !p.stopRequestPending
 
   const body = (() => {
@@ -148,7 +149,16 @@ export default function SellerProductsPage() {
                 <span className={c.ellipsis}>{p.categoryName}</span>
                 {/* TODO(API 미구현): 옵션 그룹 구조 — 지금은 상품마다 기본 옵션 1개라 '옵션 없음'으로 보여요 */}
                 <span>옵션 없음</span>
-                <span className={c.num}>{won(p.price)}</span>
+                <span className={c.num}>
+                  {p.salePrice != null ? (
+                    <>
+                      <b className={s.danger}>{p.discountRate}%</b> {won(p.salePrice)}
+                      <span className={s.faint}> · 정가 {won(p.price)}</span>
+                    </>
+                  ) : (
+                    won(p.price)
+                  )}
+                </span>
                 <span className={`${c.num} ${p.stock === 0 ? s.danger : ''}`}>{p.stock}개</span>
                 <span className={s.badges}>
                   {p.stopRequestPending ? <Badge tone="amber">중지 요청 심사 중</Badge> : <Badge tone={tone}>{label}</Badge>}
@@ -165,6 +175,9 @@ export default function SellerProductsPage() {
                       </Button>
                       <Button variant="outline" size="sm" to={stockTo(p)}>
                         재고
+                      </Button>
+                      <Button variant="outline" size="sm" to={discountTo(p)}>
+                        할인
                       </Button>
                       {canAct(p) && (
                         <>
@@ -198,13 +211,24 @@ export default function SellerProductsPage() {
                 </div>
                 <p className={c.liTitle}>{p.name}</p>
                 <p className={c.liMeta}>
-                  <b className={s.ink}>{won(p.price)}</b> · 재고 {p.stock}개
+                  <b className={s.ink}>{won(p.salePrice ?? p.price)}</b>
+                  {p.salePrice != null && <b className={s.danger}> {p.discountRate}%</b>} · 재고 {p.stock}개
                 </p>
                 {p.status === 'STOPPED' && (
                   <p className={s.faintLine}>
                     {p.stoppedBy ? STOPPED_BY[p.stoppedBy] : '판매가 중지됐어요.'}
                     {p.stoppedReason && ` 사유: ${p.stoppedReason}`}
                   </p>
+                )}
+                {p.status !== 'STOPPED' && (
+                  <div className={s.inlineLinks}>
+                    <Link to={stockTo(p)} className={s.textLink}>
+                      재고
+                    </Link>
+                    <Link to={discountTo(p)} className={s.textLink}>
+                      {p.salePrice != null ? '할인 관리' : '할인 등록'}
+                    </Link>
+                  </div>
                 )}
                 {canAct(p) && (
                   <div className={s.inlineLinks}>

@@ -50,6 +50,8 @@ const EXAMPLE_PRODUCTS: Array<ProductSummary & { stock: number }> = ROWS.map(
     productId: 900 + ROWS.length - i,
     name,
     price,
+    salePrice: null,
+    discountRate: null,
     categoryId: categoryIdOf(category),
     sellerId: 0,
     businessName: shop,
@@ -64,7 +66,7 @@ const EXAMPLE_PRODUCTS: Array<ProductSummary & { stock: number }> = ROWS.map(
 export function searchExampleProducts({
   keyword,
   categoryId,
-  sort = 'LATEST',
+  sort,
   excludeSoldOut = true,
   page = 0,
   size = 20,
@@ -101,6 +103,9 @@ export function getExampleProduct(productId: number): ProductDetail | null {
     name: p.name,
     description: `${p.name} 예시 상품이에요.\n백엔드에 연결되면 판매자가 등록한 설명이 여기에 보여요.`,
     price: p.price,
+    salePrice: null,
+    discountRate: null,
+    discountEndsAt: null,
     parentCategoryId: group.categoryId,
     parentCategoryName: group.name,
     categoryId: category.categoryId,
@@ -110,6 +115,19 @@ export function getExampleProduct(productId: number): ProductDetail | null {
     thumbnailUrl: null,
     imageUrls: [],
     soldOut: p.soldOut,
-    options: [{ optionId: p.productId * 10, name: '기본', soldOut: p.soldOut, remainingStock: p.remainingStock }],
+    optionNames: [],
+    options: [
+      {
+        optionId: p.productId * 10,
+        name: '기본',
+        values: [],
+        additionalPrice: 0,
+        price: p.price,
+        listPrice: p.price,
+        soldOut: p.soldOut,
+        remainingStock: p.remainingStock,
+      },
+    ],
+    wished: false,
   }
 }

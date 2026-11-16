@@ -132,3 +132,9 @@ export const MOCK_TRENDING: TrendingKeyword[] = [
   { word: '마스크팩', change: 0 },
   { word: '오버핏 티셔츠', change: -1 },
 ]
+
+/**
+ * 인기 검색어 (검색어만, 순위대로). 검색 패널·홈 검색창 안내·상품 목록·검색 결과 없음에서 같이 써요.
+ * TODO(API 미구현): GET /api/v1/search/trending — 지금은 목업
+ */
+export const POPULAR_KEYWORDS = MOCK_TRENDING.map((t) => t.word)

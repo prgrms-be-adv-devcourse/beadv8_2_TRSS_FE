@@ -11,7 +11,9 @@ import { addCartItem } from '../../lib/api/cart'
 import { getProductReviews, getReviewSummary } from '../../lib/api/review'
 import { useAuth } from '../../lib/auth'
 import { useApi } from '../../lib/useApi'
-import { ExampleNotice, HeartButton, Stars, imageOf, loadProduct, useRequireLogin, useWishes } from './common'
+import { recordRecentView } from '../../lib/recentViewed'
+import type { ProductOption } from '../../lib/api/product'
+import { ExampleNotice, HeartButton, PriceTag, Stars, imageOf, loadProduct, useRequireLogin, useWishes } from './common'
 import styles from './ProductDetail.module.css'
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '../../lib/shipping'
 
@@ -19,6 +21,12 @@ import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '../../lib/shipping'
 const CART_MAX_QTY = 99
 
 const fmtDate = (iso: string) => iso.slice(0, 10).replace(/-/g, '.')
+/** "2026-11-20T23:59:00" → "11.20 23:59" */
+const fmtUntil = (iso: string) => `${iso.slice(5, 10).replace('-', '.')} ${iso.slice(11, 16)}`
+
+/** 옵션 이름 순서대로 고른 값과 같은 조합 */
+const matchOption = (options: ProductOption[], picked: string[]) =>
+  options.find((o) => o.values.length === picked.length && o.values.every((v, i) => v === picked[i]))
 
 /** ④ 상품 상세 */
 export default function ProductDetailPage() {
@@ -42,20 +50,40 @@ export default function ProductDetailPage() {
   )
 
   const [imgIndex, setImgIndex] = useState(0)
-  const [optionId, setOptionId] = useState<number | null>(null)
+  /** 옵션 이름마다 고른 값 (옵션 없는 상품이면 빈 목록) */
+  const [picked, setPicked] = useState<string[]>([])
   const [qty, setQty] = useState(1)
   const [busy, setBusy] = useState<'' | 'cart'>('')
   const [added, setAdded] = useState<number | null>(null)
   const [actionError, setActionError] = useState('')
 
   // 상품이 바뀌면 살 수 있는 첫 옵션을 고르고 담기 결과를 지워요.
+  const seedWish = wishes.seed
   useEffect(() => {
-    setOptionId(product?.options.find((o) => !o.soldOut)?.optionId ?? product?.options[0]?.optionId ?? null)
+    const first = product?.options.find((o) => !o.soldOut) ?? product?.options[0]
+    setPicked(first?.values ?? [])
+    if (product && !product.example) seedWish(product.productId, product.wished)
     setQty(1)
     setAdded(null)
     setActionError('')
     setImgIndex(0)
-  }, [product])
+  }, [product, seedWish])
+
+  // 최근 본 상품에 넣어요. 예시 상품은 넣지 않아요.
+  const memberId = me?.memberId ?? null
+  useEffect(() => {
+    if (!product || product.example) return
+    recordRecentView(memberId, {
+      productId: product.productId,
+      name: product.name,
+      price: product.price,
+      salePrice: product.salePrice,
+      discountRate: product.discountRate,
+      thumbnailUrl: product.thumbnailUrl,
+      businessName: product.businessName,
+      categoryId: product.categoryId,
+    })
+  }, [product, memberId])
 
   if (loaded.loading && !product)
     return (
@@ -86,12 +114,21 @@ export default function ProductDetailPage() {
     )
 
   const images = Array.from(new Set([imageOf(product), ...product.imageUrls].filter((x): x is string => !!x)))
-  const option = product.options.find((o) => o.optionId === optionId)
+  const option = matchOption(product.options, picked)
+  /** 지금 고른 옵션의 단가(할인가·추가금 반영). 조합이 없으면 상품 판매가 */
+  const unitPrice = option?.price ?? product.salePrice ?? product.price
   /** 남은 수량은 5개 이하일 때만 와요. 그 외에는 장바구니 최대 수량까지 고를 수 있고, 재고 초과는 담을 때 서버가 막아요. */
   const maxQty = Math.min(option?.remainingStock ?? CART_MAX_QTY, CART_MAX_QTY)
   const soldOut = product.soldOut || !option || option.soldOut
   const disabled = soldOut || !!busy || isAdmin || product.example
-  const showOptions = product.options.length > 1 || product.options[0]?.name !== '기본'
+  const showOptions = product.optionNames.length > 0
+  /** i번째 옵션에서 값 v를 고르면 될 조합 (다른 옵션은 지금 고른 값 그대로) */
+  const optionWith = (i: number, v: string) =>
+    matchOption(
+      product.options,
+      picked.map((x, j) => (j === i ? v : x)),
+    )
+  const valuesOf = (i: number) => Array.from(new Set(product.options.map((o) => o.values[i])))
   const reviewCount = summary.data?.reviewCount ?? 0
   const wished = wishes.has(product.productId)
 
@@ -179,12 +216,21 @@ export default function ProductDetailPage() {
           <span>리뷰 {reviewCount.toLocaleString('ko-KR')}</span>
         </Link>
         <div className={styles.priceRow}>
-          <span className={styles.price}>{won(product.price)}</span>
+          <PriceTag
+            layout="inline"
+            className={styles.price}
+            price={product.price}
+            salePrice={product.salePrice}
+            discountRate={product.discountRate}
+          />
           {option?.remainingStock != null && !option.soldOut && (
             <span className={styles.lowTag}>{option.remainingStock}개 남음</span>
           )}
           {product.soldOut && <span className={styles.lowTag}>품절</span>}
         </div>
+        {product.salePrice != null && product.discountEndsAt && (
+          <p className={styles.saleUntil}>{fmtUntil(product.discountEndsAt)}까지 할인</p>
+        )}
       </section>
 
       <dl className={styles.ship}>
@@ -206,33 +252,51 @@ export default function ProductDetailPage() {
       </dl>
 
       <section aria-label="옵션 선택" className={styles.options}>
-        {/* TODO(API 미구현): 상품 상세 옵션 그룹 구조 — 그룹(색상 → 사이즈)이 API에 없어 조합 목록을 한 줄로 보여줘요 */}
-        {showOptions && (
-          <div role="radiogroup" aria-label="옵션">
-            <p className={styles.optLabel}>
-              옵션 <span>{option?.name}</span>
-            </p>
-            <div className={styles.optList}>
-              {product.options.map((o) => (
-                <button
-                  key={o.optionId}
-                  type="button"
-                  role="radio"
-                  aria-checked={o.optionId === optionId}
-                  disabled={o.soldOut}
-                  className={`${styles.opt} ${o.optionId === optionId ? styles.optOn : ''}`}
-                  onClick={() => {
-                    setOptionId(o.optionId)
-                    setQty(1)
-                  }}
-                >
-                  {o.name}
-                  {o.soldOut ? ' · 품절' : o.remainingStock != null ? ` · ${o.remainingStock}개 남음` : ''}
-                </button>
-              ))}
+        {showOptions &&
+          product.optionNames.map((optName, i) => (
+            <div key={optName} role="radiogroup" aria-label={optName} className={i > 0 ? styles.optGroup : undefined}>
+              <p className={styles.optLabel}>
+                {optName} <span>{picked[i]}</span>
+              </p>
+              <div className={styles.optList}>
+                {valuesOf(i).map((v) => {
+                  const o = optionWith(i, v)
+                  const on = picked[i] === v
+                  // 마지막 옵션에서만 품절·남은 수량·추가금을 붙여요 (앞 옵션은 뒤 옵션에 따라 달라져서)
+                  const last = i === product.optionNames.length - 1
+                  const note =
+                    !last || !o
+                      ? ''
+                      : o.soldOut
+                        ? ' · 품절'
+                        : o.remainingStock != null
+                          ? ` · ${o.remainingStock}개 남음`
+                          : ''
+                  const extra =
+                    last && o && o.additionalPrice > 0 ? ` +${o.additionalPrice.toLocaleString('ko-KR')}` : ''
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      disabled={last && (!o || o.soldOut)}
+                      className={`${styles.opt} ${on ? styles.optOn : ''}`}
+                      onClick={() => {
+                        setPicked((p) => p.map((x, j) => (j === i ? v : x)))
+                        setQty(1)
+                      }}
+                    >
+                      {v}
+                      {extra}
+                      {note}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          ))}
+        {showOptions && !option && <p className={styles.error}>이 조합은 판매하지 않아요. 다른 값을 골라 주세요.</p>}
         <div className={`${styles.qtyRow} ${showOptions ? styles.qtyDivided : ''}`}>
           <div className={styles.stepper}>
             <button
@@ -254,7 +318,7 @@ export default function ProductDetailPage() {
             </button>
           </div>
           <p className={styles.total}>
-            총 상품 금액<b>{won(product.price * qty)}</b>
+            총 상품 금액<b>{won(unitPrice * qty)}</b>
           </p>
         </div>
         {added != null && (

@@ -196,6 +196,10 @@
 }
 .recentThumb {
   display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
   border-radius: 8px;
   overflow: hidden;
   line-height: 0;
@@ -371,4 +375,115 @@
   display: grid;
   place-items: center;
   box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.4);
+}
+
+/* 헤더 탭(랭킹 · 특가 · 신상) */
+.tabSec {
+  padding-bottom: 24px;
+}
+.tabDesc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 8px;
+  padding: 12px 16px 0;
+}
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.rank {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+.tabMore {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+.tabMore a {
+  color: var(--sub);
+}
+.tabHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.sort {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 700;
+}
+.sort select {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  outline: none;
+}
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* 검색창 안내: 인기 검색어가 바뀔 때 아래에서 살짝 올라와요 */
+.searchHint {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: hintIn 0.35s ease-out;
+}
+@keyframes hintIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .searchHint {
+    animation: none;
+  }
+}
+.recentName {
+  color: var(--ink);
+  font-weight: 700;
 }

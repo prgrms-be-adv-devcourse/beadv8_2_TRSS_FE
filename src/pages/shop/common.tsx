@@ -112,13 +112,17 @@ export function useWishes() {
     }
   }, [loggedIn])
 
-  const set = (productId: number, on: boolean) =>
-    setIds((s) => {
-      const n = new Set(s)
-      if (on) n.add(productId)
-      else n.delete(productId)
-      return n
-    })
+  const set = useCallback(
+    (productId: number, on: boolean) =>
+      setIds((s) => {
+        if (s.has(productId) === on) return s
+        const n = new Set(s)
+        if (on) n.add(productId)
+        else n.delete(productId)
+        return n
+      }),
+    [],
+  )
 
   const toggle = async (productId: number) => {
     if (!requireLogin()) return
@@ -133,7 +137,10 @@ export function useWishes() {
     }
   }
 
-  return { has: (productId: number) => ids.has(productId), toggle, error }
+  /** 상품 상세 응답의 wished처럼 서버가 알려 준 찜 여부를 반영해요. 비로그인이면 무시해요. */
+  const seed = useCallback((productId: number, on: boolean) => loggedIn && set(productId, on), [loggedIn, set])
+
+  return { has: (productId: number) => ids.has(productId), toggle, seed, error }
 }
 
 // ── 화면 조각 ─────────────────────────────────────────────
@@ -183,10 +190,46 @@ export function HeartButton({
   )
 }
 
+/**
+ * 가격 표시. 할인 중이면 [할인율] 할인가 + 취소선 정가, 아니면 정가만.
+ * layout="stack"은 카드(정가를 아랫줄), "inline"은 상세(한 줄)
+ */
+export function PriceTag({
+  price,
+  salePrice,
+  discountRate,
+  layout = 'stack',
+  className,
+}: {
+  price: number
+  salePrice?: number | null
+  discountRate?: number | null
+  layout?: 'stack' | 'inline'
+  className?: string
+}) {
+  if (salePrice == null) return <span className={`${styles.price} ${className ?? ''}`}>{won(price)}</span>
+  return (
+    <span className={`${styles.priceSale} ${layout === 'inline' ? styles.priceInline : ''}`}>
+      <span className={`${styles.price} ${className ?? ''}`}>
+        {discountRate != null && <span className={styles.rate}>{discountRate}%</span>}
+        {won(salePrice)}
+      </span>
+      <s className={styles.listPrice}>
+        <span className={styles.srOnly}>정가 </span>
+        {won(price)}
+      </s>
+    </span>
+  )
+}
+
 export type CardProduct = {
   productId: number
   name: string
+  /** 정가 */
   price: number
+  /** 할인 중이면 할인가 */
+  salePrice?: number | null
+  discountRate?: number | null
   thumbnailUrl: string | null
   businessName?: string
   soldOut?: boolean
@@ -218,7 +261,7 @@ export function ProductCard({
         </span>
         {p.businessName && <span className={styles.brand}>{p.businessName}</span>}
         <span className={styles.name}>{p.name}</span>
-        <span className={styles.price}>{won(p.price)}</span>
+        <PriceTag price={p.price} salePrice={p.salePrice} discountRate={p.discountRate} />
       </Link>
       {onWish && <HeartButton on={!!wished} onClick={onWish} className={styles.cardHeart} />}
     </div>
@@ -232,7 +275,7 @@ export function MiniCard({ p, why }: { p: CardProduct; why?: string }) {
       <Thumb src={imageOf(p)} width="100%" height={148} radius={8} />
       {p.businessName && <span className={styles.brand}>{p.businessName}</span>}
       <span className={styles.name}>{p.name}</span>
-      <span className={styles.price}>{won(p.price)}</span>
+      <PriceTag price={p.price} salePrice={p.salePrice} discountRate={p.discountRate} />
       {why && <span className={styles.why}>{why}</span>}
     </Link>
   )

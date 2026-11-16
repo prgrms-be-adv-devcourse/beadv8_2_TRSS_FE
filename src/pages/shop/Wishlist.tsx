@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import Button from '../../components/ui/Button'
 import PageHeader from '../../components/ui/PageHeader'
-import { Empty, ErrorView, Loading, Thumb, won } from '../../components/ui/Misc'
+import { Empty, ErrorView, Loading, Thumb } from '../../components/ui/Misc'
 import { errorMessage } from '../../lib/api'
 import { getWishlist, removeWishlist, type WishlistItem } from '../../lib/api/wishlist'
 import { useApi } from '../../lib/useApi'
-import { HeartButton, imageOf } from './common'
+import { HeartButton, PriceTag, imageOf } from './common'
 import styles from './Wishlist.module.css'
 
 const PAGE_SIZE = 20
@@ -101,7 +101,9 @@ export default function WishlistPage() {
                 <HeartButton on onClick={() => remove(p.productId)} className={styles.heart} />
               </div>
               <p className={`${styles.name} ${blocked ? styles.muted : ''}`}>{p.name}</p>
-              <p className={`${styles.price} ${blocked ? styles.muted : ''}`}>{won(p.price)}</p>
+              <p className={`${styles.price} ${blocked ? styles.muted : ''}`}>
+                <PriceTag price={p.price} salePrice={blocked ? null : p.salePrice} discountRate={p.discountRate} />
+              </p>
               {blocked && (
                 <button type="button" className={styles.removeBtn} onClick={() => remove(p.productId)}>
                   찜에서 지우기

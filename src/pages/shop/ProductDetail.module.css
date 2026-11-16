@@ -435,3 +435,13 @@
   border-radius: var(--radius-pill);
   border: 1px solid var(--input-line);
 }
+
+.saleUntil {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--red);
+}
+.optGroup {
+  margin-top: 14px;
+}
