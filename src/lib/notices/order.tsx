@@ -126,3 +126,41 @@ export function orderNotice(e: unknown, ctx: { status?: OrderStatus } = {}): Not
       return commonNotice(e)
   }
 }
+
+/** 반품 요청 (POST /orders/{orderId}/returns) */
+export function returnNotice(e: unknown): Notice {
+  switch (codeOf(e)) {
+    case 'RETURN_ALREADY_REQUESTED':
+      return {
+        title: '이미 반품을 요청한 주문이에요',
+        body: '반품은 주문당 한 번만 요청할 수 있어요. 거절된 주문도 다시 요청할 수 없어요.',
+        actions: OK,
+      }
+    case 'ORDER_NOT_DELIVERED':
+      return {
+        title: '배송이 끝난 뒤에 반품할 수 있어요',
+        body: '상품을 받은 뒤 구매 확정 전까지 반품을 요청할 수 있어요.',
+        actions: OK,
+      }
+    case 'RETURN_REASON_REQUIRED':
+      return {
+        title: '반품 사유를 적어 주세요',
+        body: '기타를 골랐다면 어떤 점이 문제였는지 적어 주세요.',
+        actions: OK,
+      }
+    case 'ORDER_STATE_INVALID':
+      return {
+        title: '반품을 요청할 수 없는 주문이에요',
+        body: '결제를 마치고 구매 확정 전인 주문만 반품을 요청할 수 있어요. 주문 상태를 다시 확인해 주세요.',
+        actions: OK,
+      }
+    case 'ORDER_NOT_FOUND':
+      return {
+        title: '주문을 찾을 수 없어요',
+        body: '주문 내역에서 다시 확인해 주세요.',
+        actions: [{ label: '주문 내역 보기', to: '/orders', primary: true }],
+      }
+    default:
+      return commonNotice(e)
+  }
+}

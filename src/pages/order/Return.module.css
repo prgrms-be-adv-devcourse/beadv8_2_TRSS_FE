@@ -100,3 +100,15 @@
 .info b {
   color: var(--ink);
 }
+
+.h2Sub {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.error {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--red-ink);
+}
