@@ -237,12 +237,11 @@
   color: var(--muted);
 }
 
-/* 설문 배너: 흰 바탕 + 검정 테두리 (예치금 카드와 같은 스타일) */
+/* 설문 배너: 흰 바탕 + 검정 테두리, 시작 버튼은 검정 (버튼이 가장 먼저 눈에 띄게)
+ * 휴대폰: 아이콘 + 글 / 아래 줄에 시작 버튼, 태블릿·PC: 시작 버튼을 오른쪽에 */
 .surveyCard {
-  position: relative;
-  overflow: hidden;
   margin: 24px 16px 0;
-  padding: 18px 16px 18px 18px;
+  padding: 20px 18px;
   border: 1px solid var(--ink);
   border-radius: var(--radius-card);
   background: #fff;
@@ -250,7 +249,7 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 14px 12px;
+  gap: 16px 14px;
   text-decoration: none;
   transition: background 0.15s ease;
 }
@@ -258,101 +257,58 @@
   color: var(--ink);
   background: var(--surface-soft);
 }
-/* 오른쪽 위 은은한 원 장식 */
-.surveyDeco {
-  position: absolute;
-  right: -40px;
-  top: -50px;
-  width: 150px;
-  height: 150px;
-  border-radius: 99px;
-  display: none;
-  pointer-events: none;
-}
 .surveyIcon {
-  position: relative;
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   border-radius: 14px;
   background: var(--surface);
-  color: var(--ink);
   display: grid;
   place-items: center;
 }
 .surveyText {
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
 }
 .surveyEyebrow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--muted);
 }
-.surveyAi {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: var(--ink);
-  color: #fff;
-}
 .surveyTitle {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
+  line-height: 1.35;
   letter-spacing: -0.4px;
 }
 .surveyDesc {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
 }
-/* 아래 줄: 단계 태그(왼쪽) + 시작 버튼(오른쪽) */
-.surveyFoot {
-  position: relative;
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.surveySteps {
-  display: flex;
-  gap: 5px;
-  min-width: 0;
-  overflow: hidden;
-}
-.surveyStep {
-  display: inline-flex;
-  align-items: center;
-  flex: none;
-  height: 24px;
-  padding: 0 9px;
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--sub);
-}
 .surveyGo {
-  position: relative;
-  flex: none;
-  height: 34px;
-  padding: 0 10px 0 14px;
+  grid-column: 1 / -1;
+  height: 44px;
   border-radius: var(--radius-pill);
   background: var(--ink);
   color: #fff;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  font-size: 13px;
-  font-weight: 800;
+  justify-content: center;
+  gap: 4px;
+  font-size: 15px;
+  font-weight: 700;
   white-space: nowrap;
+}
+@media (min-width: 768px) {
+  .surveyCard {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 22px;
+  }
+  .surveyGo {
+    grid-column: auto;
+    padding: 0 20px;
+  }
 }
 
 /* 챗봇 버튼: 탭바 위에 떠 있어요 */
