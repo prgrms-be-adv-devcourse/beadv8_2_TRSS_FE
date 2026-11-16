@@ -356,17 +356,7 @@
 }
 
 /* 챗봇 버튼: 탭바 위에 떠 있어요 */
-.fabWrap {
-  position: sticky;
-  bottom: 100px;
-  display: flex;
-  justify-content: flex-end;
-  padding: 16px 16px 0;
-  pointer-events: none;
-  z-index: 18;
-}
 .fab {
-  pointer-events: auto;
   width: 52px;
   height: 52px;
   border-radius: var(--radius-pill);

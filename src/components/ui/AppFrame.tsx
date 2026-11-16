@@ -13,10 +13,12 @@ type Props = {
   footer?: boolean
   /** 하단 탭바 표시 (기본: 표시). 로그인·회원가입처럼 탭바가 필요 없는 화면에서 false */
   tabBar?: boolean
+  /** 탭바 바로 위 오른쪽에 항상 떠 있는 버튼 (예: 홈의 AI 도우미) */
+  fab?: ReactNode
 }
 
 /** 구매자 모바일 웹 틀: 흰 배경 위 가운데 컬럼 (PC에서는 조금 넓게) */
-export default function AppFrame({ children, tab, bottom, footer = false, tabBar = true }: Props) {
+export default function AppFrame({ children, tab, bottom, footer = false, tabBar = true, fab }: Props) {
   return (
     <div className={styles.stage}>
       <div className={styles.col}>
@@ -24,6 +26,8 @@ export default function AppFrame({ children, tab, bottom, footer = false, tabBar
         {footer && <Footer />}
         {/* 하단 탭바는 구매자 화면에 기본으로 보여요(로그인·회원가입 제외). 하단 고정 버튼이 있으면 탭바 바로 위에 쌓아요 */}
         <div className={styles.dock}>
+          {/* dock이 늘 화면 아래에 붙어 있어서, 그 위에 두면 스크롤·푸터와 상관없이 탭바 위 같은 자리에 있어요 */}
+          {fab && <div className={styles.fab}>{fab}</div>}
           {bottom}
           {tabBar && <TabBar active={tab} />}
         </div>

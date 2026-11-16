@@ -57,7 +57,15 @@ export default function HomePage() {
   const tab: HomeTab = HOME_TABS.find((t) => t.key === params.get('tab'))?.key ?? 'recommend'
 
   return (
-    <AppFrame tab="home" footer>
+    <AppFrame
+      tab="home"
+      footer
+      fab={
+        <Link to="/chatbot" aria-label="AI 도우미" className={styles.fab}>
+          <Icon name="chat" />
+        </Link>
+      }
+    >
       <PageHeader
         title={
           <Link to="/" aria-label="팔레트 홈" className={styles.logo}>
@@ -222,12 +230,6 @@ export default function HomePage() {
           )}
         </>
       )}
-
-      <div className={styles.fabWrap}>
-        <Link to="/chatbot" aria-label="AI 도우미" className={styles.fab}>
-          <Icon name="chat" />
-        </Link>
-      </div>
 
       {drawer && <CategoryDrawer onClose={closeDrawer} />}
       {searching && <SearchPanel onClose={closeSearch} />}
