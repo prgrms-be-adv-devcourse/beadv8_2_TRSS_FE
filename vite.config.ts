@@ -1,7 +1,8 @@
 import { defineConfig, type ProxyOptions } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const DEV_SERVER = 'http://3.37.14.205'
+// 개발 서버는 https로만 받아요(http는 301로 돌려보내 프록시가 실패해요). TRSS-191
+const DEV_SERVER = 'https://palette-shop.duckdns.org'
 // localhost는 Node에서 IPv6(::1)로 먼저 풀려 Spring(IPv4)과 연결이 안 될 수 있어요.
 const LOCAL_HOST = 'http://127.0.0.1'
 
@@ -13,15 +14,19 @@ const LOCAL_HOST = 'http://127.0.0.1'
 const LOCAL_ROUTES: Array<[RegExp, number]> = [
   // 아래 member의 users 규칙보다 먼저 둔다
   [/^\/api\/v1\/users\/me\/coupon-usages([/?]|$)/, 8082],
-  [/^\/api\/v1\/(auth|users|sellers|seller\/me|admin\/users|admin\/sellers)([/?]|$)/, 8081],
   [
-    /^\/api\/v1\/(products|categories|cart|orders|wishlist|reviews|coupons|influencer|seller\/products|seller\/order-items|seller\/partnerships|seller\/coupons|admin\/products|admin\/categories|admin\/product-stop-requests|admin\/coupons|admin\/partnerships)([/?]|$)/,
+    /^\/api\/v1\/(auth|users|sellers|seller\/me|seller\/influencers|influencers|admin\/users|admin\/sellers|admin\/influencers)([/?]|$)/,
+    8081,
+  ],
+  [
+    /^\/api\/v1\/(products|categories|cart|orders|wishlist|reviews|coupons|influencer|seller\/products|seller\/order-items|seller\/partnerships|seller\/coupons|admin\/products|admin\/categories|admin\/product-stop-requests|admin\/coupons|admin\/partnerships|admin\/returns)([/?]|$)/,
     8082,
   ],
   [/^\/api\/v1\/(wallet|topups|admin\/payments|admin\/topups)([/?]|$)/, 8083],
   [/^\/api\/v1\/(admin\/settlements|admin\/settlement-candidates|seller\/settlements)([/?]|$)/, 8084],
   [/^\/api\/v1\/logistics([/?]|$)/, 8085],
   [/^\/api\/v1\/notifications([/?]|$)/, 8086],
+  [/^\/api\/v1\/ai([/?]|$)/, 8087],
 ]
 
 const localProxy: Record<string, ProxyOptions> = Object.fromEntries(
