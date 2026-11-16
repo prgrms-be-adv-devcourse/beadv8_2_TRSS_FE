@@ -8,6 +8,7 @@ import { Empty, ErrorView, Loading } from '../../components/ui/Misc'
 import type { ProductSort, ProductSummary } from '../../lib/api/product'
 import { useApi } from '../../lib/useApi'
 import { ExampleNotice, ProductCard, indexCategories, loadCategories, loadProducts, useWishes } from './common'
+import { POPULAR_KEYWORDS } from './mock'
 import styles from './ProductList.module.css'
 
 const SORTS: Array<{ value: ProductSort; label: string }> = [
@@ -16,8 +17,8 @@ const SORTS: Array<{ value: ProductSort; label: string }> = [
   { value: 'PRICE_ASC', label: '낮은 가격순' },
   { value: 'PRICE_DESC', label: '높은 가격순' },
 ]
-/** 인기 검색어 API가 없어 고정값이에요. */
-const POPULAR_KEYWORDS = ['선크림', '쿠션', '세럼', '티셔츠', '스니커즈']
+/** 검색 영역에 보여 줄 인기 검색어 수 */
+const POPULAR_SHOWN = 5
 const PAGE_SIZE = 20
 
 /**
@@ -62,7 +63,15 @@ export default function ProductListPage() {
   const [pager, setPager] = useState({ key, page: 1 })
   const page = pager.key === key ? pager.page : 1
   const res = useApi(
-    () => loadProducts({ keyword: keyword || undefined, categoryId, sort, excludeSoldOut, page: page - 1, size: PAGE_SIZE }),
+    () =>
+      loadProducts({
+        keyword: keyword || undefined,
+        categoryId,
+        sort,
+        excludeSoldOut,
+        page: page - 1,
+        size: PAGE_SIZE,
+      }),
     [key, page],
   )
   const [acc, setAcc] = useState<{ key: string; items: ProductSummary[] }>({ key, items: [] })
@@ -125,7 +134,7 @@ export default function ProductListPage() {
           {!keyword && (
             <div className={styles.popular}>
               <span>인기 검색어</span>
-              {POPULAR_KEYWORDS.map((k) => (
+              {POPULAR_KEYWORDS.slice(0, POPULAR_SHOWN).map((k) => (
                 <button key={k} type="button" onClick={() => update({ q: k })}>
                   {k}
                 </button>
@@ -142,7 +151,10 @@ export default function ProductListPage() {
         <label className={styles.sort}>
           <Icon name="filter" size={16} />
           <span className={styles.sr}>정렬</span>
-          <select value={sort} onChange={(e) => update({ sort: e.target.value === defaultSort ? undefined : e.target.value })}>
+          <select
+            value={sort}
+            onChange={(e) => update({ sort: e.target.value === defaultSort ? undefined : e.target.value })}
+          >
             {sorts.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
@@ -216,8 +228,24 @@ export default function ProductListPage() {
             </Button>
           }
         >
-          {keyword ? '다른 검색어로 찾아보거나 전체 상품을 둘러보세요.' : '품절 상품을 함께 보거나 다른 카테고리에서 찾아보세요.'}
+          {keyword
+            ? '다른 검색어로 찾아보거나 전체 상품을 둘러보세요.'
+            : '품절 상품을 함께 보거나 다른 카테고리에서 찾아보세요.'}
         </Empty>
+      )}
+      {keyword && !res.loading && !res.error && res.data && items.length === 0 && (
+        <div className={styles.suggest}>
+          <p>이런 검색어는 어때요?</p>
+          <div className={styles.popular}>
+            {POPULAR_KEYWORDS.filter((k) => k !== keyword)
+              .slice(0, POPULAR_SHOWN)
+              .map((k) => (
+                <button key={k} type="button" onClick={() => update({ q: k })}>
+                  {k}
+                </button>
+              ))}
+          </div>
+        </div>
       )}
 
       {items.length > 0 && (
@@ -235,11 +263,7 @@ export default function ProductListPage() {
 
       {hasMore && (
         <div className={styles.more}>
-          <Button
-            variant="outline"
-            disabled={res.loading}
-            onClick={() => setPager({ key, page: page + 1 })}
-          >
+          <Button variant="outline" disabled={res.loading} onClick={() => setPager({ key, page: page + 1 })}>
             {res.loading ? '불러오는 중이에요' : '더 보기'}
           </Button>
         </div>

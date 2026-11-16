@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import Icon from '../../components/ui/Icon'
@@ -9,11 +9,30 @@ import { useApi } from '../../lib/useApi'
 import { useAuth } from '../../lib/auth'
 import { ExampleNotice, MiniCard, SectionHead, imageOf, loadProducts } from './common'
 import { useNotificationCount } from '../../lib/notificationCount'
-import { MOCK_PROFILE, MOCK_WHY } from './mock'
+import { MOCK_PROFILE, MOCK_WHY, POPULAR_KEYWORDS } from './mock'
 import CategoryDrawer from './CategoryDrawer'
 import { HOME_TABS, HomeTabList, type HomeTab } from './HomeTabs'
 import { SearchPanel } from './Search'
 import styles from './Home.module.css'
+
+/** 검색창 안내에 돌려 보여 줄 인기 검색어 수와 간격 */
+const HINT_COUNT = 5
+const HINT_INTERVAL_MS = 3000
+
+/**
+ * 홈 검색창 안내 문구. 인기 검색어를 몇 초마다 바꿔 보여 줘요.
+ * 움직임 줄이기를 켠 사용자에게는 첫 검색어만 보여 줘요.
+ */
+function useSearchHint() {
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const t = window.setInterval(() => setI((n) => (n + 1) % HINT_COUNT), HINT_INTERVAL_MS)
+    return () => window.clearInterval(t)
+  }, [])
+  const word = POPULAR_KEYWORDS[i % Math.min(HINT_COUNT, POPULAR_KEYWORDS.length)]
+  return word ? `‘${word}’ 검색해 보세요` : '브랜드나 상품을 검색해 보세요'
+}
 
 /** ① 홈 */
 export default function HomePage() {
@@ -21,6 +40,7 @@ export default function HomePage() {
   const [drawer, setDrawer] = useState(false)
   const closeDrawer = useCallback(() => setDrawer(false), [])
   const [searching, setSearching] = useState(false)
+  const searchHint = useSearchHint()
   const closeSearch = useCallback(() => setSearching(false), [])
   // TODO(API 미구현): AI 추천(회원 맞춤 · 찜 기반 · 최근 본 상품 기반) — ai-service 추천 API가 없어 최신 상품으로 자리를 채워요
   const products = useApi(() => loadProducts({ size: 12 }), [])
@@ -67,9 +87,17 @@ export default function HomePage() {
         >
           <Icon name="grid" size={20} />
         </button>
-        <button type="button" aria-haspopup="dialog" className={styles.search} onClick={() => setSearching(true)}>
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-label="브랜드나 상품 검색"
+          className={styles.search}
+          onClick={() => setSearching(true)}
+        >
           <Icon name="search" size={18} />
-          브랜드나 상품을 검색해 보세요
+          <span key={searchHint} aria-hidden="true" className={styles.searchHint}>
+            {searchHint}
+          </span>
         </button>
       </div>
 

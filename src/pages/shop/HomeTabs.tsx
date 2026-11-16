@@ -7,7 +7,8 @@
  * TODO(API 미구현): 특가 — 할인 중인 상품만 거르는 검색 조건이 없어, 최근 상품을 받아 화면에서 할인 중인 것만 골라요.
  * TODO(API 미구현): 기획전 · 이벤트 — 백엔드에 기획전·이벤트 데이터가 없어 '준비 중' 안내만 보여요.
  */
-import { Link, useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Icon from '../../components/ui/Icon'
 import Button from '../../components/ui/Button'
 import { Empty, ErrorView, Loading } from '../../components/ui/Misc'
@@ -100,7 +101,19 @@ function ProductTabList({ tab }: { tab: ProductTab }) {
   const sort = sorts?.find((o) => o.value === params.get('sort') && !o.disabled)?.value ?? 'LATEST'
   /** 서버에 보낼 정렬. 전체 탭만 고른 정렬, 나머지는 최신순이에요. */
   const apiSort: ProductSort = tab === 'all' ? (sort as ProductSort) : 'LATEST'
-  const res = useApi(() => loadProducts({ sort: apiSort, size }), [tab, apiSort])
+  // '더 보기'는 이 자리에서 다음 페이지를 이어 붙여요. 탭·정렬이 바뀌면 1페이지부터예요. (특가는 화면에서 거르는 거라 더 보기 없음)
+  const key = `${tab}|${apiSort}`
+  const [pager, setPager] = useState({ key, page: 0 })
+  const page = pager.key === key ? pager.page : 0
+  const res = useApi(() => loadProducts({ sort: apiSort, size, page }), [key, page])
+  const [acc, setAcc] = useState<{ key: string; items: ProductSummary[] }>({ key, items: [] })
+  useEffect(() => {
+    if (!res.data) return
+    const next = res.data.items
+    setAcc((prev) => (page === 0 || prev.key !== key ? { key, items: next } : { key, items: [...prev.items, ...next] }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [res.data])
+  const hasMore = tab !== 'sale' && !!res.data && page + 1 < res.data.totalPages
   const changeSort = (v: string) =>
     setParams(
       (prev) => {
@@ -113,7 +126,7 @@ function ProductTabList({ tab }: { tab: ProductTab }) {
     )
   const wishes = useWishes()
 
-  const all = res.data?.items ?? []
+  const all = acc.key === key ? acc.items : []
   const items: ProductSummary[] =
     tab === 'sale'
       ? all.filter((p) => p.salePrice != null).sort((a, b) => (b.discountRate ?? 0) - (a.discountRate ?? 0))
@@ -141,8 +154,8 @@ function ProductTabList({ tab }: { tab: ProductTab }) {
         )}
       </div>
       {res.data?.example && <ExampleNotice />}
-      {res.loading && !res.data && <Loading />}
-      {res.error && <ErrorView message={res.error} onRetry={res.reload} />}
+      {res.loading && all.length === 0 && <Loading />}
+      {res.error && page === 0 && <ErrorView message={res.error} onRetry={res.reload} />}
       {wishes.error && (
         <p role="alert" className={styles.tabDesc}>
           {wishes.error}
@@ -152,9 +165,11 @@ function ProductTabList({ tab }: { tab: ProductTab }) {
         <Empty
           title={tab === 'sale' ? '지금 할인 중인 상품이 없어요' : '아직 상품이 없어요'}
           action={
-            <Button variant="outline" size="sm" to="/products">
-              전체 상품 보기
-            </Button>
+            tab !== 'all' && (
+              <Button variant="outline" size="sm" to="/?tab=all">
+                전체 상품 보기
+              </Button>
+            )
           }
         />
       )}
@@ -171,13 +186,14 @@ function ProductTabList({ tab }: { tab: ProductTab }) {
           ))}
         </div>
       )}
-      {items.length > 0 && tab !== 'sale' && (
+      {hasMore && (
         <div className={styles.tabMore}>
-          <Link to={tab === 'all' && sort !== 'LATEST' ? `/products?sort=${sort}` : '/products'}>
-            {tab === 'all' ? '더 보기 ›' : '전체 상품 보기 ›'}
-          </Link>
+          <Button variant="outline" disabled={res.loading} onClick={() => setPager({ key, page: page + 1 })}>
+            {res.loading ? '불러오는 중이에요' : '더 보기'}
+          </Button>
         </div>
       )}
+      {res.error && page > 0 && <ErrorView message={res.error} onRetry={res.reload} />}
     </section>
   )
 }

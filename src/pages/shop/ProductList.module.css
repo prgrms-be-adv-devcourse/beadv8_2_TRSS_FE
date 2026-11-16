@@ -175,3 +175,19 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* 검색 결과 없음: 다른 검색어 제안 */
+.suggest {
+  padding: 0 16px 24px;
+  text-align: center;
+}
+.suggest p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sub);
+}
+.suggest .popular {
+  justify-content: center;
+  flex-wrap: wrap;
+}
