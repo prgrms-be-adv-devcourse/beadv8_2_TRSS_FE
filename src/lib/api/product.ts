@@ -13,11 +13,19 @@
  * GET    /api/v1/seller/products/{productId}    수정 폼 조회
  * PATCH  /api/v1/seller/products/{productId}    상품 수정 (multipart)
  * POST   /api/v1/seller/products/{productId}/options/{optionId}/stock-adjustments  재고 조정
+ * POST   /api/v1/seller/products/{productId}/options                옵션 조합 추가
+ * PATCH  /api/v1/seller/products/{productId}/options/{optionId}     옵션 추가금 수정
+ * DELETE /api/v1/seller/products/{productId}/options/{optionId}     옵션 삭제
+ * POST   /api/v1/seller/products/{productId}/discounts              기간 할인 등록
+ * PATCH  /api/v1/seller/products/{productId}/discounts/{discountId} 할인 수정 (보낸 값만)
+ * DELETE /api/v1/seller/products/{productId}/discounts/{discountId} 시작 전 할인 삭제
+ * POST   /api/v1/seller/products/{productId}/discounts/{discountId}/end  진행 중인 할인 지금 종료
  * GET    /api/v1/admin/categories               관리자 카테고리 목록
  * POST   /api/v1/admin/categories               카테고리 추가
  * PATCH  /api/v1/admin/categories/{categoryId}  카테고리 수정
  * GET    /api/v1/admin/products              관리자 전체 상품 (PageResponse)
  * POST   /api/v1/admin/products/{productId}/stop        즉시 판매 중지
+ * POST   /api/v1/admin/products/search-index/rebuild    검색 색인 전체 다시 만들기
  * GET    /api/v1/admin/product-stop-requests            판매 중지 요청 목록 (PageResponse)
  * POST   /api/v1/admin/product-stop-requests/{requestId}/approve | reject  요청 승인·반려
  *
@@ -58,12 +66,22 @@ export const modifyCategory = (categoryId: number, body: { name?: string; active
 
 // ── 구매자 상품 ──────────────────────────────────────────
 
-export type ProductSort = 'LATEST' | 'PRICE_ASC' | 'PRICE_DESC'
+/** RELEVANCE 관련도순(검색어가 있을 때 기본) · LATEST 최신순(검색어가 없을 때 기본). 안 보내면 서버가 검색어 유무로 정해요. */
+export type ProductSort = 'RELEVANCE' | 'LATEST' | 'PRICE_ASC' | 'PRICE_DESC'
+
+/** 지금 진행 중인 할인. 할인이 없으면 salePrice·discountRate 둘 다 null이에요. */
+export type DiscountFields = {
+  /** 할인가(옵션 추가금 제외). 할인 중이 아니면 null */
+  salePrice: number | null
+  /** 정가 대비 할인율(%, 소수점 버림). 할인 중이 아니면 null */
+  discountRate: number | null
+}
 
 /** 상품 검색 결과 한 줄 */
-export type ProductSummary = {
+export type ProductSummary = DiscountFields & {
   productId: number
   name: string
+  /** 정가 */
   price: number
   categoryId: number
   sellerId: number
@@ -92,17 +110,28 @@ export const searchProducts = (query: ProductSearchQuery = {}) =>
 
 export type ProductOption = {
   optionId: number
+  /** 표시 이름 (예: "블랙 / M"). 옵션 없는 상품은 "기본" */
   name: string
+  /** 옵션 값. 상품 optionNames 순서대로. 옵션 없는 상품이면 빈 목록 */
+  values: string[]
+  additionalPrice: number
+  /** 지금 실제로 파는 단가 (할인가 또는 정가 + 추가금) */
+  price: number
+  /** 정가 + 추가금 */
+  listPrice: number
   soldOut: boolean
   /** 재고가 1~5개일 때만 남은 수량, 그 외에는 null */
   remainingStock: number | null
 }
 
-export type ProductDetail = {
+export type ProductDetail = DiscountFields & {
   productId: number
   name: string
   description: string
+  /** 정가 */
   price: number
+  /** 진행 중인 할인의 마감 시각. 할인 중이 아니면 null */
+  discountEndsAt: string | null
   parentCategoryId: number
   parentCategoryName: string
   categoryId: number
@@ -114,7 +143,11 @@ export type ProductDetail = {
   /** 이미지 기능 전까지 빈 목록 */
   imageUrls: string[]
   soldOut: boolean
+  /** 옵션 이름 (예: ["색상", "사이즈"]). 옵션 없는 상품이면 빈 목록 */
+  optionNames: string[]
   options: ProductOption[]
+  /** 로그인한 회원이 찜했는지. 비로그인이면 false */
+  wished: boolean
 }
 
 /** 판매 중지·삭제·카테고리 사용 중지 상품은 404-PRODUCT_NOT_FOUND */
@@ -127,9 +160,9 @@ export type ProductDisplayStatus = 'ON_SALE' | 'SOLD_OUT' | 'STOPPED'
 /** ADMIN 관리자 즉시 중지 · SELLER_REQUEST 판매자 요청 승인 · SELLER_WITHDRAWN 판매자 철회·제재 */
 export type ProductStoppedBy = 'ADMIN' | 'SELLER_REQUEST' | 'SELLER_WITHDRAWN'
 
-export type SellerProductSummary = {
+export type SellerProductSummary = DiscountFields & {
   productId: number
-  /** 재고 조정에 쓰는 옵션 ID (지금은 상품마다 옵션 1개) */
+  /** 첫 옵션 ID. 옵션이 여럿이면 수정 폼(getSellerProductForm)의 options를 써요. */
   optionId: number
   thumbnailUrl: string | null
   name: string
@@ -168,10 +201,47 @@ export type SellerProductForm = {
   /** 이미지 기능 전까지 null */
   thumbnail: ProductImage | null
   detailImages: ProductImage[]
+  optionNames: string[]
+  options: SellerOption[]
+  /** 끝나지 않은 할인 (예정·진행 중) */
+  discounts: SellerDiscount[]
+}
+
+export type SellerOption = {
+  optionId: number
+  /** 표시 이름 (예: "블랙 / M") */
+  name: string
+  values: string[]
+  additionalPrice: number
+  /** 정가 + 추가금 */
+  price: number
+  stock: number
+}
+
+/** SCHEDULED 시작 전 · ACTIVE 진행 중 · ENDED 끝남 */
+export type ProductDiscountStatus = 'SCHEDULED' | 'ACTIVE' | 'ENDED'
+
+export type SellerDiscount = {
+  discountId: number
+  salePrice: number
+  discountRate: number
+  startsAt: string
+  endsAt: string
+  status: ProductDiscountStatus
 }
 
 export const getSellerProductForm = (productId: number | string) =>
   api<SellerProductForm>(`/api/v1/seller/products/${productId}`)
+
+/** 옵션 조합 하나 */
+export type ProductOptionRequest = {
+  /** 옵션 이름 순서대로 값 하나씩 (각 14자). 옵션 없는 상품이면 [] */
+  values: string[]
+  /** 추가금 (0 이상, 기본 0) */
+  additionalPrice?: number
+  /** 처음 재고 (1 이상) */
+  stock: number
+}
 
 export type ProductCreateRequest = {
   name: string
@@ -179,12 +249,14 @@ export type ProductCreateRequest = {
   /** 사용 중인 소분류 ID */
   categoryId: number
   description: string
-  /** 초기 재고 (기본 옵션의 재고) */
-  stock: number
+  /** 옵션 이름 최대 3개(각 20자). 옵션 없는 상품이면 빼거나 [] */
+  optionNames?: string[]
+  /** 옵션 조합 1~100개. 옵션 없는 상품은 [{ values: [], stock }] */
+  options: ProductOptionRequest[]
 }
 
-/** 수정은 보낸 값만 바뀌고 재고는 바꿀 수 없어요. */
-export type ProductModifyRequest = Partial<Omit<ProductCreateRequest, 'stock'>> & {
+/** 수정은 보낸 값만 바뀌어요. 옵션·재고·할인은 각각의 API로 바꿔요. 할인 중에는 정가(price)를 바꿀 수 없어요. */
+export type ProductModifyRequest = Partial<Omit<ProductCreateRequest, 'optionNames' | 'options'>> & {
   /** 남길 기존 상세 이미지 ID (원하는 순서대로) */
   detailImageIds?: number[]
 }
@@ -249,6 +321,43 @@ export const adjustStock = (productId: number, optionId: number, changeQty: numb
     { method: 'POST', body: { changeQty } },
   )
 
+// ── 판매자 옵션 ──────────────────────────────────────────
+
+/** 옵션 조합 추가. 같은 조합이 있으면 409 */
+export const addProductOption = (productId: number | string, body: ProductOptionRequest) =>
+  api<{ optionId: number }>(`/api/v1/seller/products/${productId}/options`, { method: 'POST', body })
+
+/** 옵션 추가금 수정 */
+export const modifyProductOption = (productId: number | string, optionId: number, additionalPrice: number) =>
+  api<null>(`/api/v1/seller/products/${productId}/options/${optionId}`, { method: 'PATCH', body: { additionalPrice } })
+
+/** 옵션 삭제. 마지막 남은 옵션은 지울 수 없어요. */
+export const deleteProductOption = (productId: number | string, optionId: number) =>
+  api<null>(`/api/v1/seller/products/${productId}/options/${optionId}`, { method: 'DELETE' })
+
+// ── 판매자 할인 ──────────────────────────────────────────
+
+/** 기간 할인 등록. 시각은 "2026-12-01T00:00:00" 형식(서버 시간대). 기간이 겹치는 할인이 있으면 409 */
+export const createDiscount = (
+  productId: number | string,
+  body: { salePrice: number; startsAt: string; endsAt: string },
+) => api<{ discountId: number }>(`/api/v1/seller/products/${productId}/discounts`, { method: 'POST', body })
+
+/** 보낸 값만 바뀌어요. 진행 중인 할인은 마감(endsAt)만 바꿀 수 있어요. */
+export const modifyDiscount = (
+  productId: number | string,
+  discountId: number,
+  body: { salePrice?: number; startsAt?: string; endsAt?: string },
+) => api<null>(`/api/v1/seller/products/${productId}/discounts/${discountId}`, { method: 'PATCH', body })
+
+/** 시작 전 할인 삭제 */
+export const deleteDiscount = (productId: number | string, discountId: number) =>
+  api<null>(`/api/v1/seller/products/${productId}/discounts/${discountId}`, { method: 'DELETE' })
+
+/** 진행 중인 할인을 지금 끝내요. */
+export const endDiscount = (productId: number | string, discountId: number) =>
+  api<null>(`/api/v1/seller/products/${productId}/discounts/${discountId}/end`, { method: 'POST' })
+
 /** INIT 등록 · ADJUST 직접 조정 · ORDER_DEDUCT 주문 · ORDER_RESTORE 주문 취소(결제 전 취소·만료·판매 중지) · RETURN_RESTORE 반품 */
 export type StockChangeType = 'INIT' | 'ADJUST' | 'ORDER_DEDUCT' | 'ORDER_RESTORE' | 'RETURN_RESTORE'
 
@@ -273,6 +382,10 @@ export const getStockHistory = (productId: number, optionId: number, query: Page
 // ── 관리자 상품 ──────────────────────────────────────────
 
 /** 관리자 화면 상태. ON_SALE 판매중(재고 있음) · SOLD_OUT 품절(판매 중 재고 0) · STOPPED 판매 중지 · DELETED 삭제됨 */
+/** 검색 색인을 DB 기준으로 다시 만들어요. */
+export const rebuildSearchIndex = () =>
+  api<{ indexedCount: number }>('/api/v1/admin/products/search-index/rebuild', { method: 'POST' })
+
 export type AdminProductStatus = 'ON_SALE' | 'SOLD_OUT' | 'STOPPED' | 'DELETED'
 
 export type AdminProductSummary = {
