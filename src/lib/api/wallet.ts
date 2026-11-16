@@ -24,14 +24,17 @@ export type Wallet = { memberId: number; balance: number; heldAmount: number }
 /** BE TopupStatus */
 export type TopupStatus =
   | 'READY' // 결제 요청 전
-  | 'PROCESSING' // 토스 승인 확인 중
+  | 'PROCESSING' // PG 승인 확인 중
   | 'DONE'
+  | 'CANCELING' // PG 취소 호출 중 또는 결과 확인 대기
   | 'CANCELED'
+  | 'METHOD_CANCELING' // 허용하지 않은 결제 수단이라 예치금에 반영하지 않고 PG 전액 취소 중
   | 'FAILED_USER_CANCEL'
   | 'FAILED_PG_DECLINED'
   | 'FAILED_AMOUNT_MISMATCH'
   | 'FAILED_EXPIRED' // 결제 요청 후 15분 안에 끝나지 않으면 자동 만료
   | 'FAILED_SYSTEM_ERROR'
+  | 'FAILED_METHOD_NOT_ALLOWED' // 허용하지 않은 결제 수단이라 PG에서 전액 취소함
 
 /** BE TopupDto */
 export type Topup = {

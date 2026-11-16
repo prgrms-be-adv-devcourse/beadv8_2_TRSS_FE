@@ -50,7 +50,7 @@ const PAYMENT_CAUSE: Partial<Record<PaymentStatus, string>> = {
   FAILED_SYSTEM_ERROR: '시스템 오류',
 }
 const TOPUP_CAUSE: Partial<Record<TopupStatus, string>> = {
-  PROCESSING: '토스 승인 응답 없음',
+  PROCESSING: 'PG 승인 응답 없음',
   FAILED_PG_DECLINED: '결제사 승인 거절',
   FAILED_AMOUNT_MISMATCH: '금액 불일치',
   FAILED_SYSTEM_ERROR: '시스템 오류',
