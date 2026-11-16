@@ -11,6 +11,7 @@ import { ExampleNotice, ProductCard, indexCategories, loadCategories, loadProduc
 import styles from './ProductList.module.css'
 
 const SORTS: Array<{ value: ProductSort; label: string }> = [
+  { value: 'RELEVANCE', label: '관련도순' },
   { value: 'LATEST', label: '최신순' },
   { value: 'PRICE_ASC', label: '낮은 가격순' },
   { value: 'PRICE_DESC', label: '높은 가격순' },
@@ -27,7 +28,10 @@ export default function ProductListPage() {
   const [params, setParams] = useSearchParams()
   const keyword = params.get('q') ?? ''
   const categoryId = Number(params.get('categoryId')) || undefined
-  const sort = SORTS.find((s) => s.value === params.get('sort'))?.value ?? 'LATEST'
+  /** 정렬을 안 고르면 서버처럼 검색어가 있으면 관련도순, 없으면 최신순이에요. 관련도순은 검색어가 있을 때만 골라요. */
+  const defaultSort: ProductSort = keyword ? 'RELEVANCE' : 'LATEST'
+  const sorts = keyword ? SORTS : SORTS.filter((s) => s.value !== 'RELEVANCE')
+  const sort = sorts.find((s) => s.value === params.get('sort'))?.value ?? defaultSort
   const excludeSoldOut = params.get('soldOut') !== 'show'
 
   const update = (next: Record<string, string | undefined>) =>
@@ -138,8 +142,8 @@ export default function ProductListPage() {
         <label className={styles.sort}>
           <Icon name="filter" size={16} />
           <span className={styles.sr}>정렬</span>
-          <select value={sort} onChange={(e) => update({ sort: e.target.value === 'LATEST' ? undefined : e.target.value })}>
-            {SORTS.map((s) => (
+          <select value={sort} onChange={(e) => update({ sort: e.target.value === defaultSort ? undefined : e.target.value })}>
+            {sorts.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
               </option>

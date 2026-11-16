@@ -188,3 +188,34 @@
   font-weight: 800;
   color: var(--sub);
 }
+
+/* 할인 가격 */
+.priceSale {
+  display: block;
+}
+.priceInline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rate {
+  margin-right: 4px;
+  color: var(--red);
+}
+.listPrice {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+.priceInline .listPrice {
+  font-size: 14px;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
