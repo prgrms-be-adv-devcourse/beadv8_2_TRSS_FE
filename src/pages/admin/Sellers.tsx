@@ -68,7 +68,7 @@ const DONE_MESSAGE: Record<Action, string> = {
   withdrawalApprove: '철회를 승인했어요.',
   withdrawalReject: '철회를 거절했어요. 다시 판매 중이에요.',
   sanction: '제재했어요. 상품 중지·결제 전 주문 취소·쿠폰 중지·협약 종료·정산 보류가 함께 처리돼요.',
-  unsanction: '제재를 해지했어요. 다시 판매 중이에요.',
+  unsanction: '제재를 해제했어요. 다시 판매 중이에요.',
 }
 const HISTORY_LABEL: Partial<Record<SellerStatus, string>> = {
   PENDING: '신청',
@@ -108,9 +108,9 @@ function useSellerActions(onDone: (detail: AdminSellerDetail, action: Action) =>
       onDone(await calls[action](), action)
       return true
     } catch (e) {
-      // 회원 탈퇴한 판매자는 제재를 해지할 수 없다
+      // 회원 탈퇴한 판매자는 제재를 해제할 수 없다
       const withdrawnMember = action === 'unsanction' && codeOf(e) === 'SELLER_STATE_INVALID'
-      setError({ id, message: withdrawnMember ? '회원 탈퇴한 판매자는 제재를 해지할 수 없어요.' : errorMessage(e) })
+      setError({ id, message: withdrawnMember ? '회원 탈퇴한 판매자는 제재를 해제할 수 없어요.' : errorMessage(e) })
       return false
     } finally {
       setBusyId(null)
@@ -207,7 +207,7 @@ function SanctionConfirm({ name, onConfirm, onClose }: { name: string; onConfirm
     >
       <p className={s.modalTarget}>{name}</p>
       판매 상품은 모두 중지되고, 결제 전 주문은 취소되고, 상품 쿠폰은 중지되고, 협약은 종료되고, 정산은 보류돼요.
-      제재하면 다시 신청할 수 없어요.
+      관리자가 제재를 해제하기 전까지 판매할 수 없어요.
     </Modal>
   )
 }
@@ -269,7 +269,7 @@ function SellerActions({
         <ReasonField
           id={fieldId}
           label={withdraw ? '사유' : '제재 사유'}
-          hint={withdraw ? '(철회 거절·제재할 때 필수)' : '(필수 · 제재하면 다시 신청할 수 없어요)'}
+          hint={withdraw ? '(철회 거절·제재할 때 필수)' : '(필수 · 해제하기 전까지 판매할 수 없어요)'}
           rows={compact ? 2 : 3}
           placeholder={withdraw ? '예: 진행 중인 주문이 남아 있어요' : '예: 허위 상품 정보가 반복해서 확인됐어요'}
           value={reason}
@@ -317,8 +317,8 @@ function SellerActions({
       <>
         <ReasonField
           id={fieldId}
-          label="해지 사유"
-          hint="(필수 · 해지하면 다시 판매 중이 돼요)"
+          label="해제 사유"
+          hint="(필수 · 해제하면 다시 판매 중이 돼요)"
           rows={compact ? 2 : 3}
           placeholder="예: 소명 자료를 확인했어요"
           value={reason}
@@ -327,7 +327,7 @@ function SellerActions({
         <Notice tone="error">{error}</Notice>
         <div className={s.btnRow}>
           <Button variant="outline" size="sm" disabled={busy} onClick={() => run('unsanction')}>
-            제재 해지
+            제재 해제
           </Button>
         </div>
       </>
@@ -363,7 +363,7 @@ function SellerPanel({ v }: { v: View }) {
               <li key={i}>
                 <b>
                   {h.fromStatus === 'SANCTIONED'
-                    ? '제재 해지'
+                    ? '제재 해제'
                     : (HISTORY_LABEL[h.toStatus] ?? SELLER_STATUS[h.toStatus][0])}
                 </b>{' '}
                 · {fmtDay(h.changedAt)}

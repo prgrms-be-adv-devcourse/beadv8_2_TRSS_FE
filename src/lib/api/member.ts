@@ -188,7 +188,7 @@ export function sanctionSeller(sellerId: number, reason: string) {
   return api<AdminSellerDetail>(`/api/v1/admin/sellers/${sellerId}/sanction`, { method: 'POST', body: { reason } })
 }
 
-/** 제재 해지 (SANCTIONED → APPROVED, 사유 필수). 회원 탈퇴한 판매자는 해지 불가(409 SELLER_STATE_INVALID) */
+/** 제재 해제 (SANCTIONED → APPROVED, 사유 필수). 회원 탈퇴한 판매자는 해제 불가(409 SELLER_STATE_INVALID) */
 export function unsanctionSeller(sellerId: number, reason: string) {
   return api<AdminSellerDetail>(`/api/v1/admin/sellers/${sellerId}/unsanction`, { method: 'POST', body: { reason } })
 }
