@@ -3,6 +3,8 @@
   position: sticky;
   bottom: 0;
   z-index: 20;
+  /* 떠 있는 탭바 주변 여백으로 스크롤한 내용이 비치지 않게 흰 배경으로 채운다 (판매자 센터 모바일도 같은 탭바) */
+  background: #fff;
   display: flex;
   justify-content: center;
   padding: 10px 0 18px;

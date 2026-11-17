@@ -101,7 +101,6 @@ export default function ChatbotPage() {
 
   return (
     <AppFrame
-      solidDock
       bottom={
         <form className={styles.inputBar} onSubmit={send}>
           <input
