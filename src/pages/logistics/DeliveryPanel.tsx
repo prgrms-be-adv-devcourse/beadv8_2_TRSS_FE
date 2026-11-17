@@ -64,7 +64,7 @@ export default function DeliveryPanel({
         <ul className={s.items}>
           {d.items.map((it) => (
             <li key={it.orderItemId}>
-              <Thumb width={40} height={40} />
+              <Thumb src={it.thumbnailUrl} width={40} height={40} />
               <span>
                 <b>{it.productName}</b>
                 <span>
