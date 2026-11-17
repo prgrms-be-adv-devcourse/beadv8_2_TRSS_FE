@@ -1,0 +1,122 @@
+/* 관리자 · 챗봇 FAQ */
+
+/* 카테고리 칩 (목록 필터 · 패널의 카테고리 선택) */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  height: 34px;
+  padding: 0 13px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--input-line);
+  box-sizing: border-box;
+  background: #fff;
+  color: var(--sub);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.chipOn {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+/* 표의 질문 칸: 행 전체가 눌리지만 키보드로도 열 수 있게 버튼으로 */
+.rowBtn {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+/* 숨긴 FAQ 질문 */
+.faded {
+  color: var(--muted);
+}
+
+.mobileTools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.mobileTop {
+  display: flex;
+  justify-content: flex-end;
+}
+.mobileTools .chips {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+/* 패널 */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.counter {
+  font-size: 12px;
+  color: var(--muted);
+}
+.answer {
+  min-height: 180px;
+}
+.switchRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0 4px;
+  border-top: 1px solid var(--line);
+}
+.switchRow > span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+.switch {
+  flex: none;
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  border: 0;
+  background: var(--line-strong);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.switchOn {
+  background: var(--ink);
+}
+.switchOn::after {
+  transform: translateX(18px);
+}
