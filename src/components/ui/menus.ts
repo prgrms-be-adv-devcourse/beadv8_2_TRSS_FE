@@ -33,7 +33,7 @@ export const ADMIN_MENU: ConsoleMenuItem[] = [
   { key: 'failed', label: '실패 거래', to: '/admin/failed' },
   { key: 'reviews', label: '리뷰', to: '/admin/reviews' },
   { key: 'coupons', label: '쿠폰 · 협약', to: '/admin/coupons' },
-  { key: 'docs', label: 'AI 문서', to: '/admin/docs' },
+  { key: 'faqs', label: '챗봇 FAQ', to: '/admin/faqs' },
 ]
 
 /** 물류 담당자 메뉴 */

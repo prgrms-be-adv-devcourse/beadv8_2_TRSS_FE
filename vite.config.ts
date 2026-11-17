@@ -26,7 +26,7 @@ const LOCAL_ROUTES: Array<[RegExp, number]> = [
   [/^\/api\/v1\/(admin\/settlements|admin\/settlement-candidates|seller\/settlements)([/?]|$)/, 8084],
   [/^\/api\/v1\/logistics([/?]|$)/, 8085],
   [/^\/api\/v1\/notifications([/?]|$)/, 8086],
-  [/^\/api\/v1\/ai([/?]|$)/, 8087],
+  [/^\/api\/v1\/(ai|admin\/faqs)([/?]|$)/, 8087],
 ]
 
 const localProxy: Record<string, ProxyOptions> = Object.fromEntries(
