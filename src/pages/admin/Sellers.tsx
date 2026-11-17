@@ -5,6 +5,7 @@ import { Badge, Empty, ErrorView, Loading, Segment, Tabs } from '../../component
 import { Modal } from '../../components/ui/Overlay'
 import c from '../../components/ui/console.module.css'
 import { errorMessage, toPageParam } from '../../lib/api'
+import { codeOf } from '../../lib/notices/common'
 import {
   approveSeller,
   approveSellerWithdrawal,
@@ -13,6 +14,7 @@ import {
   rejectSeller,
   rejectSellerWithdrawal,
   sanctionSeller,
+  unsanctionSeller,
   type AdminSeller,
   type AdminSellerCounts,
   type AdminSellerDetail,
@@ -48,7 +50,7 @@ const COUNT_KEY: Record<Tab, keyof AdminSellerCounts> = {
   SANCTIONED: 'sanctioned',
 }
 
-type Action = 'approve' | 'reject' | 'withdrawalApprove' | 'withdrawalReject' | 'sanction'
+type Action = 'approve' | 'reject' | 'withdrawalApprove' | 'withdrawalReject' | 'sanction' | 'unsanction'
 
 /** 상태별로 할 수 있는 동작 */
 const ALLOWED: Record<Action, SellerStatus[]> = {
@@ -57,14 +59,16 @@ const ALLOWED: Record<Action, SellerStatus[]> = {
   withdrawalApprove: ['WITHDRAW_REQUESTED'],
   withdrawalReject: ['WITHDRAW_REQUESTED'],
   sanction: ['APPROVED', 'WITHDRAW_REQUESTED'],
+  unsanction: ['SANCTIONED'],
 }
-const NEEDS_REASON: Action[] = ['reject', 'withdrawalReject', 'sanction']
+const NEEDS_REASON: Action[] = ['reject', 'withdrawalReject', 'sanction', 'unsanction']
 const DONE_MESSAGE: Record<Action, string> = {
   approve: '승인했어요. 이 계정에 판매자 권한이 생겼어요.',
   reject: '반려했어요. 사유가 판매자에게 보여요.',
   withdrawalApprove: '철회를 승인했어요.',
   withdrawalReject: '철회를 거절했어요. 다시 판매 중이에요.',
-  sanction: '제재했어요. 판매 철회와 상품 중지·주문 취소·정산 보류가 함께 처리돼요.',
+  sanction: '제재했어요. 상품 중지·결제 전 주문 취소·쿠폰 중지·협약 종료·정산 보류가 함께 처리돼요.',
+  unsanction: '제재를 해지했어요. 다시 판매 중이에요.',
 }
 const HISTORY_LABEL: Partial<Record<SellerStatus, string>> = {
   PENDING: '신청',
@@ -99,11 +103,14 @@ function useSellerActions(onDone: (detail: AdminSellerDetail, action: Action) =>
         withdrawalApprove: () => approveSellerWithdrawal(id),
         withdrawalReject: () => rejectSellerWithdrawal(id, r),
         sanction: () => sanctionSeller(id, r),
+        unsanction: () => unsanctionSeller(id, r),
       }
       onDone(await calls[action](), action)
       return true
     } catch (e) {
-      setError({ id, message: errorMessage(e) })
+      // 회원 탈퇴한 판매자는 제재를 해지할 수 없다
+      const withdrawnMember = action === 'unsanction' && codeOf(e) === 'SELLER_STATE_INVALID'
+      setError({ id, message: withdrawnMember ? '회원 탈퇴한 판매자는 제재를 해지할 수 없어요.' : errorMessage(e) })
       return false
     } finally {
       setBusyId(null)
@@ -181,7 +188,7 @@ function useSellersView() {
 }
 type View = ReturnType<typeof useSellersView>
 
-/** 제재는 되돌릴 수 없어서 한 번 더 물어봐요 */
+/** 제재는 상품·주문·쿠폰·협약·정산까지 함께 처리돼서 한 번 더 묻는다 */
 function SanctionConfirm({ name, onConfirm, onClose }: { name: string; onConfirm: () => void; onClose: () => void }) {
   return (
     <Modal
@@ -199,7 +206,8 @@ function SanctionConfirm({ name, onConfirm, onClose }: { name: string; onConfirm
       }
     >
       <p className={s.modalTarget}>{name}</p>
-      판매 상품은 모두 중지되고, 결제 전 주문은 취소되고, 정산은 보류돼요. 제재하면 다시 신청할 수 없어요.
+      판매 상품은 모두 중지되고, 결제 전 주문은 취소되고, 상품 쿠폰은 중지되고, 협약은 종료되고, 정산은 보류돼요.
+      제재하면 다시 신청할 수 없어요.
     </Modal>
   )
 }
@@ -288,7 +296,9 @@ function SellerActions({
             판매자 제재하기
           </Button>
         </div>
-        <p className={s.panelNote}>판매 상품은 모두 중지, 결제 전 주문은 취소, 정산은 보류돼요.</p>
+        <p className={s.panelNote}>
+          판매 상품은 모두 중지, 결제 전 주문은 취소, 상품 쿠폰 중지, 협약 종료, 정산은 보류돼요.
+        </p>
         {confirmSanction && (
           <SanctionConfirm
             name={name}
@@ -299,6 +309,27 @@ function SellerActions({
             }}
           />
         )}
+      </>
+    )
+  }
+  if (status === 'SANCTIONED') {
+    return (
+      <>
+        <ReasonField
+          id={fieldId}
+          label="해지 사유"
+          hint="(필수 · 해지하면 다시 판매 중이 돼요)"
+          rows={compact ? 2 : 3}
+          placeholder="예: 소명 자료를 확인했어요"
+          value={reason}
+          onChange={setReason}
+        />
+        <Notice tone="error">{error}</Notice>
+        <div className={s.btnRow}>
+          <Button variant="outline" size="sm" disabled={busy} onClick={() => run('unsanction')}>
+            제재 해지
+          </Button>
+        </div>
       </>
     )
   }
@@ -330,7 +361,12 @@ function SellerPanel({ v }: { v: View }) {
           <ol className={s.history}>
             {d.histories.map((h, i) => (
               <li key={i}>
-                <b>{HISTORY_LABEL[h.toStatus] ?? SELLER_STATUS[h.toStatus][0]}</b> · {fmtDay(h.changedAt)}
+                <b>
+                  {h.fromStatus === 'SANCTIONED'
+                    ? '제재 해지'
+                    : (HISTORY_LABEL[h.toStatus] ?? SELLER_STATUS[h.toStatus][0])}
+                </b>{' '}
+                · {fmtDay(h.changedAt)}
                 {h.reason && <span className={s.historyNote}>사유: {h.reason}</span>}
               </li>
             ))}
@@ -342,7 +378,8 @@ function SellerPanel({ v }: { v: View }) {
         <div className={s.panelSection}>
           <p className={s.panelSub}>판매 중인 판매자를 고르면</p>
           <p className={s.panelNote}>
-            제재 사유를 입력하고 바로 제재할 수 있어요. 상품 중지·결제 전 주문 취소·정산 보류가 함께 처리돼요.
+            제재 사유를 입력하고 바로 제재할 수 있어요. 상품 중지·결제 전 주문 취소·쿠폰 중지·협약 종료·정산 보류가 함께
+            처리돼요.
           </p>
         </div>
       )}
