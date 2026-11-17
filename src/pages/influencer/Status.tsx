@@ -25,7 +25,7 @@ const STATE: Record<
   PENDING: {
     chip: '심사 중',
     tone: 'amber',
-    icon: 'more',
+    icon: 'clock',
     title: '신청 내용을 확인하고 있어요',
     desc: '관리자가 SNS 계정을 확인한 뒤 승인 여부를 알려 드려요. 결과는 이 화면과 내 정보에서 볼 수 있어요.',
     date: '신청일',
@@ -74,10 +74,6 @@ export default function InfluencerStatusPage(props: { influencerStatus?: string 
           {app.status === 'REJECTED' ? (
             <Button size="lg" to="/influencer/apply">
               다시 신청하기
-            </Button>
-          ) : app.status === 'APPROVED' ? (
-            <Button size="lg" to="/influencer/picks">
-              내 pick 관리하기
             </Button>
           ) : (
             <Button size="lg" variant="outline" to="/mypage/profile">
