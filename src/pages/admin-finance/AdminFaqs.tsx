@@ -162,7 +162,7 @@ export default function AdminFaqs() {
                     >
                       {x.question}
                     </button>
-                    <span>{x.visible ? '켜짐' : <Badge>숨김</Badge>}</span>
+                    <span>{x.visible ? <Badge tone="blue">노출</Badge> : <Badge>숨김</Badge>}</span>
                     <span>
                       <EmbedBadge embedded={x.embedded} />
                     </span>
