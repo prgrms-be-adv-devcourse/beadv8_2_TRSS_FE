@@ -152,7 +152,7 @@ export default function LogisticsDeliveries({ tab }: { tab: Key }) {
     <span className={s.itemLines}>
       {d.items.map((it) => (
         <span key={it.orderItemId} className={s.itemLine}>
-          <Thumb width={36} height={36} radius={6} />
+          <Thumb src={it.thumbnailUrl} width={36} height={36} radius={6} />
           <span>
             <b>{it.productName}</b>
             <span>

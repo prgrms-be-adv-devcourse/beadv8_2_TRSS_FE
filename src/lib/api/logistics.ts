@@ -33,6 +33,10 @@ export type LogisticsDeliveryItem = {
   productName: string
   optionName: string
   quantity: number
+  /** BE#382(TRSS-261) 응답: 상품 ID */
+  productId?: number
+  /** BE#382(TRSS-261) 응답: 상품 현재 대표 이미지. 없거나 market 조회 실패면 null */
+  thumbnailUrl?: string | null
 }
 
 /** BE LogisticsDeliveryResponse (목록·상세·송장 등록/수정 응답 공통) */
