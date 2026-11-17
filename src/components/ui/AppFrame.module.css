@@ -41,3 +41,6 @@
   bottom: 0;
   z-index: 20;
 }
+.solid {
+  background: #fff;
+}
