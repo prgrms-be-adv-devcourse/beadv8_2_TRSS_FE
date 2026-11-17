@@ -1,11 +1,12 @@
 /**
- * AI 뷰티 설문 · 맞춤 추천 (ai-service, TRSS-243)
+ * AI 뷰티 설문 · 맞춤 추천 (ai-service, TRSS-243) · FAQ 챗봇 (TRSS-254)
  *
  * - 값은 모두 코드(SKIN_TYPES 등)로 주고받고, 화면 글자는 아래 *_LABEL로 바꿔요.
  * - 상품 추천은 비회원도 부를 수 있어요(설문이 없거나 비회원이면 personalized=false, 판매 중 뷰티 최신순).
  * - 설문 저장·조회와 크리에이터 추천은 로그인이 필요해요.
  */
 import { api, ApiError } from './client'
+import type { PageQuery, PageResponse } from './types'
 
 // ── 코드표 (백엔드 enum과 같은 순서) ─────────────────────
 
@@ -182,6 +183,64 @@ export const getCreatorRecommendations = (size = 10) =>
       throw e
     },
   )
+
+// ── FAQ 챗봇 ────────────────────────────────────────────
+
+/** 질문은 200자까지 */
+export const CHAT_MAX_LENGTH = 200
+
+/** AI: FAQ 근거로 AI가 답함 · FAQ: AI 실패로 가장 비슷한 FAQ 답변 그대로 · NO_MATCH: 관련 FAQ 없음(고객센터 안내) */
+export type ChatAnswerType = 'AI' | 'FAQ' | 'NO_MATCH'
+
+/** 답변 근거 FAQ (답변 본문 제외) */
+export type ChatSource = {
+  faqId: number
+  category: 'MEMBER' | 'TOPUP' | 'ORDER' | 'DELIVERY' | 'RETURN' | 'SELLER'
+  /** 화면 표시용 카테고리 이름 (예: 반품·환불) */
+  categoryLabel: string
+  question: string
+}
+
+export type ChatAnswer = {
+  /** 이어서 물을 때 그대로 보내는 대화 id */
+  conversationId: number
+  answer: string
+  answerType: ChatAnswerType
+  /** 유사도 높은 순, 최대 3건. NO_MATCH면 빈 목록 */
+  sources: ChatSource[]
+}
+
+export type ChatConversation = {
+  conversationId: number
+  /** 첫 질문(100자까지) */
+  title: string
+  lastMessageAt: string
+}
+
+export type ChatMessage = {
+  messageId: number
+  role: 'USER' | 'ASSISTANT'
+  content: string
+  /** 질문이면 null */
+  answerType: ChatAnswerType | null
+  sources: ChatSource[]
+  createdAt: string
+}
+
+/**
+ * 챗봇 질문. conversationId가 없으면 새 대화를 시작한다.
+ * 404-CONVERSATION_NOT_FOUND(남의 대화·없는 대화), 429-TOO_MANY_REQUESTS(1분에 10번 초과), 502(OpenAI 실패)
+ */
+export const askChatbot = (message: string, conversationId?: number | null) =>
+  api<ChatAnswer>('/api/v1/ai/chat', { method: 'POST', body: { conversationId: conversationId ?? null, message } })
+
+/** 내 대화 목록 (최근 대화 순) */
+export const getChatConversations = (query: PageQuery = {}) =>
+  api<PageResponse<ChatConversation>>('/api/v1/ai/chat/conversations', { query })
+
+/** 대화의 질문·답변 전체 (오래된 순) */
+export const getChatMessages = (conversationId: number) =>
+  api<ChatMessage[]>(`/api/v1/ai/chat/conversations/${conversationId}/messages`)
 
 // ── 화면 문구 ───────────────────────────────────────────
 
