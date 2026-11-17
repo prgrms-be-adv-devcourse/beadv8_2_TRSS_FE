@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Button from '../../components/ui/Button'
 import ConsoleShell from '../../components/ui/ConsoleShell'
@@ -78,6 +78,10 @@ const RUN_STATUS: Record<string, [string, string]> = {
   STOPPED: ['var(--red-ink)', '실행 중단'],
 }
 const runStatusOf = (r: SettlementRun) => RUN_STATUS[r.status] ?? ['var(--muted)', r.status]
+const isRunning = (r: SettlementRun) => r.status === 'STARTED' || r.status === 'STARTING'
+/** 수동 실행 접수 뒤 실행 기록을 다시 불러오는 간격과 최대 횟수 (5초 × 120 = 10분) */
+const RUN_POLL_MS = 5000
+const RUN_POLL_MAX = 120
 /** '2026-11-10T00:42:10' → '11월 10일' */
 const monthDay = (iso: string | null) => (iso ? `${Number(iso.slice(5, 7))}월 ${Number(iso.slice(8, 10))}일` : '-')
 /** '2026-11-10T00:42:10' → '00:42' */
@@ -136,6 +140,26 @@ export default function AdminSettlements() {
     () => getSettlements({ from, to, group, sellerId, page: toPageParam(page), size: PAGE_SIZE }),
     [from, to, group, sellerId, page],
   )
+
+  // 수동 실행을 접수한 달. 그 달 실행이 끝날 때까지 실행 기록을 다시 불러와요
+  const [watchMonth, setWatchMonth] = useState<YearMonth | null>(null)
+  const pollCount = useRef(0)
+  useEffect(() => {
+    if (!watchMonth || runs.loading) return
+    const last = runs.data?.items[0]
+    if (last && last.targetMonth === watchMonth && !isRunning(last)) {
+      setWatchMonth(null)
+      refresh()
+      return
+    }
+    if (pollCount.current >= RUN_POLL_MAX) return setWatchMonth(null)
+    const id = setTimeout(() => {
+      pollCount.current += 1
+      runs.reload()
+    }, RUN_POLL_MS)
+    return () => clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchMonth, runs.data, runs.loading])
 
   // 조건이 바뀌면 첫 쪽부터, 이전 조건의 목록은 지워요 (새 응답 전까지 다른 조건의 행과 버튼이 보이지 않게)
   useEffect(() => {
@@ -506,8 +530,10 @@ export default function AdminSettlements() {
       {runOpen && (
         <ManualRunSheet
           onClose={() => setRunOpen(false)}
-          onDone={(msg) => {
+          onDone={(msg, month) => {
             say(msg)
+            pollCount.current = 0
+            setWatchMonth(month)
             runs.reload()
             refresh()
           }}
@@ -649,7 +675,7 @@ function ManualRunSheet({
   onError,
 }: {
   onClose: () => void
-  onDone: (msg: string) => void
+  onDone: (msg: string, month: YearMonth) => void
   onError: (msg: string) => void
 }) {
   const runnable = useApi(getRunnableSettlementMonths, [])
@@ -666,11 +692,13 @@ function ManualRunSheet({
     setRunning(true)
     try {
       // 서버는 실행을 접수만 하고 바로 응답해요(202). 결과는 실행 기록에서 확인해요
+      // 202 본문이 비어 있으면 r은 null이라 '시작' 문구로 보여요
       const r = await runSettlement(selected)
       onDone(
-        r.status === 'QUEUED'
+        r?.status === 'QUEUED'
           ? `${fmtMonth(selected)} 정산 실행을 접수했어요. 진행 중인 다른 달 실행이 끝나면 시작돼요. 결과는 실행 기록에서 확인해 주세요.`
           : `${fmtMonth(selected)} 정산 실행을 시작했어요. 실행 기록에서 결과를 확인해 주세요. 지급은 지급 예정일부터 진행돼요.`,
+        selected,
       )
       onClose()
     } catch (e) {
