@@ -254,12 +254,15 @@ function FaqDrawer({
       }
       if (contentChanged) await modifyFaq(faq.faqId, body)
       if (visibleChanged) await changeFaqVisibility(faq.faqId, visible)
+      const visibleMsg = visible ? 'FAQ를 다시 노출했어요.' : 'FAQ를 숨겼어요. 챗봇 검색에서 빠져요.'
       onSaved(
-        contentChanged
-          ? 'FAQ를 수정했어요. 다시 반영될 때까지 잠시 걸려요.'
-          : visible
-            ? 'FAQ를 다시 노출했어요.'
-            : 'FAQ를 숨겼어요. 챗봇 검색에서 빠져요.',
+        !contentChanged
+          ? visibleMsg
+          : visibleChanged
+            ? visible
+              ? 'FAQ를 수정하고 다시 노출했어요. 다시 반영될 때까지 잠시 걸려요.'
+              : 'FAQ를 수정하고 숨겼어요. 챗봇 검색에서 빠져요.'
+            : 'FAQ를 수정했어요. 다시 반영될 때까지 잠시 걸려요.',
       )
     } catch (err) {
       setError(errorMessage(err))
