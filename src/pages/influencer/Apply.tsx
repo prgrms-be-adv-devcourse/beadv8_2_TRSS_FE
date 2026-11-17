@@ -4,30 +4,39 @@ import AppFrame from '../../components/ui/AppFrame'
 import BottomBar from '../../components/ui/BottomBar'
 import Button from '../../components/ui/Button'
 import PageHeader from '../../components/ui/PageHeader'
-import { Loading } from '../../components/ui/Misc'
+import { ErrorView, Loading } from '../../components/ui/Misc'
 import f from '../../components/ui/form.module.css'
 import { errorMessage } from '../../lib/api'
-import { applyInfluencer, useInfluencerStatus } from './mock'
+import { applyInfluencer } from '../../lib/api/influencer'
+import { codeOf } from '../../lib/notices/common'
+import { useInfluencerStatus } from './influencerStatus'
 import s from './influencer.module.css'
 
 const FORM_ID = 'influencer-apply'
-const URL_RULE = /^https?:\/\/\S+\.\S+/
+// 백엔드 검증과 같은 규칙: http:// 또는 https://로 시작하고 공백 없는 주소
+const URL_RULE = /^https?:\/\/\S+\.\S+$/
 
 /**
  * ⑨-2 인플루언서 신청
- * TODO(API 미구현): POST /api/v1/influencers — 지금은 mock.ts의 목업 신청이에요
+ * POST /api/v1/influencers (반려된 뒤 다시 신청할 때도 같은 API)
  */
 export default function InfluencerApplyPage() {
   const navigate = useNavigate()
-  const { app } = useInfluencerStatus()
+  const { app, error: loadError, reload } = useInfluencerStatus()
   const [activityName, setActivityName] = useState('')
   const [snsUrl, setSnsUrl] = useState('')
   const [intro, setIntro] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
 
-  if (app === undefined) return <AppFrame><PageHeader title="인플루언서 신청" back="/mypage/profile" /><Loading /></AppFrame>
-  // 반려된 경우만 다시 신청할 수 있어요. 심사 중·승인·자격 해제면 상태 화면으로
+  if (app === undefined)
+    return (
+      <AppFrame>
+        <PageHeader title="인플루언서 신청" back="/mypage/profile" />
+        {loadError ? <ErrorView message={loadError} onRetry={reload} /> : <Loading />}
+      </AppFrame>
+    )
+  // 반려된 경우만 다시 신청할 수 있다. 심사 중·승인이면 상태 화면으로
   if (app && app.status !== 'REJECTED') return <Navigate to="/influencer/status" replace />
 
   const urlOk = URL_RULE.test(snsUrl.trim())
@@ -39,10 +48,15 @@ export default function InfluencerApplyPage() {
     setPending(true)
     setError('')
     try {
-      await applyInfluencer({ activityName: activityName.trim(), snsUrl: snsUrl.trim(), intro: intro.trim() })
+      await applyInfluencer({ activityName: activityName.trim(), snsUrl: snsUrl.trim(), introduction: intro.trim() })
       navigate('/influencer/status', { replace: true })
     } catch (err) {
-      setError(errorMessage(err))
+      // 다른 창에서 먼저 신청한 경우 등: 진행 중인 신청이 있으면 상태 화면에서 확인하도록 안내한다
+      setError(
+        codeOf(err) === 'INFLUENCER_ALREADY_APPLIED'
+          ? '이미 진행 중인 신청이 있어요. 내 정보에서 신청 상태를 확인해 주세요.'
+          : errorMessage(err),
+      )
       setPending(false)
     }
   }
@@ -89,6 +103,7 @@ export default function InfluencerApplyPage() {
             className={f.input}
             type="url"
             inputMode="url"
+            maxLength={500}
             placeholder="https://instagram.com/계정이름"
             aria-describedby="inf-sns-h"
             aria-invalid={snsUrl.length > 0 && !urlOk}
@@ -96,7 +111,7 @@ export default function InfluencerApplyPage() {
             onChange={(e) => setSnsUrl(e.target.value)}
           />
           <p id="inf-sns-h" className={snsUrl && !urlOk ? f.error : f.help}>
-            {snsUrl && !urlOk ? 'https://로 시작하는 주소를 넣어 주세요.' : '본인 계정인지 관리자가 이 주소로 확인해요.'}
+            {snsUrl && !urlOk ? 'http:// 또는 https://로 시작하는 주소를 넣어 주세요.' : '본인 계정인지 관리자가 이 주소로 확인해요.'}
           </p>
         </div>
         <div className={f.field}>

@@ -35,13 +35,12 @@
   flex-direction: column;
 }
 
-/* 하단 고정 버튼 + 탭바를 한 덩어리로 아래에 붙여요 (안쪽 sticky는 이 안에서 제자리) */
+/* 하단 고정 버튼 + 탭바를 한 덩어리로 아래에 붙여요 (안쪽 sticky는 이 안에서 제자리)
+   떠 있는 탭바 주변 여백으로 스크롤한 내용이 비치지 않도록 흰 배경으로 채운다 */
 .dock {
   position: sticky;
   bottom: 0;
   z-index: 20;
-}
-.solid {
   background: #fff;
 }
 
