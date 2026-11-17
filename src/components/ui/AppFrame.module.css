@@ -44,3 +44,10 @@
 .solid {
   background: #fff;
 }
+
+/* 탭바 위 오른쪽 떠 있는 버튼 자리 (컬럼 오른쪽 끝 기준) */
+.fab {
+  position: absolute;
+  right: 16px;
+  bottom: calc(100% + 4px);
+}

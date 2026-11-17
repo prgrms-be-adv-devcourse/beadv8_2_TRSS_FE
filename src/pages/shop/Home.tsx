@@ -57,7 +57,15 @@ export default function HomePage() {
   const tab: HomeTab = HOME_TABS.find((t) => t.key === params.get('tab'))?.key ?? 'recommend'
 
   return (
-    <AppFrame tab="home" footer>
+    <AppFrame
+      tab="home"
+      footer
+      fab={
+        <Link to="/chatbot" aria-label="AI 도우미" className={styles.fab}>
+          <Icon name="chat" />
+        </Link>
+      }
+    >
       <PageHeader
         title={
           <Link to="/" aria-label="팔레트 홈" className={styles.logo}>
@@ -194,40 +202,22 @@ export default function HomePage() {
           {/* 설문 전(맞춤 추천이 아닐 때)에만 보여줘요 */}
           {!rec.loading && !rec.data?.personalized && (
             <Link to="/survey" className={styles.surveyCard}>
-              <span aria-hidden="true" className={styles.surveyDeco} />
               <span aria-hidden="true" className={styles.surveyIcon}>
-                <Icon name="sparkle" size={22} />
+                <Icon name="droplet" size={24} />
               </span>
               <span className={styles.surveyText}>
-                <span className={styles.surveyEyebrow}>
-                  <span className={styles.surveyAi}>AI</span>뷰티 설문
-                </span>
-                <b className={styles.surveyTitle}>30초 설문하고 맞춤 추천 받기</b>
-                <span className={styles.surveyDesc}>피부 타입과 성분 취향을 알려주세요</span>
+                <span className={styles.surveyEyebrow}>뷰티 설문 · 30초</span>
+                <b className={styles.surveyTitle}>내 피부에 맞는 상품만 골라 볼까요?</b>
+                <span className={styles.surveyDesc}>피부 타입 → 피부 고민 → 피하는 성분</span>
               </span>
-              <span className={styles.surveyFoot}>
-                <span aria-hidden="true" className={styles.surveySteps}>
-                  {['피부 타입', '피부 고민', '성분 취향'].map((t) => (
-                    <span key={t} className={styles.surveyStep}>
-                      {t}
-                    </span>
-                  ))}
-                </span>
-                <span className={styles.surveyGo}>
-                  시작
-                  <Icon name="chevron" size={14} strokeWidth={2.2} />
-                </span>
+              <span className={styles.surveyGo}>
+                시작하기
+                <Icon name="arrow" size={16} strokeWidth={2.2} />
               </span>
             </Link>
           )}
         </>
       )}
-
-      <div className={styles.fabWrap}>
-        <Link to="/chatbot" aria-label="AI 도우미" className={styles.fab}>
-          <Icon name="chat" />
-        </Link>
-      </div>
 
       {drawer && <CategoryDrawer onClose={closeDrawer} />}
       {searching && <SearchPanel onClose={closeSearch} />}

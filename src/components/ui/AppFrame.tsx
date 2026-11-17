@@ -15,10 +15,20 @@ type Props = {
   tabBar?: boolean
   /** 하단 영역(고정 버튼 + 탭바) 뒤를 흰 배경으로 채움. 채팅처럼 내용이 탭바 주변으로 비치면 안 되는 화면에서 true */
   solidDock?: boolean
+  /** 탭바 바로 위 오른쪽에 항상 떠 있는 버튼 (예: 홈의 AI 도우미) */
+  fab?: ReactNode
 }
 
 /** 구매자 모바일 웹 틀: 흰 배경 위 가운데 컬럼 (PC에서는 조금 넓게) */
-export default function AppFrame({ children, tab, bottom, footer = false, tabBar = true, solidDock = false }: Props) {
+export default function AppFrame({
+  children,
+  tab,
+  bottom,
+  footer = false,
+  tabBar = true,
+  fab,
+  solidDock = false,
+}: Props) {
   return (
     <div className={styles.stage}>
       <div className={styles.col}>
@@ -26,6 +36,8 @@ export default function AppFrame({ children, tab, bottom, footer = false, tabBar
         {footer && <Footer />}
         {/* 하단 탭바는 구매자 화면에 기본으로 보여요(로그인·회원가입 제외). 하단 고정 버튼이 있으면 탭바 바로 위에 쌓아요 */}
         <div className={solidDock ? `${styles.dock} ${styles.solid}` : styles.dock}>
+          {/* dock이 늘 화면 아래에 붙어 있어서, 그 위에 두면 스크롤·푸터와 상관없이 탭바 위 같은 자리에 있어요 */}
+          {fab && <div className={styles.fab}>{fab}</div>}
           {bottom}
           {tabBar && <TabBar active={tab} />}
         </div>

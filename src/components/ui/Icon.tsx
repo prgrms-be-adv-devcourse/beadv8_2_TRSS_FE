@@ -101,6 +101,8 @@ const PATHS = {
   check: <path d="m5 12 4.5 4.5L19 7" />,
   sparkle: <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6" />,
   chat: <path d="M4 5h16v11H9l-5 4z" />,
+  droplet: <path d="M12 3.5s-6 6.6-6 11a6 6 0 0 0 12 0c0-4.4-6-11-6-11z" />,
+  arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
   camera: (
     <>
       <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
