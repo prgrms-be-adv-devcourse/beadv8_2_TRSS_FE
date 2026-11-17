@@ -37,6 +37,9 @@ export function startKakao(purpose: KakaoPurpose, from?: string) {
     redirect_uri: kakaoRedirectUri(),
     response_type: 'code',
     state,
+    // 프로필 사진 동의를 명시적으로 요청한다. 이 항목을 나중에 켰기 때문에, 그 전에 동의한 회원에게는
+    // scope 없이는 동의 화면이 다시 뜨지 않는다. 이미 동의한 회원에게는 동의 화면 없이 지나간다.
+    scope: 'profile_image',
   })
   window.location.assign(`https://kauth.kakao.com/oauth/authorize?${query}`)
   return true
