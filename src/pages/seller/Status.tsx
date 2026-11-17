@@ -24,7 +24,7 @@ type View = {
 /** S8 상태별 안내 (심사 중 · 판매 중 · 반려 · 철회 심사 중 · 철회됨 · 이용 제한) */
 const VIEW: Record<SellerStatus, View> = {
   PENDING: {
-    icon: 'receipt',
+    icon: 'clock',
     title: '신청 내용을 확인하고 있어요',
     desc: '관리자가 사업자 정보를 확인한 뒤 판매를 시작할 수 있어요.',
     dateLabel: '신청일',
@@ -48,12 +48,11 @@ const VIEW: Record<SellerStatus, View> = {
     primary: ['다시 신청하기', '/seller/apply'],
   },
   WITHDRAW_REQUESTED: {
-    icon: 'receipt',
+    icon: 'clock',
     title: '판매 철회를 요청했어요',
     desc: '관리자가 확인하는 동안 판매 기능은 잠겨요. 구매는 그대로 할 수 있어요.',
     dateLabel: '승인일',
     date: (x) => x.approvedAt,
-    reasonLabel: '철회 사유',
   },
   WITHDRAWN: {
     icon: 'check',
@@ -64,7 +63,7 @@ const VIEW: Record<SellerStatus, View> = {
     primary: ['다시 신청하기', '/seller/apply'],
   },
   SANCTIONED: {
-    icon: 'close',
+    icon: 'lock',
     title: '판매 활동이 제한됐어요',
     desc: '다시 신청할 수 없어요.',
     dateLabel: '신청일',
@@ -110,7 +109,7 @@ export default function SellerStatusPage() {
                 {v.primary[0]}
               </Button>
             ) : (
-              <Button size="lg" variant="outline" to="/mypage">
+              <Button size="lg" variant="outline" to="/mypage/profile">
                 내 정보로 돌아가기
               </Button>
             )}
@@ -118,7 +117,7 @@ export default function SellerStatusPage() {
         )
       }
     >
-      <PageHeader title="판매자 신청" back="/mypage" />
+      <PageHeader title="판매자 신청" back="/mypage/profile" />
       {loading && !data && <Loading />}
       {error && <ErrorView message={error} onRetry={reload} />}
       {!loading && !error && !seller && (
