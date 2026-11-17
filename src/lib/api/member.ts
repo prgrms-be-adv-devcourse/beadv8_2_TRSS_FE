@@ -10,7 +10,7 @@
  * PATCH  /api/v1/seller/me         판매자 정보 수정 (SELLER)
  * POST   /api/v1/seller/me/withdrawal  판매자 철회 요청 (SELLER)
  * GET    /api/v1/admin/sellers (PageResponse) | /{sellerId}
- * POST   /api/v1/admin/sellers/{sellerId}/approve | reject | withdrawal/approve | withdrawal/reject | sanction
+ * POST   /api/v1/admin/sellers/{sellerId}/approve | reject | withdrawal/approve | withdrawal/reject | sanction | unsanction
  * GET    /api/v1/admin/users (PageResponse) | /{userId}
  */
 
@@ -186,6 +186,11 @@ export function rejectSellerWithdrawal(sellerId: number, reason: string) {
 /** 제재 (APPROVED·WITHDRAW_REQUESTED, 사유 필수). 정산 보류, 재신청 불가 */
 export function sanctionSeller(sellerId: number, reason: string) {
   return api<AdminSellerDetail>(`/api/v1/admin/sellers/${sellerId}/sanction`, { method: 'POST', body: { reason } })
+}
+
+/** 제재 해지 (SANCTIONED → APPROVED, 사유 필수). 회원 탈퇴한 판매자는 해지 불가(409 SELLER_STATE_INVALID) */
+export function unsanctionSeller(sellerId: number, reason: string) {
+  return api<AdminSellerDetail>(`/api/v1/admin/sellers/${sellerId}/unsanction`, { method: 'POST', body: { reason } })
 }
 
 // ── 관리자 회원 조회 (ADMIN) ─────────────────────────────
