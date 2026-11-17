@@ -1,121 +1,212 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
+import Button from '../../components/ui/Button'
 import Icon from '../../components/ui/Icon'
-import PageHeader from '../../components/ui/PageHeader'
-import { Thumb } from '../../components/ui/Misc'
+import { Empty, ErrorView, Loading } from '../../components/ui/Misc'
+import { Sheet } from '../../components/ui/Overlay'
+import PageHeader, { HeaderIcon } from '../../components/ui/PageHeader'
+import { ApiError, errorMessage } from '../../lib/api'
+import {
+  askChatbot,
+  CHAT_MAX_LENGTH,
+  getChatConversations,
+  getChatMessages,
+  type ChatMessage,
+  type ChatSource,
+} from '../../lib/api/ai'
+import { useApi } from '../../lib/useApi'
 import styles from './Chatbot.module.css'
 
 type Msg =
-  | { id: number; from: 'me'; text: string }
-  | {
-      id: number
-      from: 'bot'
-      text: string
-      source?: string
-      order?: { img: string; title: string; status: string }
-      link?: { to: string; label: string }
-    }
+  | { key: string; from: 'me'; text: string }
+  | { key: string; from: 'bot'; text: string; sources: ChatSource[] }
+  | { key: string; from: 'error'; text: string }
 
-// TODO(API 미구현): POST /ai/chat — 챗봇 대화. 지금은 시안의 예시 대화를 보여주고, 보낸 질문에는 고정 안내로 답해요
-const SAMPLE: Msg[] = [
-  { id: 1, from: 'me', text: '반품은 언제까지 할 수 있어요?' },
-  {
-    id: 2,
-    from: 'bot',
-    text: '주문한 상품이 모두 배송 완료된 뒤, 구매 확정 전까지 반품을 요청할 수 있어요. 배송 완료 7일 뒤에는 자동으로 구매 확정돼요.',
-    source: '참고 · 반품 정책',
-  },
-  { id: 3, from: 'me', text: '제 주문 지금 어디쯤이에요?' },
-  {
-    id: 4,
-    from: 'bot',
-    text: '11월 9일 주문은 배송 중이에요.',
-    order: { img: '/images/windbreaker.jpg', title: '라이트 윈드브레이커 외 1건', status: '[택배사] · 간선 하차 11.10 08:12' },
-    source: '참고 · 내 주문 [주문번호]',
-  },
-  { id: 5, from: 'me', text: '주문을 취소하고 싶어요' },
-  {
-    id: 6,
-    from: 'bot',
-    text: '도우미는 조회와 안내만 할 수 있어요. 결제 전 주문은 주문 상세에서 취소할 수 있어요.',
-    link: { to: '/orders', label: '주문 내역으로 가기' },
-  },
-]
+const toMsg = (m: ChatMessage): Msg =>
+  m.role === 'USER'
+    ? { key: `m${m.messageId}`, from: 'me', text: m.content }
+    : { key: `m${m.messageId}`, from: 'bot', text: m.content, sources: m.sources }
 
-/** ⑱ 팔레트 챗봇 (AI 챗봇) */
+/** 2026-11-17T10:20:30 → 11.17 10:20 */
+function chatTime(iso: string) {
+  const m = /^\d{4}-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso)
+  return m ? `${m[1]}.${m[2]} ${m[3]}:${m[4]}` : iso
+}
+
+/** ⑱ 팔레트 챗봇 (FAQ 근거 AI 챗봇) */
 export default function ChatbotPage() {
-  const [msgs, setMsgs] = useState<Msg[]>(SAMPLE)
+  const [msgs, setMsgs] = useState<Msg[]>([])
+  const [conversationId, setConversationId] = useState<number | null>(null)
   const [input, setInput] = useState('')
+  const [pending, setPending] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [opening, setOpening] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
+  const seq = useRef(0)
 
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: 'end' })
-  }, [msgs.length])
+  }, [msgs.length, pending])
 
-  const send = (e: FormEvent) => {
+  const send = async (e: FormEvent) => {
     e.preventDefault()
     const text = input.trim()
-    if (!text) return
-    const id = Date.now()
-    setMsgs((m) => [
-      ...m,
-      { id, from: 'me', text },
-      { id: id + 1, from: 'bot', text: '도우미는 아직 준비 중이에요. 곧 배송·반품·쿠폰·충전과 내 주문을 안내해 드릴게요.' },
-    ])
+    if (!text || pending) return
+    const id = ++seq.current
+    setMsgs((m) => [...m, { key: `q${id}`, from: 'me', text }])
     setInput('')
+    setPending(true)
+    try {
+      const res = await askChatbot(text, conversationId)
+      if (id !== seq.current) return
+      setConversationId(res.conversationId)
+      setMsgs((m) => [...m, { key: `a${id}`, from: 'bot', text: res.answer, sources: res.sources }])
+    } catch (err) {
+      if (id !== seq.current) return
+      // 이어 묻던 대화가 사라졌으면 다음 질문은 새 대화로 시작
+      if (err instanceof ApiError && err.status === 404) setConversationId(null)
+      setMsgs((m) => [...m, { key: `e${id}`, from: 'error', text: errorMessage(err) }])
+    } finally {
+      if (id === seq.current) setPending(false)
+    }
+  }
+
+  const openConversation = async (cid: number) => {
+    const id = ++seq.current
+    setHistoryOpen(false)
+    setPending(false)
+    setOpening(true)
+    try {
+      const list = await getChatMessages(cid)
+      if (id !== seq.current) return
+      setConversationId(cid)
+      setMsgs(list.map(toMsg))
+    } catch (err) {
+      if (id !== seq.current) return
+      setConversationId(null)
+      setMsgs([{ key: `e${id}`, from: 'error', text: errorMessage(err) }])
+    } finally {
+      if (id === seq.current) setOpening(false)
+    }
+  }
+
+  const startNew = () => {
+    seq.current++
+    setHistoryOpen(false)
+    setPending(false)
+    setOpening(false)
+    setConversationId(null)
+    setMsgs([])
   }
 
   return (
     <AppFrame
+      solidDock
       bottom={
         <form className={styles.inputBar} onSubmit={send}>
           <input
             aria-label="메시지"
             placeholder="궁금한 걸 물어보세요"
             value={input}
-            maxLength={500}
+            maxLength={CHAT_MAX_LENGTH}
             onChange={(e) => setInput(e.target.value)}
           />
-          <button type="submit" aria-label="보내기" disabled={!input.trim()}>
-            <Icon name="chevron" size={20} />
+          <button type="submit" aria-label="보내기" disabled={!input.trim() || pending || opening}>
+            <Icon name="send" size={18} strokeWidth={2} />
           </button>
         </form>
       }
     >
-      <PageHeader back title="팔레트 챗봇" />
+      <PageHeader
+        back
+        home={false}
+        title="팔레트 챗봇"
+        right={<HeaderIcon icon="clock" label="대화 내역" onClick={() => setHistoryOpen(true)} />}
+      />
       <div className={styles.chat} aria-live="polite">
-        <p className={styles.lead}>배송·반품·쿠폰·충전과 내 주문을 물어볼 수 있어요</p>
-        {msgs.map((m) =>
-          m.from === 'me' ? (
-            <div key={m.id} className={styles.me}>
-              <p>{m.text}</p>
-            </div>
-          ) : (
-            <div key={m.id} className={styles.bot}>
-              <div className={styles.bubble}>
+        <p className={styles.lead}>회원·충전·주문·배송·반품·정산을 물어볼 수 있어요</p>
+        {opening ? (
+          <Loading label="대화를 불러오는 중이에요" />
+        ) : (
+          msgs.map((m) =>
+            m.from === 'me' ? (
+              <div key={m.key} className={styles.me}>
                 <p>{m.text}</p>
-                {m.order && (
-                  <div className={styles.order}>
-                    <Thumb src={m.order.img} width={44} height={44} radius={8} />
-                    <span>
-                      <b>{m.order.title}</b>
-                      <span>{m.order.status}</span>
-                    </span>
-                  </div>
+              </div>
+            ) : (
+              <div key={m.key} className={styles.bot}>
+                <p className={m.from === 'error' ? `${styles.bubble} ${styles.error}` : styles.bubble}>{m.text}</p>
+                {m.from === 'bot' && m.sources.length > 0 && (
+                  <ul className={styles.sources} aria-label="참고한 FAQ">
+                    {m.sources.map((s) => (
+                      <li key={s.faqId} className={styles.source} title={s.question}>
+                        참고 · {s.categoryLabel} · {s.question}
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
-              {m.source && <span className={styles.source}>{m.source}</span>}
-              {m.link && (
-                <Link to={m.link.to} className={styles.link}>
-                  {m.link.label}
-                </Link>
-              )}
-            </div>
-          ),
+            ),
+          )
+        )}
+        {pending && (
+          <div className={styles.bot} role="status" aria-label="답변을 만드는 중이에요">
+            <span className={`${styles.bubble} ${styles.typing}`}>
+              <i />
+              <i />
+              <i />
+            </span>
+          </div>
         )}
         <div ref={endRef} />
       </div>
+      {historyOpen && (
+        <HistorySheet onSelect={openConversation} onNew={startNew} onClose={() => setHistoryOpen(false)} />
+      )}
     </AppFrame>
+  )
+}
+
+/** 대화 내역 (최근 대화 순) */
+function HistorySheet({
+  onSelect,
+  onNew,
+  onClose,
+}: {
+  onSelect: (conversationId: number) => void
+  onNew: () => void
+  onClose: () => void
+}) {
+  const { data, loading, error, reload } = useApi(() => getChatConversations({ size: 20 }), [])
+
+  return (
+    <Sheet
+      title="대화 내역"
+      onClose={onClose}
+      footer={
+        <Button variant="outline" onClick={onNew}>
+          새 대화 시작
+        </Button>
+      }
+    >
+      {loading ? (
+        <Loading />
+      ) : error ? (
+        <ErrorView message={error} onRetry={reload} />
+      ) : !data?.items.length ? (
+        <Empty title="아직 나눈 대화가 없어요" />
+      ) : (
+        <ul className={styles.history}>
+          {data.items.map((c) => (
+            <li key={c.conversationId}>
+              <button type="button" onClick={() => onSelect(c.conversationId)}>
+                <b>{c.title}</b>
+                <span>{chatTime(c.lastMessageAt)}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Sheet>
   )
 }
