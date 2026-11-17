@@ -6,7 +6,7 @@ import InfluencerPicksPage from '../pages/influencer/Picks'
 import InfluencerPartnersPage from '../pages/influencer/Partners'
 import InfluencerProfilePage from '../pages/influencer/Profile'
 
-/** 인플루언서 화면 (신청·상태는 목업, 협약·쿠폰은 실제 API) */
+/** 인플루언서 화면 (신청·상태·협약·쿠폰은 실제 API, pick·크리에이터 프로필은 목업) */
 export const influencerScreens: ScreenRoute[] = [
   { path: '/influencer/apply', title: '인플루언서 신청', auth: 'login', group: '인플루언서', element: <InfluencerApplyPage /> },
   {
@@ -14,7 +14,7 @@ export const influencerScreens: ScreenRoute[] = [
     title: '인플루언서 신청 상태',
     auth: 'login',
     group: '인플루언서',
-    // ?influencerStatus=PENDING|APPROVED|REJECTED|REVOKED 로 상태별 화면을 볼 수 있어요
+    // ?influencerStatus=PENDING|APPROVED|REJECTED 로 상태별 화면을 볼 수 있어요
     element: <WithQuery page={InfluencerStatusPage} />,
     demo: '/influencer/status?influencerStatus=REJECTED',
   },

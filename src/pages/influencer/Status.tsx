@@ -4,9 +4,10 @@ import BottomBar from '../../components/ui/BottomBar'
 import Button from '../../components/ui/Button'
 import Icon, { type IconName } from '../../components/ui/Icon'
 import PageHeader from '../../components/ui/PageHeader'
-import { Badge, Loading } from '../../components/ui/Misc'
+import { Badge, ErrorView, Loading } from '../../components/ui/Misc'
 import { fmtDate } from '../account/util'
-import { useInfluencerStatus, type InfluencerStatus } from './mock'
+import type { InfluencerStatus } from '../../lib/api/influencer'
+import { useInfluencerStatus } from './influencerStatus'
 import s from './influencer.module.css'
 
 const STATE: Record<
@@ -46,30 +47,21 @@ const STATE: Record<
     date: '반려일',
     reasonLabel: '반려 사유',
   },
-  REVOKED: {
-    chip: '자격 해제',
-    tone: 'neutral',
-    icon: 'close',
-    title: '인플루언서 자격이 해제됐어요',
-    desc: '자격이 해제된 계정은 다시 신청할 수 없어요.',
-    date: '해제일',
-    reasonLabel: '해제 사유',
-  },
 }
 
 /**
- * ⑨-3 인플루언서 신청 상태 (PENDING · APPROVED · REJECTED · REVOKED)
+ * ⑨-3 인플루언서 신청 상태 (PENDING · APPROVED · REJECTED)
+ * GET /api/v1/influencers/me. 신청한 적이 없으면(404) 신청 화면으로
  * 화면 확인용: /influencer/status?influencerStatus=REJECTED
- * TODO(API 미구현): GET /api/v1/influencers/me — 지금은 mock.ts의 목업 상태예요
  */
 export default function InfluencerStatusPage(props: { influencerStatus?: string }) {
-  const { app } = useInfluencerStatus(props.influencerStatus)
+  const { app, error, reload } = useInfluencerStatus(props.influencerStatus)
 
   if (app === undefined)
     return (
       <AppFrame>
         <PageHeader title="인플루언서 신청" back="/mypage/profile" />
-        <Loading />
+        {error ? <ErrorView message={error} onRetry={reload} /> : <Loading />}
       </AppFrame>
     )
   if (app === null) return <Navigate to="/influencer/apply" replace />
