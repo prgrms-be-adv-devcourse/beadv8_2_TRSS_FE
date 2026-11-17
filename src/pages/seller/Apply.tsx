@@ -105,7 +105,7 @@ export default function SellerApplyPage() {
         </BottomBar>
       }
     >
-      <PageHeader title="판매자 신청" back="/mypage" />
+      <PageHeader title="판매자 신청" back="/mypage/profile" />
       {seller === undefined && !loadError ? (
         <Loading />
       ) : (
