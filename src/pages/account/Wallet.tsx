@@ -21,6 +21,7 @@ export const LEDGER_LABEL: Record<WalletTransactionType, string> = {
   SHIPPING_FEE: '배송비',
   SHIPPING_FEE_CANCEL: '배송비 반환',
   REFUND: '반품 환불',
+  RETURN_PICKUP_FEE_PAYMENT: '반품 배송비',
   SETTLEMENT: '정산 지급',
   FEE: '정산 수수료',
 }

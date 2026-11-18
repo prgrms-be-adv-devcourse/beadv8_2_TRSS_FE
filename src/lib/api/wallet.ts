@@ -82,6 +82,7 @@ export type WalletTransactionType =
   | 'SHIPPING_FEE' // 결제 중 배송비 (관리자)
   | 'SHIPPING_FEE_CANCEL' // 결제 취소 시 배송비 반환 (관리자)
   | 'REFUND' // 반품 환불
+  | 'RETURN_PICKUP_FEE_PAYMENT' // 단순변심 반품 시 구매자가 낸 반품 배송비
   | 'SETTLEMENT' // 정산 지급 (판매자)
   | 'FEE' // 정산 수수료 (관리자)
 
