@@ -226,6 +226,8 @@ export type RecommendationSection = {
   basis: RecommendBasis
   seedProductId: number
   seedProductName: string
+  /** 기준 상품 대표 이미지 (제목 옆 썸네일). 대표 이미지가 없으면 null */
+  seedThumbnailUrl: string | null
   items: ProductSummary[]
 }
 

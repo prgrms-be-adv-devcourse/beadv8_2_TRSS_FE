@@ -1,7 +1,7 @@
 /**
  * 홈 추천 탭의 상품 개인화 추천 (GET /api/v1/products/recommendations/me)
  * - "회원님을 위한 추천": 구매·별점·찜·장바구니를 바탕으로 고른 상품. 카드마다 "찜한 ○○와 비슷해요" 같은 이유를 붙여요.
- * - 기준 상품 섹션: "○○을 찜하셨네요"처럼 대표 기준 상품마다 비슷한 상품 한 줄
+ * - 기준 상품 섹션: "○○을 찜하셨네요"처럼 대표 기준 상품마다 비슷한 상품 한 줄. 기준 상품 대표 이미지가 있으면 제목 옆에 보여 줘요
  * 비로그인이거나 이력이 없으면(personalized=false) 둘 다 숨겨요. 맨 위 AI 피부 맞춤 추천과 랭킹 탭이 그 자리를 채워요.
  * 추천은 보조 정보라 요청이 실패해도 홈은 그대로 두고 이 섹션들만 숨겨요.
  */
@@ -15,7 +15,7 @@ import {
   type RecommendBasis,
   type RecommendationReason,
 } from '../../lib/api/product'
-import { MiniCard, SectionHead, imageOf } from './common'
+import { MiniCard, SectionHead } from './common'
 import styles from './Home.module.css'
 
 /** 회원님을 위한 추천 개수 */
@@ -80,8 +80,6 @@ export default function HomePersonal() {
       {data.sections
         .filter((s) => s.items.length > 0)
         .map((s, i) => {
-          // 섹션 응답에 기준 상품 사진이 없어서, 이름으로 찾을 수 있을 때만 썸네일을 보여 줘요.
-          const seedImage = imageOf({ thumbnailUrl: null, name: s.seedProductName })
           const titleId = `seed-${s.seedProductId}`
           return (
             <section
@@ -90,9 +88,9 @@ export default function HomePersonal() {
               className={`${styles.sec} ${i === 0 && data.forYou.length === 0 ? styles.divided : ''}`}
             >
               <div className={`${styles.secPad} ${styles.seedHead}`}>
-                {seedImage && (
+                {s.seedThumbnailUrl && (
                   <Link to={`/product/${s.seedProductId}`} aria-label={s.seedProductName} className={styles.seedThumb}>
-                    <Thumb src={seedImage} width={40} height={40} radius={10} />
+                    <Thumb src={s.seedThumbnailUrl} width={40} height={40} radius={10} />
                   </Link>
                 )}
                 <h2 id={titleId} className={styles.seedTitle}>
