@@ -5,6 +5,7 @@
  * POST   /api/v1/topups                    충전 준비 (토스 결제위젯 결제 요청 전)
  * POST   /api/v1/topups/confirm            충전 승인 (토스 successUrl에서)
  * POST   /api/v1/topups/{topupId}/fail     충전 실패 기록 (failUrl 복귀 또는 결제창 닫기 USER_CANCEL)
+ * POST   /api/v1/topups/{topupId}/cancel   충전 취소 (아직 쓰지 않은 금액 전부를 결제한 PG로 취소)
  * GET    /api/v1/topups                    충전 내역 (PageResponse, 최신순)
  * GET    /api/v1/topups/{topupId}          충전 상세
  * GET    /api/v1/wallet/transactions       예치금 거래 내역 (PageResponse, 최신순 고정, BE PR #132)
@@ -42,10 +43,21 @@ export type Topup = {
   orderId: string // TOPUP-…
   amount: number
   remainingAmount: number
+  cancelableAmount: number // 지금 취소할 수 있는 금액 (DONE이면 남은 금액, 그 외 0)
+  canceledAmount: number // PG 취소가 확정된 금액 합계
   status: TopupStatus
   failReason: string | null
   approvedAt: string | null
   createdAt: string
+}
+/** BE TopupCancelDto. status CANCELED(전부 취소)·DONE(일부 취소)이면 취소 완료, CANCELING이면 결과 확인 중 */
+export type TopupCancel = {
+  topupId: number
+  orderId: string
+  status: TopupStatus
+  cancelAmount: number // 이번에 취소 요청한 금액
+  canceledAmount: number | null // 이 충전 건에서 PG 취소가 확정된 금액 합계
+  balance: number | null // 취소 후 예치금 잔액
 }
 export type TopupPrepare = { topupId: number; orderId: string; amount: number }
 /** status DONE이면 balance는 반영 후 잔액, PROCESSING이면 null */
@@ -103,6 +115,14 @@ export const failTopup = (topupId: number, body: { code: string; message?: strin
     method: 'POST',
     body: { code: body.code, message: body.message?.slice(0, 300) },
   })
+
+/**
+ * 충전 취소. 아직 쓰지 않은 금액(cancelableAmount) 전부를 취소하고, 취소 금액은 요청 즉시 예치금에서 빠진다.
+ * 400-TOPUP_CANCEL_DECLINED PG 거절(data: PG 오류 코드·메시지) / 409-TOPUP_NOT_CANCELABLE 취소할 금액 없음 / 502 PG 오류.
+ * 실패하면 잔액은 원래대로 돌아온다
+ */
+export const cancelTopup = (topupId: number) =>
+  api<TopupCancel>(`/api/v1/topups/${topupId}/cancel`, { method: 'POST' })
 
 // ── 결제 요청 직전에 저장해 두는 충전 건 ──
 // 사용자가 결제를 취소하면 토스가 orderId를 안 줘서, 충전 준비 응답의 topupId를 미리 저장해 둬요.
