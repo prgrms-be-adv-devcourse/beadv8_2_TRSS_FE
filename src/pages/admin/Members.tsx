@@ -17,11 +17,11 @@ import {
 import { useApi } from '../../lib/useApi'
 import { useDebounced } from '../../lib/useDebounced'
 import { useIsDesktop } from '../../lib/useMedia'
-import { InfoRow, Notice, Pager, SELLER_STATUS, fmtDate } from './shared'
+import { INFLUENCER_STATUS, InfoRow, Notice, Pager, SELLER_STATUS, fmtDate } from './shared'
 import s from './admin.module.css'
 
 const PAGE_SIZE = 20
-const COLS = { gridTemplateColumns: '1fr 1.6fr .9fr .9fr .9fr .7fr' }
+const COLS = { gridTemplateColumns: '1fr 1.6fr .9fr .9fr .9fr .9fr .7fr' }
 
 const ORDER_STATUS_LABEL: Record<string, string> = {
   CREATED: '결제 대기',
@@ -145,13 +145,17 @@ function MemberDetail({ d }: { d: AdminMemberDetail }) {
       <InfoRow label="이메일">{deleted ? '-' : d.email}</InfoRow>
       <InfoRow label="회원 유형">{MEMBER_TYPE_LABEL[d.memberType]}</InfoRow>
       <InfoRow label="판매자 상태">{d.sellerStatus ? SELLER_STATUS[d.sellerStatus][0] : '-'}</InfoRow>
+      <InfoRow label="인플루언서 상태">{d.influencerStatus ? INFLUENCER_STATUS[d.influencerStatus][0] : '-'}</InfoRow>
       <InfoRow label="가입일">{fmtDate(d.createdAt)}</InfoRow>
-      <InfoRow label="예치금">{won(d.wallet.balance)}</InfoRow>
-      <InfoRow label="구매 확정 대기">{won(d.wallet.heldAmount)}</InfoRow>
+      {/* 지갑은 조회하지 못했을 때와 지갑이 없을 때(시드 관리자·물류 담당자 등) 모두 null이라 구분 없이 "-"로 표시한다 */}
+      <InfoRow label="예치금">{d.wallet ? won(d.wallet.balance) : '-'}</InfoRow>
+      <InfoRow label="구매 확정 대기">{d.wallet ? won(d.wallet.heldAmount) : '-'}</InfoRow>
+      {/* 최근 주문은 주문이 없으면 빈 목록, 조회하지 못하면 null로 구분되어 온다 */}
       <div className={s.panelSection}>
         <p className={s.panelSub}>최근 주문</p>
-        {d.recentOrders.length === 0 && <p className={s.panelNote}>최근 주문이 없어요.</p>}
-        {d.recentOrders.map((o) => (
+        {d.recentOrders === null && <p className={s.panelNote}>주문 정보를 불러오지 못했어요.</p>}
+        {d.recentOrders?.length === 0 && <p className={s.panelNote}>최근 주문이 없어요.</p>}
+        {d.recentOrders?.map((o) => (
           <InfoRow key={o.orderId} label={`#${o.orderId}`}>
             {won(o.totalAmount)} · {ORDER_STATUS_LABEL[o.status] ?? o.status}
           </InfoRow>
@@ -191,6 +195,7 @@ function DesktopMembers({ v }: { v: View }) {
               <span>이메일</span>
               <span>회원 유형</span>
               <span>판매자</span>
+              <span>인플루언서</span>
               <span>가입일</span>
               <span>상태</span>
             </div>
@@ -214,6 +219,15 @@ function DesktopMembers({ v }: { v: View }) {
                 <span>
                   {m.sellerStatus ? (
                     <Badge tone={SELLER_STATUS[m.sellerStatus][1]}>{SELLER_STATUS[m.sellerStatus][0]}</Badge>
+                  ) : (
+                    '—'
+                  )}
+                </span>
+                <span>
+                  {m.influencerStatus ? (
+                    <Badge tone={INFLUENCER_STATUS[m.influencerStatus][1]}>
+                      {INFLUENCER_STATUS[m.influencerStatus][0]}
+                    </Badge>
                   ) : (
                     '—'
                   )}

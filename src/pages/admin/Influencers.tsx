@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import ConsoleShell from '../../components/ui/ConsoleShell'
 import Button from '../../components/ui/Button'
-import { Badge, Empty, ErrorView, Loading, Segment, Tabs, type Tone } from '../../components/ui/Misc'
+import { Badge, Empty, ErrorView, Loading, Segment, Tabs } from '../../components/ui/Misc'
 import c from '../../components/ui/console.module.css'
 import { errorMessage, toPageParam } from '../../lib/api'
 import {
@@ -17,7 +17,7 @@ import {
 } from '../../lib/api/influencer'
 import { useApi } from '../../lib/useApi'
 import { useIsDesktop } from '../../lib/useMedia'
-import { InfoRow, Notice, Pager, ReasonField, fmtDay } from './shared'
+import { INFLUENCER_STATUS, InfoRow, Notice, Pager, ReasonField, fmtDay } from './shared'
 import s from './admin.module.css'
 
 const PAGE_SIZE = 20
@@ -32,11 +32,7 @@ const COUNT_KEY: Record<Tab, keyof AdminInfluencerCounts> = {
   APPROVED: 'approved',
   REJECTED: 'rejected',
 }
-const STATUS: Record<InfluencerStatus, [string, Tone]> = {
-  PENDING: ['심사 중', 'amber'],
-  APPROVED: ['승인됨', 'green'],
-  REJECTED: ['반려됨', 'red'],
-}
+const STATUS = INFLUENCER_STATUS
 
 type Action = 'approve' | 'reject'
 const DONE: Record<Action, string> = {
