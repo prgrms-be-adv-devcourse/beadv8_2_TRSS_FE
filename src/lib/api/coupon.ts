@@ -168,7 +168,7 @@ export type ProductCoupon = {
  */
 export type ProductCouponIssueRequest = {
   partnershipId: number
-  /** 진행 중 협약의 인플루언서가 pick한 내 판매 중 상품 */
+  /** 내 판매 중 상품 */
   productId: number
   /** 최대 100자 */
   name: string

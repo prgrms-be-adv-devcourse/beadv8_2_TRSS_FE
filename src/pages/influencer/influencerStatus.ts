@@ -78,9 +78,9 @@ export const INFLUENCER_META: Record<
   APPROVED: {
     tag: '승인됨',
     tone: 'green',
-    text: 'pick한 상품과 판매자 협약·쿠폰을 관리할 수 있어요.',
-    act: '내 pick 보기',
-    to: '/influencer/picks',
+    text: '판매자 협약과 발행받은 쿠폰을 관리할 수 있어요.',
+    act: '협약 · 쿠폰 보기',
+    to: '/influencer/partners',
   },
   REJECTED: {
     tag: '반려됨',

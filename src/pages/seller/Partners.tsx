@@ -7,6 +7,7 @@ import c from '../../components/ui/console.module.css'
 import f from '../../components/ui/form.module.css'
 import { errorMessage, toPageParam } from '../../lib/api'
 import { getSellerCoupons } from '../../lib/api/coupon'
+import { searchInfluencers, type InfluencerProfile } from '../../lib/api/influencer'
 import {
   PARTNERSHIP_ENDED_BY_LABEL,
   endSellerPartnership,
@@ -16,14 +17,16 @@ import {
   type PartnershipStatus,
 } from '../../lib/api/partnership'
 import { useApi } from '../../lib/useApi'
+import { useDebounced } from '../../lib/useDebounced'
 import { useIsDesktop } from '../../lib/useMedia'
-import { MOCK_INFLUENCERS } from './mock'
+import { usePaged } from '../account/util'
 import { Notice, Pager, fmtMD } from './shared'
 import s from './seller.module.css'
 
 const PAGE_SIZE = 20
 const COLS = '1fr 1.4fr .8fr 1fr .8fr 1.4fr'
 const MESSAGE_MAX = 500
+const SEARCH_SIZE = 10
 
 type TabKey = 'all' | PartnershipStatus
 const TABS: Array<[TabKey, string]> = [
@@ -90,8 +93,7 @@ export default function SellerPartnersPage() {
   const [tab, setTab] = useState<TabKey>('all')
   const [page, setPage] = useState(1)
   const list = useApi(
-    () =>
-      getSellerPartnerships({ status: tab === 'all' ? undefined : tab, page: toPageParam(page), size: PAGE_SIZE }),
+    () => getSellerPartnerships({ status: tab === 'all' ? undefined : tab, page: toPageParam(page), size: PAGE_SIZE }),
     [tab, page],
   )
   const counts = useCounts()
@@ -102,26 +104,25 @@ export default function SellerPartnersPage() {
     return { total: mine.length, stopped: mine.filter((x) => x.status === 'STOPPED').length }
   }
 
-  // 새 협약 요청
-  // TODO(API 미구현): 판매자가 고를 수 있는 승인된 인플루언서 목록 — 목업 목록에 내 협약 상대를 더해 보여요.
-  const known = new Map<number, string>()
-  for (const p of list.data?.items ?? []) known.set(p.influencerId, who(p))
-  for (const m of MOCK_INFLUENCERS) if (!known.has(m.influencerId)) known.set(m.influencerId, m.activityName)
-  const [influencerId, setInfluencerId] = useState('')
+  // 새 협약 요청: 승인된 인플루언서를 활동명으로 검색해 고른다
+  const [keyword, setKeyword] = useState('')
+  const q = useDebounced(keyword.trim())
+  const found = usePaged((pg) => searchInfluencers({ keyword: q || undefined, page: pg, size: SEARCH_SIZE }), [q])
+  const [selected, setSelected] = useState<InfluencerProfile | null>(null)
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [formError, setFormError] = useState('')
   const [done, setDone] = useState('')
 
-  async function send(targetId: number, msg?: string) {
+  async function send(targetId: number, name: string, msg?: string) {
     if (sending) return
     setSending(true)
     setFormError('')
     setDone('')
     try {
       await requestPartnership(targetId, msg?.trim() || undefined)
-      setDone(`${known.get(targetId) ?? '인플루언서'}에게 협약을 요청했어요. 수락하면 진행 중으로 바뀌어요.`)
-      setInfluencerId('')
+      setDone(`${name}에게 협약을 요청했어요. 수락하면 진행 중으로 바뀌어요.`)
+      setSelected(null)
       setMessage('')
       list.reload()
       counts.reload()
@@ -177,7 +178,7 @@ export default function SellerPartnersPage() {
       )
     if (p.status === 'REJECTED' || p.status === 'ENDED')
       return (
-        <Button variant="outline" size="sm" onClick={() => send(p.influencerId)} disabled={sending}>
+        <Button variant="outline" size="sm" onClick={() => send(p.influencerId, who(p))} disabled={sending}>
           다시 요청
         </Button>
       )
@@ -198,19 +199,56 @@ export default function SellerPartnersPage() {
         <label htmlFor="pt-inf" className={f.label}>
           인플루언서
         </label>
-        <select
+        <input
           id="pt-inf"
-          className={f.select}
-          value={influencerId}
-          onChange={(e) => setInfluencerId(e.target.value)}
+          type="search"
+          className={f.input}
+          placeholder="활동명으로 검색"
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          aria-controls="pt-inf-list"
+        />
+        <div
+          id="pt-inf-list"
+          className={s.infList}
+          role="listbox"
+          aria-label="승인된 인플루언서"
+          aria-busy={found.loading}
         >
-          <option value="">승인된 인플루언서를 골라 주세요</option>
-          {[...known].map(([id, name]) => (
-            <option key={id} value={id}>
-              {name}
-            </option>
-          ))}
-        </select>
+          {found.error ? (
+            <ErrorView message={found.error} onRetry={found.reload} />
+          ) : found.loaded && found.items.length === 0 ? (
+            <p className={s.faintLine}>
+              {q ? `'${q}'에 맞는 인플루언서가 없어요.` : '승인된 인플루언서가 아직 없어요.'}
+            </p>
+          ) : !found.loaded ? (
+            <p className={s.faintLine}>인플루언서를 불러오고 있어요</p>
+          ) : (
+            found.items.map((it) => (
+              <button
+                key={it.influencerId}
+                type="button"
+                role="option"
+                aria-selected={selected?.influencerId === it.influencerId}
+                className={s.infItem}
+                onClick={() => setSelected(it)}
+              >
+                <span className={s.avatarSm} aria-hidden="true">
+                  {it.activityName.slice(0, 1)}
+                </span>
+                <span className={s.prodText}>
+                  <b>{it.activityName}</b>
+                  {it.introduction && <span className={`${s.faint} ${c.ellipsis}`}>{it.introduction}</span>}
+                </span>
+              </button>
+            ))
+          )}
+          {found.hasMore && !found.error && (
+            <Button variant="outline" size="sm" onClick={found.loadMore} disabled={found.loading}>
+              {found.loading ? '불러오는 중' : '더 보기'}
+            </Button>
+          )}
+        </div>
       </div>
       <div className={f.field}>
         <label htmlFor="pt-msg" className={f.label}>
@@ -227,7 +265,10 @@ export default function SellerPartnersPage() {
       </div>
       {formError && <Notice tone="error">{formError}</Notice>}
       <div className={desktop ? s.right : undefined}>
-        <Button onClick={() => send(Number(influencerId), message)} disabled={!influencerId || sending}>
+        <Button
+          onClick={() => selected && send(selected.influencerId, selected.activityName, message)}
+          disabled={!selected || sending}
+        >
           {sending ? '보내는 중' : '협약 요청 보내기'}
         </Button>
       </div>
@@ -242,7 +283,11 @@ export default function SellerPartnersPage() {
   if (list.loading && !list.data) body = <Loading label="협약을 불러오고 있어요" />
   else if (list.error) body = <ErrorView message={list.error} onRetry={list.reload} />
   else if (items.length === 0)
-    body = <Empty title={tab === 'all' ? '아직 협약이 없어요' : '이 상태의 협약이 없어요'}>인플루언서에게 협약을 요청해 보세요.</Empty>
+    body = (
+      <Empty title={tab === 'all' ? '아직 협약이 없어요' : '이 상태의 협약이 없어요'}>
+        인플루언서에게 협약을 요청해 보세요.
+      </Empty>
+    )
   else if (desktop)
     body = (
       <div role="table" className={c.table} aria-busy={list.loading}>

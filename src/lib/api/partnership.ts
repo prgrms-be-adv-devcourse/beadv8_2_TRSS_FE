@@ -4,7 +4,6 @@
  * [판매자] (USER + 판매자 승인 상태)
  * POST /api/v1/seller/partnerships                                 협약 요청 { influencerId, message } → { partnershipId }
  * GET  /api/v1/seller/partnerships ?status                         내 협약 목록 (PageResponse, 최신 요청순)
- * GET  /api/v1/seller/partnerships/{partnershipId}/picked-products 협약 인플루언서가 pick한 내 판매 중 상품 (List, 쿠폰 발행 대상)
  * POST /api/v1/seller/partnerships/{partnershipId}/end             협약 종료 (그 협약의 상품 쿠폰 모두 중지)
  * [인플루언서] (USER + 인플루언서 승인 상태)
  * GET  /api/v1/influencer/partnerships ?status                     받은 협약 목록 (PageResponse, 최신 요청순)
@@ -54,14 +53,6 @@ export type Partnership = {
   endedBy: PartnershipEndedBy | null
 }
 
-/** BE PickedProductDto. 협약 인플루언서가 pick한 내 판매 중 상품 */
-export type PickedProduct = {
-  productId: number
-  name: string
-  price: number
-  thumbnailUrl: string | null
-}
-
 type PartnershipQuery = PageQuery & { status?: PartnershipStatus }
 
 // ── 판매자 ──
@@ -70,9 +61,6 @@ export const requestPartnership = (influencerId: number, message?: string) =>
   api<{ partnershipId: number }>('/api/v1/seller/partnerships', { method: 'POST', body: { influencerId, message } })
 export const getSellerPartnerships = (query: PartnershipQuery = {}) =>
   api<PageResponse<Partnership>>('/api/v1/seller/partnerships', { query })
-/** 페이지 없이 배열로 와요. 협약이 ACTIVE가 아니면 409 */
-export const getPickedProducts = (partnershipId: number) =>
-  api<PickedProduct[]>(`/api/v1/seller/partnerships/${partnershipId}/picked-products`)
 export const endSellerPartnership = (partnershipId: number) =>
   api<void>(`/api/v1/seller/partnerships/${partnershipId}/end`, { method: 'POST' })
 

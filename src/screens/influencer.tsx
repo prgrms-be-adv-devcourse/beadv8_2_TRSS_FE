@@ -2,13 +2,18 @@ import type { ScreenRoute } from '../routes'
 import WithQuery from './WithQuery'
 import InfluencerApplyPage from '../pages/influencer/Apply'
 import InfluencerStatusPage from '../pages/influencer/Status'
-import InfluencerPicksPage from '../pages/influencer/Picks'
 import InfluencerPartnersPage from '../pages/influencer/Partners'
 import InfluencerProfilePage from '../pages/influencer/Profile'
 
-/** 인플루언서 화면 (신청·상태·협약·쿠폰은 실제 API, pick·크리에이터 프로필은 목업) */
+/** 인플루언서 화면 (신청·상태·협약·쿠폰·크리에이터 프로필 모두 실제 API) */
 export const influencerScreens: ScreenRoute[] = [
-  { path: '/influencer/apply', title: '인플루언서 신청', auth: 'login', group: '인플루언서', element: <InfluencerApplyPage /> },
+  {
+    path: '/influencer/apply',
+    title: '인플루언서 신청',
+    auth: 'login',
+    group: '인플루언서',
+    element: <InfluencerApplyPage />,
+  },
   {
     path: '/influencer/status',
     title: '인플루언서 신청 상태',
@@ -18,8 +23,13 @@ export const influencerScreens: ScreenRoute[] = [
     element: <WithQuery page={InfluencerStatusPage} />,
     demo: '/influencer/status?influencerStatus=REJECTED',
   },
-  { path: '/influencer/picks', title: '내 pick', auth: 'login', group: '인플루언서', element: <InfluencerPicksPage /> },
-  { path: '/influencer/partners', title: '협약 · 발행받은 쿠폰', auth: 'login', group: '인플루언서', element: <InfluencerPartnersPage /> },
+  {
+    path: '/influencer/partners',
+    title: '협약 · 발행받은 쿠폰',
+    auth: 'login',
+    group: '인플루언서',
+    element: <InfluencerPartnersPage />,
+  },
   {
     path: '/influencer/profile',
     title: '크리에이터 프로필',
