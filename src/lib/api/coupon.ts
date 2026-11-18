@@ -321,6 +321,8 @@ export const getAdminCoupons = (
     status?: CouponDisplayStatus
     sellerId?: number
     influencerId?: number
+    /** 쿠폰명 검색어 (부분 일치, 대소문자 무시, 최대 50자) */
+    keyword?: string
   } = {},
 ) => api<PageResponse<AdminCouponSummary>>('/api/v1/admin/coupons', { query })
 /** query의 page·size는 사용 내역(usages) 페이지예요. */

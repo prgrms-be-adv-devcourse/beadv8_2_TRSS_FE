@@ -69,13 +69,25 @@ export default function AdminCoupons() {
   const [view, setView] = useState<View>('coupons')
   const [page, setPage] = useState(1)
   const [keyword, setKeyword] = useState('')
+  // 입력이 멈추고 0.3초 뒤에 서버에서 검색해요(글자마다 요청하지 않게)
+  const [searchKeyword, setSearchKeyword] = useState('')
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearchKeyword(keyword.trim())
+      setPage(1)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [keyword])
   const [partnerTab, setPartnerTab] = useState<PartnerTab>('ALL')
   const [partnerPage, setPartnerPage] = useState(1)
   const [notice, setNotice] = useState('')
   const [stopTarget, setStopTarget] = useState<AdminCouponSummary | null>(null)
   const [detailId, setDetailId] = useState<number | null>(null)
 
-  const coupons = useApi(() => getAdminCoupons({ page: toPageParam(page), size: PAGE_SIZE }), [page])
+  const coupons = useApi(
+    () => getAdminCoupons({ keyword: searchKeyword || undefined, page: toPageParam(page), size: PAGE_SIZE }),
+    [searchKeyword, page],
+  )
   const partnerStatus = partnerTab === 'ALL' ? undefined : partnerTab
   const partners = useApi(
     () => getAdminPartnerships({ status: partnerStatus, page: toPageParam(partnerPage), size: PAGE_SIZE }),
@@ -94,19 +106,20 @@ export default function AdminCoupons() {
   const issuer = (cp: AdminCouponSummary) => {
     if (cp.issuerType === 'ADMIN') return '관리자'
     const p = cp.productCoupon ? partnerMap.get(cp.productCoupon.partnershipId) : undefined
-    if (p) return `${pName(p)}, ${iName(p)}`
-    return `판매자 #${cp.issuerId}${cp.productCoupon ? `, 인플루언서 #${cp.productCoupon.influencerId}` : ''}`
+    if (p) return `${pName(p)} · ${iName(p)}`
+    return `판매자 #${cp.issuerId}${cp.productCoupon ? ` · 인플루언서 #${cp.productCoupon.influencerId}` : ''}`
+  }
+  /** 모바일 한 줄 요약에서는 상호명만 보여요 (시안) */
+  const sellerOf = (cp: AdminCouponSummary) => {
+    const p = cp.productCoupon ? partnerMap.get(cp.productCoupon.partnershipId) : undefined
+    return p ? pName(p) : `판매자 #${cp.issuerId}`
   }
   const usage = (cp: AdminCouponSummary) =>
     `${cp.usedCount.toLocaleString('ko-KR')} / ${cp.quantityLimited ? (cp.totalQuantity ?? 0).toLocaleString('ko-KR') : '제한 없음'}`
   const period = (cp: { validFrom: string; validUntil: string }) => `${mmdd(cp.validFrom)} ~ ${lastDay(cp.validUntil)}`
 
-  // TODO(API 미구현): 관리자 쿠폰 목록에 쿠폰명 검색 파라미터가 없어요 — 지금은 불러온 페이지 안에서만 걸러요
-  const couponRows = useMemo(() => {
-    const items = coupons.error ? [] : (coupons.data?.items ?? [])
-    const q = keyword.trim()
-    return q ? items.filter((cp) => cp.name.includes(q)) : items
-  }, [coupons.data, coupons.error, keyword])
+  // 쿠폰명 검색은 서버에서 해요(keyword). 모든 페이지에서 찾아요
+  const couponRows = coupons.error ? [] : (coupons.data?.items ?? [])
 
   const viewTabs = [
     { value: 'coupons' as View, label: `쿠폰${coupons.data ? ` ${coupons.data.totalElements}` : ''}` },
@@ -140,7 +153,7 @@ export default function AdminCoupons() {
     ) : coupons.error ? (
       <ErrorView message={coupons.error} onRetry={coupons.reload} />
     ) : couponRows.length === 0 ? (
-      <Empty title={keyword.trim() ? '검색 결과가 없어요.' : '등록된 쿠폰이 없어요.'} />
+      <Empty title={searchKeyword ? '검색 결과가 없어요.' : '등록된 쿠폰이 없어요.'} />
     ) : null
 
   const partnerRows = partners.error ? [] : (partners.data?.items ?? [])
@@ -315,7 +328,7 @@ export default function AdminCoupons() {
                         <span className={s.grow}>
                           <b className={c.ellipsis}>{cp.name}</b>
                           <span className={s.meta}>
-                            {cp.couponType === 'CART' ? '장바구니' : `상품, ${issuer(cp)}`}, {period(cp)}, 사용{' '}
+                            {cp.couponType === 'CART' ? '장바구니' : `상품 · ${sellerOf(cp)}`} · {period(cp)} · 사용{' '}
                             {usage(cp)}
                           </span>
                         </span>
