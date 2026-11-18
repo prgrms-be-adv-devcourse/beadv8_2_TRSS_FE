@@ -5,7 +5,7 @@
  * 서버 데이터가 아니라는 뜻이고, "팔레트 시드 상점" 상품이 보이면 서버에 제대로 연결된 거예요.
  */
 import { ApiError, type PageResponse } from './api'
-import type { CategoryNode, ProductDetail, ProductSearchQuery, ProductSummary } from './api/product'
+import type { CategoryNode, PopularKeyword, ProductDetail, ProductSearchQuery, ProductSummary } from './api/product'
 
 /** 서버에 닿지 못한 오류인지. 요청 자체가 실패했거나, 백엔드 형식("404-CODE")이 아닌 응답(프록시 오류 등)이면 true */
 export function isServerUnreachable(e: unknown) {
@@ -44,23 +44,26 @@ const ROWS: Array<[string, string, string, number, number]> = [
   ['데일리핏', '라이트 윈드브레이커', '아우터', 59000, 14],
 ]
 
+/** 목록 응답에는 카테고리가 없어서, 예시 데이터 안에서만 카테고리·재고를 같이 들고 있어요. */
+type ExampleProduct = ProductSummary & { categoryId: number; stock: number }
+
 /** 최신순(ID 내림차순)으로 둬요. */
-const EXAMPLE_PRODUCTS: Array<ProductSummary & { stock: number }> = ROWS.map(
-  ([shop, name, category, price, stock], i) => ({
-    productId: 900 + ROWS.length - i,
-    name,
-    price,
-    salePrice: null,
-    discountRate: null,
-    categoryId: categoryIdOf(category),
-    sellerId: 0,
-    businessName: shop,
-    thumbnailUrl: null,
-    soldOut: stock === 0,
-    remainingStock: stock > 0 && stock <= 5 ? stock : null,
-    stock,
-  }),
-)
+const EXAMPLE_PRODUCTS: ExampleProduct[] = ROWS.map(([shop, name, category, price, stock], i) => ({
+  productId: 900 + ROWS.length - i,
+  name,
+  price,
+  salePrice: null,
+  discountRate: null,
+  sellerId: 0,
+  businessName: shop,
+  thumbnailUrl: null,
+  soldOut: stock === 0,
+  remainingStock: stock > 0 && stock <= 5 ? stock : null,
+  reviewCount: 0,
+  averageRating: 0,
+  categoryId: categoryIdOf(category),
+  stock,
+}))
 
 /** GET /api/v1/products 와 같은 규칙으로 예시 상품을 걸러요. */
 export function searchExampleProducts({
@@ -68,6 +71,7 @@ export function searchExampleProducts({
   categoryId,
   sort,
   excludeSoldOut = true,
+  discounted = false,
   page = 0,
   size = 20,
 }: ProductSearchQuery): PageResponse<ProductSummary> {
@@ -78,13 +82,14 @@ export function searchExampleProducts({
     (p) =>
       (!categoryIds || categoryIds.includes(p.categoryId)) &&
       (!keyword || p.name.includes(keyword)) &&
-      (!excludeSoldOut || !p.soldOut),
+      (!excludeSoldOut || !p.soldOut) &&
+      (!discounted || p.salePrice != null),
   )
   if (sort === 'PRICE_ASC') items = [...items].sort((a, b) => a.price - b.price)
   if (sort === 'PRICE_DESC') items = [...items].sort((a, b) => b.price - a.price)
 
   return {
-    items: items.slice(page * size, (page + 1) * size).map(({ stock: _stock, ...p }) => p),
+    items: items.slice(page * size, (page + 1) * size).map(({ stock: _stock, categoryId: _categoryId, ...p }) => p),
     page,
     size,
     totalElements: items.length,
@@ -132,3 +137,17 @@ export function getExampleProduct(productId: number): ProductDetail | null {
     ingredientsText: null,
   }
 }
+
+/** 서버에 닿지 못할 때 보여 줄 예시 인기 검색어 (예시 상품 이름에서 골랐어요) */
+export const EXAMPLE_POPULAR_KEYWORDS: PopularKeyword[] = (
+  [
+    ['선크림', 2],
+    ['시카 크림', null],
+    ['토너', 0],
+    ['세럼', 3],
+    ['쿠션', -1],
+    ['클렌징폼', 1],
+    ['윈드브레이커', null],
+    ['마스크팩', -2],
+  ] as Array<[string, number | null]>
+).map(([keyword, rankChange], i) => ({ rank: i + 1, keyword, rankChange }))

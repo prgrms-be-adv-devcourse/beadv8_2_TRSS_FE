@@ -1,6 +1,6 @@
 /**
  * 구매자·쇼핑 화면 공통 헬퍼 (pages/shop 안에서만 써요)
- * - 상품·카테고리 불러오기 (백엔드에 닿지 못하면 lib/exampleProducts 예시 데이터)
+ * - 상품·카테고리·인기 검색어 불러오기 (백엔드에 닿지 못하면 lib/exampleProducts 예시 데이터)
  * - 찜 상태·토글, 로그인 필요 동작
  * - 상품 카드, AI 표시, 별점
  */
@@ -9,17 +9,21 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError, errorMessage } from '../../lib/api'
 import {
   getCategories,
+  getPopularKeywords,
   getProduct,
   searchProducts,
   type CategoryNode,
+  type PopularKeyword,
   type ProductDetail,
   type ProductSearchQuery,
 } from '../../lib/api/product'
 import { addWishlist, getWishlist, removeWishlist } from '../../lib/api/wishlist'
 import { getProductRecommendations, type ProductRecommendations } from '../../lib/api/ai'
 import { useAuth } from '../../lib/auth'
+import { useApi } from '../../lib/useApi'
 import {
   EXAMPLE_CATEGORIES,
+  EXAMPLE_POPULAR_KEYWORDS,
   getExampleProduct,
   isServerUnreachable,
   searchExampleProducts,
@@ -39,6 +43,32 @@ export function imageOf(p: { thumbnailUrl: string | null; name: string }) {
 /** 카테고리 트리. 서버에 닿지 못하면 예시 카테고리 */
 export const loadCategories = () =>
   getCategories().catch((e) => (isServerUnreachable(e) ? EXAMPLE_CATEGORIES : Promise.reject(e)))
+
+/** 인기 검색어를 다시 받기까지의 시간. 서버도 1분 캐시해서 더 자주 받아도 같아요. */
+const POPULAR_KEYWORDS_TTL_MS = 60_000
+let popularKeywordsCache: { at: number; promise: Promise<PopularKeyword[]> } | null = null
+
+/**
+ * 인기 검색어 (순위순). 홈 검색창 안내·검색 패널·상품 목록이 같이 쓰므로 1분 동안 한 번만 받아요.
+ * 서버에 닿지 못하면 예시 검색어, 그 밖의 실패면 빈 목록(화면에서 숨김)이에요.
+ */
+export function loadPopularKeywords(): Promise<PopularKeyword[]> {
+  const now = Date.now()
+  if (popularKeywordsCache && now - popularKeywordsCache.at < POPULAR_KEYWORDS_TTL_MS) {
+    return popularKeywordsCache.promise
+  }
+  const promise = getPopularKeywords().catch((e: unknown) => {
+    popularKeywordsCache = null // 실패는 캐시하지 않고 다음에 다시 받아요
+    return isServerUnreachable(e) ? EXAMPLE_POPULAR_KEYWORDS : []
+  })
+  popularKeywordsCache = { at: now, promise }
+  return promise
+}
+
+/** 인기 검색어. 받기 전·실패면 빈 목록이에요. */
+export function usePopularKeywords(): PopularKeyword[] {
+  return useApi(loadPopularKeywords, []).data ?? []
+}
 
 /** 상품 검색. 서버에 닿지 못하면 예시 상품 (example: true) */
 export const loadProducts = (query: ProductSearchQuery) =>
