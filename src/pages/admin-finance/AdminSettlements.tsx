@@ -434,7 +434,7 @@ export default function AdminSettlements() {
               <input
                 id="seller-filter"
                 type="search"
-                placeholder="상호명 또는 판매자 ID"
+                placeholder="판매자 ID로 검색"
                 value={sellerInput}
                 aria-invalid={!!sellerError}
                 aria-describedby={sellerError ? 'seller-filter-help' : undefined}
