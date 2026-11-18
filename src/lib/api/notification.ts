@@ -5,6 +5,8 @@
  * GET   /api/v1/notifications/unread-count    최근 30일 안 읽은 개수 (유형과 관계없이 전체)
  * PATCH /api/v1/notifications/{id}/read       하나 읽음 (이미 읽었으면 그대로 성공)
  * PATCH /api/v1/notifications/read-all        전체 읽음
+ * GET   /api/v1/notifications/subscribe       실시간 구독 (SSE, lib/notificationStream.ts)
+ * 읽음 처리 뒤 안 읽은 개수는 SSE unread-count로 온다
  */
 import { api } from '.'
 
@@ -38,16 +40,11 @@ export type NotificationList = {
   hasNext: boolean
 }
 
-/** 읽음 처리 뒤 헤더 배지를 다시 불러오라는 신호 */
-export const NOTIFICATIONS_CHANGED = 'palette:notifications-changed'
-const changed = () => window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED))
-
 /** 다음 페이지도 같은 type으로 조회해야 한다 (커서는 유형별로 따로) */
 export const getNotifications = (
   query: { type?: NotificationType | null; cursor?: number | null; size?: number } = {},
 ) => api<NotificationList>('/api/v1/notifications', { query })
 export const getUnreadNotificationCount = () => api<number>('/api/v1/notifications/unread-count')
 /** 없거나 다른 회원 알림이면 404-NOTIFICATION_NOT_FOUND */
-export const readNotification = (id: number) =>
-  api<void>(`/api/v1/notifications/${id}/read`, { method: 'PATCH' }).then(changed)
-export const readAllNotifications = () => api<void>('/api/v1/notifications/read-all', { method: 'PATCH' }).then(changed)
+export const readNotification = (id: number) => api<void>(`/api/v1/notifications/${id}/read`, { method: 'PATCH' })
+export const readAllNotifications = () => api<void>('/api/v1/notifications/read-all', { method: 'PATCH' })
