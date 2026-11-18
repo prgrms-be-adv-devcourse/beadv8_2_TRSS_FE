@@ -35,14 +35,14 @@ const STATUS_LABEL: Record<CouponDisplayStatus, string> = { ...COUPON_DISPLAY_ST
 
 const discountText = (x: Pick<ProductCoupon, 'discountType' | 'discountValue' | 'maxDiscountAmount'>) =>
   x.discountType === 'RATE'
-    ? `${x.discountValue}%${x.maxDiscountAmount ? ` · 최대 ${won(x.maxDiscountAmount)}` : ''}`
+    ? `${x.discountValue}%${x.maxDiscountAmount ? `, 최대 ${won(x.maxDiscountAmount)}` : ''}`
     : won(x.discountValue)
 const usageText = (x: ProductCoupon) => `${x.usedCount} / ${x.quantityLimited ? x.totalQuantity : '제한 없음'}`
 const stoppedText = (x: ProductCoupon) =>
   x.stoppedBy === 'SYSTEM'
     ? '협약 종료 등으로 자동 중지'
     : x.stoppedBy
-      ? `${COUPON_STOPPED_BY_LABEL[x.stoppedBy]}${x.stopReason ? ` · ${x.stopReason}` : ''}`
+      ? `${COUPON_STOPPED_BY_LABEL[x.stoppedBy]}${x.stopReason ? `, ${x.stopReason}` : ''}`
       : '중지됨'
 
 type Editing = { coupon: ProductCoupon; mode: 'edit' | 'extend' }
@@ -64,7 +64,7 @@ const toForm = (x: ProductCoupon): CouponForm => ({
 
 /**
  * 바뀐 값만 담아요 (coupon.ts 규칙)
- * - 할인 방식이나 값이 바뀌면 discountType·discountValue를 함께, 정률이면 maxDiscountAmount도 함께
+ * - 할인 방식이나 값이 바뀌면 discountType,discountValue를 함께, 정률이면 maxDiscountAmount도 함께
  * - 수량 제한이 바뀌거나 총 수량이 바뀌면 quantityLimited를 보내고, 제한이면 totalQuantity도 함께
  */
 function diff(x: ProductCoupon, form: CouponForm): ProductCouponUpdateRequest {
@@ -93,9 +93,9 @@ function diff(x: ProductCoupon, form: CouponForm): ProductCouponUpdateRequest {
   return body
 }
 
-/** 수정(시작 전) · 종료일 연장(진행 중) 모달 */
+/** 수정(시작 전), 종료일 연장(진행 중) 모달 */
 function EditModal({ target, onClose, onDone }: { target: Editing; onClose: () => void; onDone: (msg: string) => void }) {
-  // 열 때 최신 상세를 다시 불러와요 (목록 이후 사용·상태가 바뀌었을 수 있어서)
+  // 열 때 최신 상세를 다시 불러와요 (목록 이후 사용,상태가 바뀌었을 수 있어서)
   const fresh = useApi(() => getSellerCoupon(target.coupon.couponId), [target.coupon.couponId])
   const coupon = fresh.data ?? target.coupon
   const [form, setForm] = useState<CouponForm>(() => toForm(target.coupon))
@@ -148,7 +148,7 @@ function EditModal({ target, onClose, onDone }: { target: Editing; onClose: () =
     >
       <div className={s.modalForm}>
         <p className={s.modalLead}>
-          {coupon.name} · <code>{coupon.code}</code>
+          {coupon.name}, <code>{coupon.code}</code>
         </p>
         {extendOnly ? (
           <>
@@ -205,7 +205,7 @@ export default function SellerCouponsPage() {
     setStopError('')
     try {
       await stopSellerCoupon(stopping.couponId)
-      setDone(`‘${stopping.name}’을(를) 중지했어요. 이미 주문에 예약된 쿠폰은 그대로 결제·취소를 따라가요.`)
+      setDone(`‘${stopping.name}’을(를) 중지했어요. 이미 주문에 예약된 쿠폰은 그대로 결제, 취소를 따라가요.`)
       setStopping(null)
       reloadAll()
     } catch (e) {
@@ -302,10 +302,10 @@ export default function SellerCouponsPage() {
                 <Badge tone={TONE[x.status]}>{STATUS_LABEL[x.status]}</Badge>
               </div>
               <p className={s.faintLine}>
-                {x.productName ?? `상품 #${x.productId}`} · {x.activityName ?? `#${x.influencerId}`}
+                {x.productName ?? `상품 #${x.productId}`}, {x.activityName ?? `#${x.influencerId}`}
               </p>
               <p className={s.faintLine}>
-                {discountText(x)} · {fmtPeriod(x.validFrom, x.validUntil)} · 코드 <b className={s.ink}>{x.code}</b>
+                {discountText(x)}, {fmtPeriod(x.validFrom, x.validUntil)}, 코드 <b className={s.ink}>{x.code}</b>
               </p>
               <div className={s.couponStats}>
                 <span>
@@ -357,7 +357,7 @@ export default function SellerCouponsPage() {
           <div className={c.kpi}>
             <p className={c.kpiLabel}>이번 달 할인 총액</p>
             <p className={c.kpiValue}>{discountThisMonth}</p>
-            <p className={c.kpiSub}>할인은 판매자 부담 · 정산은 할인 후 금액 기준</p>
+            <p className={c.kpiSub}>할인은 판매자 부담, 정산은 할인 후 금액 기준</p>
           </div>
         </div>
       ) : (
@@ -391,7 +391,7 @@ export default function SellerCouponsPage() {
       <Pager page={page} totalPages={list.data?.totalPages ?? 0} onChange={setPage} />
       {desktop && (
         <p className={s.footNote}>
-          시작 전에만 수정할 수 있고, 시작 뒤에는 종료일 연장과 중지만 돼요. 같은 인플루언서·상품으로 기간이 겹치는
+          시작 전에만 수정할 수 있고, 시작 뒤에는 종료일 연장과 중지만 돼요. 같은 인플루언서, 상품으로 기간이 겹치는
           쿠폰은 발행할 수 없어요.
         </p>
       )}
@@ -422,7 +422,7 @@ export default function SellerCouponsPage() {
           }
         >
           <p className={s.modalLead}>
-            {stopping.name} · <code>{stopping.code}</code>
+            {stopping.name}, <code>{stopping.code}</code>
           </p>
           <p>중지한 쿠폰은 다시 켤 수 없어요. 구매자는 더 이상 이 코드를 쓸 수 없어요.</p>
           {stopError && <Notice tone="error">{stopError}</Notice>}

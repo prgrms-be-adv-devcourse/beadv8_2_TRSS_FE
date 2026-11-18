@@ -67,7 +67,7 @@ const LEGACY_STATUS_TAB: Record<string, Tab> = {
 }
 
 const COLS = '1.2fr .6fr 1fr .8fr 1fr .9fr 1.4fr .5fr .9fr'
-const PREVIEW_COLS = '1.4fr .7fr 1fr 1fr 1fr 1.2fr'
+const PREVIEW_COLS = '1.6fr .8fr 1fr 1fr 1fr'
 
 /** 월 정산 Job 실행 상태 → [점 색, 글자] */
 const RUN_STATUS: Record<string, [string, string]> = {
@@ -106,7 +106,7 @@ export default function AdminSettlements() {
   const [params, setParams] = useSearchParams()
   const thisMonth = ym(new Date())
   const [months] = useState(monthOptions)
-  // 기본 조회 기간: 지난달 한 달
+  // 기본 조회 기간: 지난 달 한 달
   const [period, setPeriod] = useState<Period>(() => initialPeriod('1'))
   const { from, to } = period
   const [sellerInput, setSellerInput] = useState('')
@@ -386,7 +386,7 @@ export default function AdminSettlements() {
               dot={lastRun ? runStatusOf(lastRun)[0] : undefined}
               sub={
                 lastRun
-                  ? `시작 ${hm(lastRun.startTime)}${lastRun.endTime ? ` · 종료 ${hm(lastRun.endTime)}` : ''}`
+                  ? `시작 ${hm(lastRun.startTime)}${lastRun.endTime ? `, 종료 ${hm(lastRun.endTime)}` : ''}`
                   : '매월 10일 00:00에 실행돼요'
               }
             />
@@ -514,15 +514,15 @@ export default function AdminSettlements() {
                       <button type="button" className={s.cardOpen} onClick={() => setDetailId(row.settlementId)}>
                         <span className={s.cardHead}>
                           <b>
-                            {sellerName(row)} · {Number(row.settlementMonth.slice(5, 7))}월
+                            {sellerName(row)}, {Number(row.settlementMonth.slice(5, 7))}월
                           </b>
                           <Badge tone={tone}>{label}</Badge>
                         </span>
                         <span className={s.cardHead}>
                           <span className={manual ? s.metaRed : c.sub}>
                             {reason
-                              ? `${reason}${triesOf(row) !== '-' ? ` · ${triesOf(row)}` : ''}`
-                              : `판매 ${won(row.totalSalePrice)} · 수수료 ${won(row.totalFee)}`}
+                              ? `${reason}${triesOf(row) !== '-' ? `, ${triesOf(row)}` : ''}`
+                              : `판매 ${won(row.totalSalePrice)}, 수수료 ${won(row.totalFee)}`}
                           </span>
                           <b>{won(row.payoutAmount)}</b>
                         </span>
@@ -569,7 +569,7 @@ export default function AdminSettlements() {
           onClose={() => setRetryTarget(null)}
         >
           <dl className={s.dlBox}>
-            <Row label="받을 금액">{won(retryTarget.payoutAmount)}</Row>
+            <Row label="지급 예정액">{won(retryTarget.payoutAmount)}</Row>
             <Row label="실패 횟수">{retryTarget.retryCount}회</Row>
             <Row label="마지막 실패 원인">{retryTarget.lastFailReason ?? '-'}</Row>
           </dl>
@@ -581,7 +581,7 @@ export default function AdminSettlements() {
           title={`${sellerName(holdTarget)} 정산서를 보류할까요?`}
           label="보류 사유"
           placeholder="예: 판매자 제재 검토 중이라 지급을 멈춰요."
-          help="보류를 풀기 전까지 자동 재시도·지급을 하지 않아요."
+          help="보류를 풀기 전까지 자동 재시도, 지급을 하지 않아요."
           confirmLabel="보류하기"
           danger
           onConfirm={confirmHold}
@@ -589,7 +589,7 @@ export default function AdminSettlements() {
         >
           <dl className={s.dlBox}>
             <Row label="정산월">{fmtMonth(holdTarget.settlementMonth)}</Row>
-            <Row label="받을 금액">{won(holdTarget.payoutAmount)}</Row>
+            <Row label="지급 예정액">{won(holdTarget.payoutAmount)}</Row>
           </dl>
         </ReasonModal>
       )}
@@ -632,11 +632,10 @@ function PreviewSheet({ month, desktop, onClose }: { month: YearMonth; desktop: 
       </Sheet>
     )
   return (
-    <Sheet title={title} onClose={onClose}>
+    <Sheet title={title} onClose={onClose} wide>
       {data && (
         <p className={c.sub}>
-          판매자 {data.sellerCount}명 · 품목 {data.itemCount}건 · 받을 금액 {won(data.payoutAmount)} (저장되지 않는 미리
-          보기예요)
+          판매자 {data.sellerCount}명, 품목 {data.itemCount}건, 지급 예정액 {won(data.payoutAmount)} (실시간 집계 값, 최종 금액 X)
         </p>
       )}
       {preview.loading && !data ? (
@@ -646,36 +645,40 @@ function PreviewSheet({ month, desktop, onClose }: { month: YearMonth; desktop: 
       ) : !data || data.sellers.items.length === 0 ? (
         <Empty title="이번 달에 정산할 구매 확정 건이 아직 없어요." />
       ) : (
-        <div className={s.innerTable}>
-          <div className={`${c.tr} ${c.thead}`} style={{ gridTemplateColumns: PREVIEW_COLS }}>
-            <span>판매자</span>
-            <span className={s.right}>대상 주문</span>
-            <span className={s.right}>판매 금액</span>
-            <span className={s.right}>수수료 10%</span>
-            <span className={s.right}>받을 금액</span>
-            <span>비고</span>
-          </div>
-          {data.sellers.items.map((p) => (
-            <div key={p.sellerId} className={`${c.tr} ${c.num}`} style={{ gridTemplateColumns: PREVIEW_COLS }}>
-              <span className={c.ellipsis}>{sellerName(p)}</span>
-              <span className={s.right}>
-                {p.itemCount}
-                {p.carriedOverCount > 0 && <span className={c.sub}>이월 {p.carriedOverCount}</span>}
-              </span>
-              <span className={s.right}>{won(p.totalSalePrice)}</span>
-              <span className={s.right}>{won(p.totalFee)}</span>
-              <span className={`${s.right} ${c.strong}`}>{won(p.payoutAmount)}</span>
-              <span className={s.badges}>
-                {p.willHold && <Badge tone="amber">보류 예정</Badge>}
-                {p.carriedToNextMonth && <Badge>다음 달 이월</Badge>}
-                {p.existingSettlementStatus && (
-                  <Badge tone={SETTLEMENT_STATUS[p.existingSettlementStatus][0]}>
-                    {SETTLEMENT_STATUS[p.existingSettlementStatus][1]}
-                  </Badge>
-                )}
-              </span>
+        <div className={`${s.innerTable} ${s.innerScroll}`}>
+          <div>
+            <div className={`${c.tr} ${c.thead}`} style={{ gridTemplateColumns: PREVIEW_COLS }}>
+              <span>판매자</span>
+              <span className={`${s.right} ${s.nowrap}`}>대상 주문</span>
+              <span className={`${s.right} ${s.nowrap}`}>판매 금액</span>
+              <span className={`${s.right} ${s.nowrap}`}>수수료(10%)</span>
+              <span className={`${s.right} ${s.nowrap}`}>지급 예정액</span>
             </div>
-          ))}
+            {data.sellers.items.map((p) => (
+              <div key={p.sellerId} className={`${c.tr} ${c.num}`} style={{ gridTemplateColumns: PREVIEW_COLS }}>
+                <span className={s.nameCell}>
+                  <span className={c.ellipsis}>{sellerName(p)}</span>
+                  {(p.willHold || p.carriedToNextMonth || p.existingSettlementStatus) && (
+                    <span className={s.badges}>
+                      {p.willHold && <Badge tone="amber">보류 예정</Badge>}
+                      {p.carriedToNextMonth && <Badge>다음 달 이월</Badge>}
+                      {p.existingSettlementStatus && (
+                        <Badge tone={SETTLEMENT_STATUS[p.existingSettlementStatus][0]}>
+                          {SETTLEMENT_STATUS[p.existingSettlementStatus][1]}
+                        </Badge>
+                      )}
+                    </span>
+                  )}
+                </span>
+                <span className={`${s.right} ${s.nowrap}`}>
+                  {p.itemCount}건{p.carriedOverCount > 0 && <span className={c.sub}>이월 {p.carriedOverCount}건</span>}
+                </span>
+                <span className={`${s.right} ${s.nowrap}`}>{won(p.totalSalePrice)}</span>
+                <span className={`${s.right} ${s.nowrap}`}>{won(p.totalFee)}</span>
+                <span className={`${s.right} ${s.nowrap} ${c.strong}`}>{won(p.payoutAmount)}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </Sheet>
@@ -759,7 +762,7 @@ function ManualRunSheet({
           {recent.data!.items.map((r) => (
             <Row key={r.jobExecutionId} label={fmtMonth(r.targetMonth)}>
               <span style={{ color: runStatusOf(r)[0] }}>
-                {runStatusOf(r)[1]} · {mmddhm(r.startTime)}
+                {runStatusOf(r)[1]}, {mmddhm(r.startTime)}
               </span>
             </Row>
           ))}
@@ -782,7 +785,7 @@ function ManualRunSheet({
               value={selected}
               options={options.map((o) => ({
                 value: o.settlementMonth,
-                label: `${fmtMonth(o.settlementMonth)} · ${o.reason === 'FAILED' ? '실패' : '실행 안 됨'}`,
+                label: `${fmtMonth(o.settlementMonth)}, ${o.reason === 'FAILED' ? '실패' : '실행 안 됨'}`,
               }))}
               onChange={setMonth}
             />
@@ -823,13 +826,13 @@ function MobilePreview({
       ) : (
         <>
           <p className={c.sub}>
-            판매자 {data.sellerCount}명 · 품목 {data.itemCount}건 · 받을 금액 {won(data.payoutAmount)}
+            판매자 {data.sellerCount}명, 품목 {data.itemCount}건, 지급 예정액 {won(data.payoutAmount)}
           </p>
           <ul className={s.plainList}>
             {data.sellers.items.map((p) => (
               <li key={p.sellerId}>
                 <span className={c.ellipsis}>
-                  {sellerName(p)} · {p.itemCount}건{p.willHold ? ' · 보류 예정' : ''}
+                  {sellerName(p)}, {p.itemCount}건{p.willHold ? ', 보류 예정' : ''}
                 </span>
                 <b>{won(p.payoutAmount)}</b>
               </li>

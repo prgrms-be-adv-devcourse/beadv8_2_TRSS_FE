@@ -32,7 +32,7 @@ export const ADMIN_MENU: ConsoleMenuItem[] = [
   { key: 'settlements', label: '정산 내역', to: '/admin/settlements' },
   { key: 'failed', label: '실패 거래', to: '/admin/failed' },
   { key: 'reviews', label: '리뷰', to: '/admin/reviews' },
-  { key: 'coupons', label: '쿠폰 · 협약', to: '/admin/coupons' },
+  { key: 'coupons', label: '쿠폰, 협약', to: '/admin/coupons' },
   { key: 'faqs', label: '챗봇 FAQ', to: '/admin/faqs' },
 ]
 

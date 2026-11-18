@@ -79,7 +79,7 @@ export const INFLUENCER_META: Record<
     tag: '승인됨',
     tone: 'green',
     text: '판매자 협약과 발행받은 쿠폰을 관리할 수 있어요.',
-    act: '협약 · 쿠폰 보기',
+    act: '협약, 쿠폰 보기',
     to: '/influencer/partners',
   },
   REJECTED: {

@@ -41,16 +41,24 @@ export function Sheet({
   children,
   footer,
   onClose,
+  wide = false,
 }: {
   title: ReactNode
   children: ReactNode
   footer?: ReactNode
   onClose: () => void
+  /** 표처럼 넓은 내용을 담을 때 (최대 760px) */
+  wide?: boolean
 }) {
   useEscape(onClose)
   return (
     <div className={`${styles.backdrop} ${styles.center}`} onClick={onClose}>
-      <div role="dialog" aria-modal="true" className={styles.sheet} onClick={(e) => e.stopPropagation()}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        className={`${styles.sheet} ${wide ? styles.sheetWide : ''}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className={styles.sheetHead}>
           <h2 className={styles.sheetTitle}>{title}</h2>
           <button type="button" aria-label="닫기" className={styles.close} onClick={onClose}>

@@ -45,11 +45,11 @@ const ACTION_TEXT: Record<Action['kind'], { title: string; body: string; label: 
 
 function discountText(c: ProductCoupon) {
   if (c.discountType === 'RATE')
-    return `${c.discountValue}%${c.maxDiscountAmount ? ` · 최대 ${won(c.maxDiscountAmount)}` : ''}`
+    return `${c.discountValue}%${c.maxDiscountAmount ? `, 최대 ${won(c.maxDiscountAmount)}` : ''}`
   return won(c.discountValue)
 }
 
-/** I4 협약 · 발행받은 쿠폰 (승인된 인플루언서) */
+/** I4 협약, 발행받은 쿠폰 (승인된 인플루언서) */
 export default function InfluencerPartnersPage() {
   const [tab, setTab] = useState<Tab>('REQUESTED')
   // 협약 수가 많지 않아 한 번에 받아 탭별로 나눠요
@@ -107,7 +107,7 @@ export default function InfluencerPartnersPage() {
 
   return (
     <AppFrame>
-      <PageHeader title="협약 · 쿠폰" badge="인플루언서" back="/mypage" />
+      <PageHeader title="협약, 쿠폰" badge="인플루언서" back="/mypage" />
       <Tabs
         label="협약 상태"
         value={tab}
@@ -137,7 +137,7 @@ export default function InfluencerPartnersPage() {
                   <Badge tone="amber">응답 대기</Badge>
                 </div>
                 {p.requestMessage && <p className={s.quote}>“{p.requestMessage}”</p>}
-                <p className={s.meta}>{fmtMd(p.requestedAt)} 요청 · 판매자와 협약은 한 번에 하나만 진행할 수 있어요</p>
+                <p className={s.meta}>{fmtMd(p.requestedAt)} 요청, 판매자와 협약은 한 번에 하나만 진행할 수 있어요</p>
                 <div className={s.btns}>
                   <Button
                     variant="outline"
@@ -163,7 +163,7 @@ export default function InfluencerPartnersPage() {
               <div key={p.partnershipId} className={s.partner}>
                 <b>{name(p)}</b>
                 <span>
-                  {fmtMd(p.acceptedAt)}부터 · 쿠폰 {couponCount(p.partnershipId)}
+                  {fmtMd(p.acceptedAt)}부터, 쿠폰 {couponCount(p.partnershipId)}
                 </span>
                 <Button variant="outline" size="sm" onClick={() => (setActionError(''), setAction({ kind: 'end', p }))}>
                   종료
@@ -183,7 +183,7 @@ export default function InfluencerPartnersPage() {
                 <span>
                   {p.status === 'REJECTED'
                     ? `${fmtMd(p.rejectedAt)} 거절`
-                    : `${fmtMd(p.endedAt)} 종료${p.endedBy ? ` · ${PARTNERSHIP_ENDED_BY_LABEL[p.endedBy]}` : ''}`}
+                    : `${fmtMd(p.endedAt)} 종료${p.endedBy ? `, ${PARTNERSHIP_ENDED_BY_LABEL[p.endedBy]}` : ''}`}
                 </span>
               </div>
             ))}
@@ -205,7 +205,7 @@ export default function InfluencerPartnersPage() {
               <Badge tone={COUPON_TONE[c.status]}>{COUPON_DISPLAY_STATUS_LABEL[c.status]}</Badge>
             </div>
             <p className={s.meta}>
-              {c.productName ?? '상품'} · {discountText(c)} · {fmtMd(c.validFrom)} ~ {fmtMd(c.validUntil)}
+              {c.productName ?? '상품'}, {discountText(c)}, {fmtMd(c.validFrom)} ~ {fmtMd(c.validUntil)}
             </p>
             <div className={s.codeRow}>
               <span className={s.code}>{c.code}</span>
@@ -214,8 +214,8 @@ export default function InfluencerPartnersPage() {
               </Button>
             </div>
             <p className={s.meta}>
-              사용 {c.usedCount}회{c.remainingQuantity !== null ? ` · 남은 수량 ${c.remainingQuantity}` : ''}
-              {c.stopReason ? ` · 중지 사유: ${c.stopReason}` : ''}
+              사용 {c.usedCount}회{c.remainingQuantity !== null ? `, 남은 수량 ${c.remainingQuantity}` : ''}
+              {c.stopReason ? `, 중지 사유: ${c.stopReason}` : ''}
             </p>
           </div>
         ))}

@@ -94,8 +94,8 @@ export default function AdminCoupons() {
   const issuer = (cp: AdminCouponSummary) => {
     if (cp.issuerType === 'ADMIN') return '관리자'
     const p = cp.productCoupon ? partnerMap.get(cp.productCoupon.partnershipId) : undefined
-    if (p) return `${pName(p)} · ${iName(p)}`
-    return `판매자 #${cp.issuerId}${cp.productCoupon ? ` · 인플루언서 #${cp.productCoupon.influencerId}` : ''}`
+    if (p) return `${pName(p)}, ${iName(p)}`
+    return `판매자 #${cp.issuerId}${cp.productCoupon ? `, 인플루언서 #${cp.productCoupon.influencerId}` : ''}`
   }
   const usage = (cp: AdminCouponSummary) =>
     `${cp.usedCount.toLocaleString('ko-KR')} / ${cp.quantityLimited ? (cp.totalQuantity ?? 0).toLocaleString('ko-KR') : '제한 없음'}`
@@ -116,7 +116,7 @@ export default function AdminCoupons() {
   async function confirmStop(reason: string) {
     if (!stopTarget) return
     await stopAdminCoupon(stopTarget.couponId, reason)
-    setNotice(`'${stopTarget.name}' 쿠폰을 중지했어요. 이미 주문에 예약된 쿠폰은 그대로 결제·취소를 따라가요.`)
+    setNotice(`'${stopTarget.name}' 쿠폰을 중지했어요. 이미 주문에 예약된 쿠폰은 그대로 결제, 취소를 따라가요.`)
     coupons.reload()
   }
 
@@ -183,7 +183,7 @@ export default function AdminCoupons() {
   )
 
   return (
-    <ConsoleShell variant="admin" active="coupons" title="쿠폰 · 협약">
+    <ConsoleShell variant="admin" active="coupons" title="쿠폰, 협약">
       <div className={s.page}>
         <Notice>{notice}</Notice>
         {desktop ? (
@@ -315,7 +315,7 @@ export default function AdminCoupons() {
                         <span className={s.grow}>
                           <b className={c.ellipsis}>{cp.name}</b>
                           <span className={s.meta}>
-                            {cp.couponType === 'CART' ? '장바구니' : `상품 · ${issuer(cp)}`} · {period(cp)} · 사용{' '}
+                            {cp.couponType === 'CART' ? '장바구니' : `상품, ${issuer(cp)}`}, {period(cp)}, 사용{' '}
                             {usage(cp)}
                           </span>
                         </span>
@@ -336,12 +336,12 @@ export default function AdminCoupons() {
                     <li key={p.partnershipId}>
                       <span className={s.grow}>
                         <b className={c.ellipsis}>
-                          {pName(p)} · {iName(p)}
+                          {pName(p)}, {iName(p)}
                         </b>
                         <span className={s.meta}>
                           {mmdd(p.requestedAt)} 요청
-                          {p.acceptedAt && ` · ${mmdd(p.acceptedAt)} 수락`}
-                          {p.endedAt && ` · ${mmdd(p.endedAt)} 종료`}
+                          {p.acceptedAt && `, ${mmdd(p.acceptedAt)} 수락`}
+                          {p.endedAt && `, ${mmdd(p.endedAt)} 종료`}
                         </span>
                       </span>
                       <Badge tone={PARTNER_TONE[p.status]}>{PARTNERSHIP_STATUS_LABEL[p.status]}</Badge>
@@ -427,7 +427,7 @@ function CouponDrawer({
               {d.stoppedAt && (
                 <>
                   <Row label="중지">
-                    {ymdhm(d.stoppedAt)} · {d.stoppedBy ? COUPON_STOPPED_BY_LABEL[d.stoppedBy] : ''}
+                    {ymdhm(d.stoppedAt)}, {d.stoppedBy ? COUPON_STOPPED_BY_LABEL[d.stoppedBy] : ''}
                   </Row>
                   {d.stopReason && <Row label="중지 사유">{d.stopReason}</Row>}
                 </>
@@ -456,9 +456,9 @@ function CouponDrawer({
                 {d.usages.items.map((u) => (
                   <li key={u.usageId}>
                     <span>
-                      주문 #{u.orderId} · 회원 #{u.memberId}
+                      주문 #{u.orderId}, 회원 #{u.memberId}
                       <span className={s.meta}>
-                        {COUPON_USAGE_STATUS_LABEL[u.status]} · {ymdhm(u.usedAt ?? u.releasedAt ?? u.reservedAt)}
+                        {COUPON_USAGE_STATUS_LABEL[u.status]}, {ymdhm(u.usedAt ?? u.releasedAt ?? u.reservedAt)}
                       </span>
                     </span>
                     <b>−{won(u.discountAmount)}</b>

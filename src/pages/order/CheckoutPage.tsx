@@ -219,7 +219,7 @@ function AddressFormSection({
           <input
             id="ship-addr2"
             className={`${f.input} ${styles.mt8}`}
-            placeholder="상세 주소 (동·호수)"
+            placeholder="상세 주소 (동, 호수)"
             maxLength={200}
             value={value.addr2}
             onChange={set('addr2')}
@@ -363,7 +363,7 @@ function AddressReadOnly({ a }: { a: ShippingAddress | null | undefined }) {
       {a ? (
         <div className={styles.addrBox}>
           <b>
-            {a.receiverName} · {phoneText(a.receiverPhone)}
+            {a.receiverName}, {phoneText(a.receiverPhone)}
           </b>
           <span>
             ({a.zipCode}) {a.address}
@@ -411,7 +411,7 @@ function ItemsSection({ rows }: { rows: Row[] }) {
               <div>
                 <p className={styles.itemName}>{r.name}</p>
                 <p className={styles.muted}>
-                  {r.option ? `${r.option} · ` : ''}
+                  {r.option ? `${r.option}, ` : ''}
                   {r.qty}개
                 </p>
               </div>
@@ -678,7 +678,7 @@ function CouponSheet({
                 <span className={styles.couponAmount}>{off ? `최대 ${won(max)}` : won(d)}</span>
                 <span className={styles.couponName}>{c.name}</span>
                 <span className={styles.couponCond}>
-                  {c.tiers.map((t) => `${won(t.minOrderAmount)} 이상 ${won(t.discountAmount)}`).join(' · ')} ·{' '}
+                  {c.tiers.map((t) => `${won(t.minOrderAmount)} 이상 ${won(t.discountAmount)}`).join(', ')},{' '}
                   {mmdd(c.validUntil)}까지
                 </span>
                 {off && <span className={styles.couponReason}>{couponOffReason(c, base)}</span>}
