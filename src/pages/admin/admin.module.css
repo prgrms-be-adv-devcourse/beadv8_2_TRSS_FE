@@ -572,19 +572,20 @@ button.mItem {
   padding: 10px 0;
   border-top: 1px solid #f0f0ef;
 }
-.returnItem > span {
+/* 상품명 칸만 남은 폭을 써요 (썸네일도 span이라 > span으로 잡으면 같이 늘어나요) */
+.returnInfo {
   flex: 1;
   min-width: 0;
   font-size: 13px;
 }
-.returnItem > span b {
+.returnInfo b {
   display: block;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.returnItem > span span {
+.returnInfo span {
   font-size: 12px;
   color: var(--muted);
 }
