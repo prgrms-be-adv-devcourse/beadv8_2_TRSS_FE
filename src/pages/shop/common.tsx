@@ -314,9 +314,12 @@ export function ProductCard({
           {p.remainingStock != null && !p.soldOut && <span className={styles.low}>{p.remainingStock}개 남음</span>}
           {p.soldOut && <span className={styles.soldOut}>품절</span>}
         </span>
-        {p.businessName && <span className={styles.brand}>{p.businessName}</span>}
-        <span className={styles.name}>{p.name}</span>
-        <PriceTag price={p.price} salePrice={p.salePrice} discountRate={p.discountRate} />
+        {/* 할인 중이면 정가 줄이 하나 더 생겨요. 이 부분이 남는 높이를 채워서 같은 줄 카드의 별점 줄 높이를 맞춰요 */}
+        <span className={styles.cardBody}>
+          {p.businessName && <span className={styles.brand}>{p.businessName}</span>}
+          <span className={styles.name}>{p.name}</span>
+          <PriceTag price={p.price} salePrice={p.salePrice} discountRate={p.discountRate} />
+        </span>
         {p.reviewCount != null && <CardRating reviewCount={p.reviewCount} averageRating={p.averageRating ?? 0} />}
       </Link>
       {onWish && <HeartButton on={!!wished} onClick={onWish} className={styles.cardHeart} />}
