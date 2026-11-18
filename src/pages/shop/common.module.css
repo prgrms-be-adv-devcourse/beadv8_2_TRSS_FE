@@ -51,7 +51,7 @@
 .cardImg {
   position: relative;
   display: block;
-  height: 192px;
+  aspect-ratio: 1 / 1;
   border-radius: 6px;
   overflow: hidden;
   background: var(--surface);
@@ -109,6 +109,21 @@
   margin-top: 2px;
   font-size: 15px;
   font-weight: 800;
+}
+/* 목록 카드 아래 별점 줄 (★ 4.9 (312)) */
+.cardRating {
+  display: block;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--sub);
+}
+.cardStar {
+  color: #f2b01e;
+}
+.cardStarOff {
+  color: #d8d8dc;
 }
 .why {
   display: block;

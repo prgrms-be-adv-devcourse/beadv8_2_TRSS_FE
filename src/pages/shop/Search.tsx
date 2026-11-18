@@ -4,8 +4,7 @@ import AppFrame from '../../components/ui/AppFrame'
 import Icon from '../../components/ui/Icon'
 import { ErrorView, Loading } from '../../components/ui/Misc'
 import { useApi } from '../../lib/useApi'
-import { loadCategories } from './common'
-import { MOCK_TRENDING } from './mock'
+import { loadCategories, usePopularKeywords } from './common'
 import styles from './Search.module.css'
 
 const RECENT_KEY = 'palette.recentSearches'
@@ -27,7 +26,7 @@ function writeRecent(list: string[]) {
   }
 }
 
-/** 지금 시각 정각 기준 문구: "11.10 14:00 기준" */
+/** 순위 변동은 한 시간 전 순위와 비교해서, 지금 시각 정각 기준 문구로 보여 줘요: "11.10 14:00 기준" */
 function trendingAt() {
   const d = new Date()
   const p = (n: number) => String(n).padStart(2, '0')
@@ -37,7 +36,7 @@ function trendingAt() {
 /**
  * 검색 (홈 검색창·검색 아이콘에서 들어와요)
  * - 검색어를 입력하면 상품 목록(/products?q=)으로
- * - 입력 전에는 최근 검색어 · 인기 급상승 검색어 · 카테고리를 보여줘요
+ * - 입력 전에는 최근 검색어 · 인기 검색어 · 카테고리를 보여줘요
  */
 export default function SearchPage() {
   return (
@@ -89,6 +88,7 @@ function SearchView({ onClose }: { onClose?: () => void }) {
   const [keyword, setKeyword] = useState('')
   const [recent, setRecent] = useState<string[]>(readRecent)
   const categories = useApi(loadCategories, [])
+  const popular = usePopularKeywords()
 
   useEffect(() => {
     inputRef.current?.focus()
@@ -179,38 +179,39 @@ function SearchView({ onClose }: { onClose?: () => void }) {
         </section>
       )}
 
-      <section aria-labelledby="search-trending" className={styles.sec}>
-        <div className={styles.secHead}>
-          <h2 id="search-trending">인기 급상승 검색어</h2>
-          <span className={styles.at}>{trendingAt()}</span>
-        </div>
-        {/* TODO(API 미구현): GET /api/v1/search/trending — 인기 급상승 검색어(순위·변동). 지금은 목업 */}
-        <ol className={styles.trending}>
-          {MOCK_TRENDING.map((t, i) => (
-            <li key={t.word}>
-              <button type="button" className={styles.trendItem} onClick={() => go(t.word)}>
-                <span className={`${styles.rank} ${i < 3 ? styles.rankTop : ''}`}>{i + 1}</span>
-                <span className={styles.trendWord}>{t.word}</span>
-                {t.change === 'new' ? (
-                  <span className={styles.new}>NEW</span>
-                ) : t.change > 0 ? (
-                  <span className={styles.up} aria-label={`${t.change}계단 상승`}>
-                    ▲{t.change}
-                  </span>
-                ) : t.change < 0 ? (
-                  <span className={styles.down} aria-label={`${-t.change}계단 하락`}>
-                    ▼{-t.change}
-                  </span>
-                ) : (
-                  <span className={styles.same} aria-label="변동 없음">
-                    –
-                  </span>
-                )}
-              </button>
-            </li>
-          ))}
-        </ol>
-      </section>
+      {popular.length > 0 && (
+        <section aria-labelledby="search-trending" className={styles.sec}>
+          <div className={styles.secHead}>
+            <h2 id="search-trending">인기 검색어</h2>
+            <span className={styles.at}>{trendingAt()}</span>
+          </div>
+          <ol className={styles.trending}>
+            {popular.map((t) => (
+              <li key={t.keyword}>
+                <button type="button" className={styles.trendItem} onClick={() => go(t.keyword)}>
+                  <span className={`${styles.rank} ${t.rank <= 3 ? styles.rankTop : ''}`}>{t.rank}</span>
+                  <span className={styles.trendWord}>{t.keyword}</span>
+                  {t.rankChange == null ? (
+                    <span className={styles.new}>NEW</span>
+                  ) : t.rankChange > 0 ? (
+                    <span className={styles.up} aria-label={`${t.rankChange}계단 상승`}>
+                      ▲{t.rankChange}
+                    </span>
+                  ) : t.rankChange < 0 ? (
+                    <span className={styles.down} aria-label={`${-t.rankChange}계단 하락`}>
+                      ▼{-t.rankChange}
+                    </span>
+                  ) : (
+                    <span className={styles.same} aria-label="변동 없음">
+                      –
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       <section aria-labelledby="search-category" className={`${styles.sec} ${styles.lastSec}`}>
         <div className={styles.secHead}>

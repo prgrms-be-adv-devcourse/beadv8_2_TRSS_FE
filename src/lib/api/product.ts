@@ -2,6 +2,7 @@
  * 상품·카테고리 API (백엔드 담당: 유진)
  *
  * GET    /api/v1/products                       상품 검색 (PageResponse)
+ * GET    /api/v1/products/popular-keywords      인기 검색어 (순위·변동)
  * GET    /api/v1/products/{productId}           상품 상세
  * GET    /api/v1/categories                     카테고리 트리
  * GET    /api/v1/seller/products                판매자 상품 목록 (PageResponse)
@@ -66,8 +67,15 @@ export const modifyCategory = (categoryId: number, body: { name?: string; active
 
 // ── 구매자 상품 ──────────────────────────────────────────
 
-/** RELEVANCE 관련도순(검색어가 있을 때 기본) · LATEST 최신순(검색어가 없을 때 기본). 안 보내면 서버가 검색어 유무로 정해요. */
-export type ProductSort = 'RELEVANCE' | 'LATEST' | 'PRICE_ASC' | 'PRICE_DESC'
+/**
+ * 상품 정렬. 안 보내면 서버가 검색어 유무로 정해요 (있으면 RELEVANCE, 없으면 LATEST).
+ * - RELEVANCE 관련도순 · LATEST 최신순 · PRICE_ASC/PRICE_DESC 가격순(할인 중이면 할인가 기준)
+ * - DISCOUNT_RATE 할인율 높은순(할인 없는 상품은 뒤)
+ * - POPULAR 인기순(찜·별점·최근 30일 판매량) · WISH 찜 많은순 · SALES 최근 30일 판매량순
+ *   (검색 서버가 꺼져 DB 검색이 되면 이 셋은 최신순과 같아요)
+ */
+export type ProductSort =
+  'RELEVANCE' | 'LATEST' | 'PRICE_ASC' | 'PRICE_DESC' | 'DISCOUNT_RATE' | 'POPULAR' | 'WISH' | 'SALES'
 
 /** 지금 진행 중인 할인. 할인이 없으면 salePrice·discountRate 둘 다 null이에요. */
 export type DiscountFields = {
@@ -83,7 +91,6 @@ export type ProductSummary = DiscountFields & {
   name: string
   /** 정가 */
   price: number
-  categoryId: number
   sellerId: number
   /** 판매자 상호명 */
   businessName: string
@@ -92,6 +99,9 @@ export type ProductSummary = DiscountFields & {
   soldOut: boolean
   /** 재고 합계가 1~5개일 때만 그 수, 그 외(6개 이상·품절)에는 null */
   remainingStock: number | null
+  reviewCount: number
+  /** 평균 별점 (리뷰가 없으면 0) */
+  averageRating: number
 }
 
 export type ProductSearchQuery = PageQuery & {
@@ -102,11 +112,28 @@ export type ProductSearchQuery = PageQuery & {
   sort?: ProductSort
   /** 기본 true */
   excludeSoldOut?: boolean
+  /** true면 지금 할인 중인 상품만 (특가). 기본 false */
+  discounted?: boolean
 }
 
 /** size는 최대 50이에요. 넘기면 50으로 잘려요. */
 export const searchProducts = (query: ProductSearchQuery = {}) =>
   api<PageResponse<ProductSummary>>('/api/v1/products', { query })
+
+/**
+ * 인기 검색어 한 줄. 최근 7일 검색을 최근일수록 크게 쳐서(반감기 3시간) 매긴 순위예요. 서버가 1분 캐시해요.
+ * 집계 저장소가 응답하지 않으면 빈 목록이에요.
+ */
+export type PopularKeyword = {
+  /** 1부터 */
+  rank: number
+  /** 공백 정리·영문 소문자로 맞춘 검색어 */
+  keyword: string
+  /** 한 시간 전 순위와의 차이. 오르면 양수, 내리면 음수, 같으면 0, 새로 오른 검색어면 null */
+  rankChange: number | null
+}
+
+export const getPopularKeywords = () => api<PopularKeyword[]>('/api/v1/products/popular-keywords')
 
 export type ProductOption = {
   optionId: number

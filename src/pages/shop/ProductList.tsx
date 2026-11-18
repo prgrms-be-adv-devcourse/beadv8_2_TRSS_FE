@@ -7,8 +7,15 @@ import PageHeader from '../../components/ui/PageHeader'
 import { Empty, ErrorView, Loading } from '../../components/ui/Misc'
 import type { ProductSort, ProductSummary } from '../../lib/api/product'
 import { useApi } from '../../lib/useApi'
-import { ExampleNotice, ProductCard, indexCategories, loadCategories, loadProducts, useWishes } from './common'
-import { POPULAR_KEYWORDS } from './mock'
+import {
+  ExampleNotice,
+  ProductCard,
+  indexCategories,
+  loadCategories,
+  loadProducts,
+  usePopularKeywords,
+  useWishes,
+} from './common'
 import styles from './ProductList.module.css'
 
 const SORTS: Array<{ value: ProductSort; label: string }> = [
@@ -86,6 +93,7 @@ export default function ProductListPage() {
   const hasMore = !!res.data && page < res.data.totalPages
 
   const wishes = useWishes()
+  const popular = usePopularKeywords().map((k) => k.keyword)
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -131,10 +139,10 @@ export default function ProductListPage() {
               </button>
             )}
           </form>
-          {!keyword && (
+          {!keyword && popular.length > 0 && (
             <div className={styles.popular}>
               <span>인기 검색어</span>
-              {POPULAR_KEYWORDS.slice(0, POPULAR_SHOWN).map((k) => (
+              {popular.slice(0, POPULAR_SHOWN).map((k) => (
                 <button key={k} type="button" onClick={() => update({ q: k })}>
                   {k}
                 </button>
@@ -148,6 +156,14 @@ export default function ProductListPage() {
         <h2 className={styles.title}>
           {listTitle} {res.data && <span className={styles.count}>{total.toLocaleString('ko-KR')}</span>}
         </h2>
+        <label className={styles.soldOut}>
+          <input
+            type="checkbox"
+            checked={!excludeSoldOut}
+            onChange={(e) => update({ soldOut: e.target.checked ? 'show' : undefined })}
+          />
+          품절 포함
+        </label>
         <label className={styles.sort}>
           <Icon name="filter" size={16} />
           <span className={styles.sr}>정렬</span>
@@ -164,51 +180,30 @@ export default function ProductListPage() {
         </label>
       </div>
 
-      <div role="group" aria-label="필터" className={styles.chips}>
-        {group && (
-          <>
+      {/* 카테고리로 들어왔을 때만 같은 대분류의 소분류로 옮겨 다니는 칩을 보여 줘요. 검색 결과에는 칩이 없어요. */}
+      {group && (
+        <div role="group" aria-label="소분류" className={styles.chips}>
+          <button
+            type="button"
+            aria-pressed={categoryId === group.categoryId}
+            className={categoryId === group.categoryId ? styles.chipOn : styles.chip}
+            onClick={() => update({ categoryId: String(group.categoryId) })}
+          >
+            {group.name} 전체
+          </button>
+          {group.children.map((c) => (
             <button
+              key={c.categoryId}
               type="button"
-              aria-pressed={categoryId === group.categoryId}
-              className={categoryId === group.categoryId ? styles.chipOn : styles.chip}
-              onClick={() => update({ categoryId: String(group.categoryId) })}
+              aria-pressed={categoryId === c.categoryId}
+              className={categoryId === c.categoryId ? styles.chipOn : styles.chip}
+              onClick={() => update({ categoryId: String(c.categoryId) })}
             >
-              전체
-            </button>
-            {group.children.map((c) => (
-              <button
-                key={c.categoryId}
-                type="button"
-                aria-pressed={categoryId === c.categoryId}
-                className={categoryId === c.categoryId ? styles.chipOn : styles.chip}
-                onClick={() => update({ categoryId: String(c.categoryId) })}
-              >
-                {c.name}
-              </button>
-            ))}
-          </>
-        )}
-        {!group &&
-          tree.map((g) => (
-            <button
-              key={g.categoryId}
-              type="button"
-              aria-pressed={false}
-              className={styles.chip}
-              onClick={() => update({ categoryId: String(g.categoryId) })}
-            >
-              {g.name}
+              {c.name}
             </button>
           ))}
-        <button
-          type="button"
-          aria-pressed={!excludeSoldOut}
-          className={!excludeSoldOut ? styles.chipOn : styles.chip}
-          onClick={() => update({ soldOut: excludeSoldOut ? 'show' : undefined })}
-        >
-          품절 포함
-        </button>
-      </div>
+        </div>
+      )}
 
       {res.data?.example && <ExampleNotice />}
       {wishes.error && (
@@ -233,20 +228,26 @@ export default function ProductListPage() {
             : '품절 상품을 함께 보거나 다른 카테고리에서 찾아보세요.'}
         </Empty>
       )}
-      {keyword && !res.loading && !res.error && res.data && items.length === 0 && (
-        <div className={styles.suggest}>
-          <p>이런 검색어는 어때요?</p>
-          <div className={styles.popular}>
-            {POPULAR_KEYWORDS.filter((k) => k !== keyword)
-              .slice(0, POPULAR_SHOWN)
-              .map((k) => (
-                <button key={k} type="button" onClick={() => update({ q: k })}>
-                  {k}
-                </button>
-              ))}
+      {keyword &&
+        popular.some((k) => k !== keyword) &&
+        !res.loading &&
+        !res.error &&
+        res.data &&
+        items.length === 0 && (
+          <div className={styles.suggest}>
+            <p>이런 검색어는 어때요?</p>
+            <div className={styles.popular}>
+              {popular
+                .filter((k) => k !== keyword)
+                .slice(0, POPULAR_SHOWN)
+                .map((k) => (
+                  <button key={k} type="button" onClick={() => update({ q: k })}>
+                    {k}
+                  </button>
+                ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {items.length > 0 && (
         <div className={styles.grid}>

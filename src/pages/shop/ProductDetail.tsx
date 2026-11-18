@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type MouseEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import BottomBar from '../../components/ui/BottomBar'
@@ -23,6 +23,16 @@ const CART_MAX_QTY = 99
 const fmtDate = (iso: string) => iso.slice(0, 10).replace(/-/g, '.')
 /** "2026-11-20T23:59:00" → "11.20 23:59" */
 const fmtUntil = (iso: string) => `${iso.slice(5, 10).replace('-', '.')} ${iso.slice(11, 16)}`
+
+/**
+ * 상세 메뉴(상품 정보 · 리뷰)에서 그 섹션으로 스크롤만 해요.
+ * 그냥 #info·#reviews 링크로 두면 누를 때마다 방문 기록이 쌓여서, 뒤로 버튼이 이전 화면 대신 앞서 누른 섹션으로 돌아가요.
+ */
+const scrollToSection = (id: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+  e.preventDefault()
+  // 예전 # 링크처럼 바로 그 자리로 옮겨요
+  document.getElementById(id)?.scrollIntoView({ block: 'start' })
+}
 
 /** 옵션 이름 순서대로 고른 값과 같은 조합 */
 const matchOption = (options: ProductOption[], picked: string[]) =>
@@ -335,10 +345,12 @@ export default function ProductDetailPage() {
       </section>
 
       <nav aria-label="상세 메뉴" className={styles.anchors}>
-        <a href="#info" aria-current="true">
+        <a href="#info" aria-current="true" onClick={scrollToSection('info')}>
           상품 정보
         </a>
-        <a href="#reviews">리뷰 {reviewCount.toLocaleString('ko-KR')}</a>
+        <a href="#reviews" onClick={scrollToSection('reviews')}>
+          리뷰 {reviewCount.toLocaleString('ko-KR')}
+        </a>
       </nav>
 
       <section id="info" aria-labelledby="pi" className={styles.info}>
