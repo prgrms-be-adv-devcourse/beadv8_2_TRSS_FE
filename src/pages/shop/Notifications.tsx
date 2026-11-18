@@ -12,6 +12,7 @@ import {
   type NotificationType,
 } from '../../lib/api/notification'
 import { useNotificationCount } from '../../lib/notificationCount'
+import { useNotificationStream } from '../../lib/notificationStream'
 import styles from './Notifications.module.css'
 
 const KIND: Record<NotificationType, { label: string; icon: IconName; tone: string }> = {
@@ -69,6 +70,8 @@ export default function NotificationsPage() {
   // 탭을 오가도 불러온 목록을 그대로 둔다
   const [feeds, setFeeds] = useState<Partial<Record<Tab, Feed>>>({})
   const loadingRef = useRef(new Set<Tab>())
+  // 목록을 처음부터 다시 받을 때 올리는 번호. 그 전에 보낸 요청의 결과는 버린다
+  const genRef = useRef(0)
   const { items, hasNext, loading, error } = feeds[tab] ?? EMPTY_FEED
 
   const patch = (t: Tab, next: (f: Feed) => Partial<Feed>) =>
@@ -81,22 +84,45 @@ export default function NotificationsPage() {
     const t = tab
     const f = feeds[t] ?? EMPTY_FEED
     if (loadingRef.current.has(t) || !f.hasNext) return
+    const gen = genRef.current
     loadingRef.current.add(t)
     patch(t, () => ({ loading: true, error: null }))
     try {
       const page = await getNotifications({ type: t === 'ALL' ? null : t, cursor: f.cursor, size: PAGE_SIZE })
+      if (gen !== genRef.current) return
       patch(t, (cur) => ({
-        items: [...cur.items, ...page.items],
+        // SSE로 먼저 들어온 알림과 겹치면 뺀다
+        items: [...cur.items, ...page.items.filter((n) => !cur.items.some((x) => x.id === n.id))],
         cursor: page.nextCursor,
         hasNext: page.hasNext,
         loading: false,
       }))
     } catch (e) {
+      if (gen !== genRef.current) return
       patch(t, () => ({ loading: false, error: errorMessage(e) }))
     } finally {
-      loadingRef.current.delete(t)
+      if (gen === genRef.current) loadingRef.current.delete(t)
     }
   }, [tab, feeds])
+
+  useNotificationStream({
+    // 새 알림은 이미 불러온 전체 탭과 같은 유형 탭 맨 위에 붙인다. 아직 안 연 탭은 열 때 받는다
+    onNotification: (n) =>
+      setFeeds((prev) => {
+        const next = { ...prev }
+        for (const t of ['ALL', n.type] as Tab[]) {
+          const f = prev[t]
+          if (f && !f.items.some((x) => x.id === n.id)) next[t] = { ...f, items: [n, ...f.items] }
+        }
+        return next
+      }),
+    // 끊긴 동안의 알림은 다시 오지 않으므로 목록을 처음부터 다시 받는다
+    onReconnect: () => {
+      genRef.current++
+      loadingRef.current.clear()
+      setFeeds({})
+    },
+  })
 
   // 목록 끝이 보이면 다음 페이지를 불러온다 (오류가 나면 다시 불러오기 버튼으로만)
   const sentinel = useRef<HTMLDivElement>(null)

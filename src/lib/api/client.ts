@@ -64,7 +64,7 @@ type Options = {
 }
 
 /** 주소 + 쿼리스트링 (값이 비어 있는 키는 빼요) */
-function buildUrl(path: string, query?: Options['query']) {
+export function buildUrl(path: string, query?: Options['query']) {
   let url = `${BASE_URL}${path}`
   if (query) {
     const qs = new URLSearchParams()
