@@ -78,14 +78,15 @@
 }
 
 .titleRow {
-  padding: 8px 16px 0;
+  padding: 8px 16px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 .title {
   margin: 0;
+  flex: 1;
   font-size: 19px;
   font-weight: 800;
   min-width: 0;
@@ -96,6 +97,26 @@
 .count {
   color: #8a8a90;
   font-weight: 500;
+}
+/* 품절 포함: 정렬 앞의 작은 체크박스 (칩 한 줄을 따로 두지 않으려고 제목 줄에 둬요) */
+.soldOut {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sub);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.soldOut input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ink);
+  cursor: pointer;
 }
 .sort {
   flex: none;
@@ -125,7 +146,7 @@
 .chips {
   display: flex;
   gap: 6px;
-  padding: 14px 16px;
+  padding: 2px 16px 14px;
   overflow-x: auto;
 }
 .chip,

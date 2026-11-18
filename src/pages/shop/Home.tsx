@@ -7,9 +7,17 @@ import PageHeader, { HeaderIcon } from '../../components/ui/PageHeader'
 import { ErrorView, Loading, Thumb } from '../../components/ui/Misc'
 import { useApi } from '../../lib/useApi'
 import { useAuth } from '../../lib/auth'
-import { ExampleNotice, MiniCard, SectionHead, imageOf, loadProducts, loadRecommendations } from './common'
+import {
+  ExampleNotice,
+  MiniCard,
+  SectionHead,
+  imageOf,
+  loadProducts,
+  loadRecommendations,
+  usePopularKeywords,
+} from './common'
 import { useNotificationCount } from '../../lib/notificationCount'
-import { MOCK_WHY, POPULAR_KEYWORDS } from './mock'
+import { MOCK_WHY } from './mock'
 import { basisText } from '../../lib/api/ai'
 import CategoryDrawer from './CategoryDrawer'
 import HomeRecent from './HomeRecent'
@@ -32,7 +40,8 @@ function useSearchHint() {
     const t = window.setInterval(() => setI((n) => (n + 1) % HINT_COUNT), HINT_INTERVAL_MS)
     return () => window.clearInterval(t)
   }, [])
-  const word = POPULAR_KEYWORDS[i % Math.min(HINT_COUNT, POPULAR_KEYWORDS.length)]
+  const words = usePopularKeywords().slice(0, HINT_COUNT)
+  const word = words.length ? words[i % words.length].keyword : null
   return word ? `‘${word}’ 검색해 보세요` : '브랜드나 상품을 검색해 보세요'
 }
 
