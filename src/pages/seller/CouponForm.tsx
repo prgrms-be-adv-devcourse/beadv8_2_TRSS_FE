@@ -153,6 +153,15 @@ export default function SellerCouponFormPage() {
           <li>할인액은 그 상품 금액(단가 × 수량)을 넘지 않아요. 구매자 1명당 1번 쓸 수 있어요.</li>
         </ul>
         {error && <Notice tone="error">{error}</Notice>}
+        {/* 모바일은 아래 고정 바(BottomBar)에 발행 버튼이 있어요 */}
+        {desktop && (
+          <div className={s.formActions}>
+            <Button variant="outline" to="/seller/coupons">
+              취소
+            </Button>
+            {submitBtn}
+          </div>
+        )}
       </form>
     )
 
@@ -164,14 +173,6 @@ export default function SellerCouponFormPage() {
       description="협약 중인 인플루언서에게 내 상품의 할인 코드를 만들어 줘요."
       back="/seller/coupons"
       hideMobileNav
-      actions={
-        <>
-          <Button variant="outline" to="/seller/coupons">
-            취소
-          </Button>
-          {submitBtn}
-        </>
-      }
       bottom={active.length > 0 ? <BottomBar>{submitBtn}</BottomBar> : undefined}
     >
       {content}
