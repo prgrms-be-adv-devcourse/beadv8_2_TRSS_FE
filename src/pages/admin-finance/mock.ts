@@ -2,36 +2,6 @@
  * 관리자 화면 목업 데이터 (백엔드 API가 아직 없는 부분)
  * API가 생기면 이 파일의 해당 상수를 지우고 화면에서 API를 불러요.
  */
-import type { FailedRow } from './AdminFailed'
-
-// TODO(API 미구현): 환불 실패 목록 · 배송 추적 실패 목록 — 실패 거래 화면 예시 행
-export const MOCK_FAILED: FailedRow[] = [
-  {
-    key: 'mock-refund-1',
-    kind: 'refund',
-    type: '환불 실패',
-    tone: 'red',
-    at: '2026-11-08T18:44:00',
-    who: 'buyer03@example.com',
-    amount: 41000,
-    cause: '환불 처리 오류',
-    handle: '자동 재시도 대기',
-    mock: true,
-  },
-  {
-    key: 'mock-delivery-1',
-    kind: 'delivery',
-    type: '배송 추적 실패',
-    tone: 'amber',
-    at: '2026-11-07T06:00:00',
-    who: '[판매자]',
-    amount: null,
-    cause: '송장 등록 후 15일',
-    handle: '',
-    mock: true,
-  },
-]
-
 // TODO(API 미구현): 관리자 리뷰 목록 API — GET /api/v1/admin/reviews ?keyword (상품명·작성자)
 export type AdminReview = {
   reviewId: number

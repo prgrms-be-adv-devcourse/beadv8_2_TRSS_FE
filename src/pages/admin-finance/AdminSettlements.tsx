@@ -103,7 +103,7 @@ const retryTitle = (st: Settlement) => (st.status === 'FAILED' ? retryHint(st.ne
 /** 관리자 · 정산 내역 (A6) */
 export default function AdminSettlements() {
   const desktop = useIsDesktop()
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const thisMonth = ym(new Date())
   const [months] = useState(monthOptions)
   // 기본 조회 기간: 지난달 한 달
@@ -129,8 +129,25 @@ export default function AdminSettlements() {
   // 모달 · 상세
   const [retryTarget, setRetryTarget] = useState<Settlement | null>(null)
   const [holdTarget, setHoldTarget] = useState<Settlement | null>(null)
-  const [detailId, setDetailId] = useState<number | null>(null)
+  // 실패 거래 화면의 "월 정산으로"(?settlementId=)로 들어오면 그 정산서 상세를 바로 열어요(조회 기간과 상관없이)
+  const [detailId, setDetailId] = useState<number | null>(() => {
+    const id = Number(params.get('settlementId'))
+    return Number.isInteger(id) && id > 0 ? id : null
+  })
   const [detailKey, setDetailKey] = useState(0)
+  // 읽은 뒤 주소에서 지워요 (닫은 뒤 새로고침·뒤로 가기로 다시 열리지 않게)
+  useEffect(() => {
+    if (!params.has('settlementId')) return
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('settlementId')
+        return next
+      },
+      { replace: true },
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const group = tab === 'ALL' ? undefined : tab
 
