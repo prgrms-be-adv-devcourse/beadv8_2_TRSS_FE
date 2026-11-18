@@ -5,6 +5,8 @@
  * GET    /api/v1/products/popular-keywords      인기 검색어 (순위·변동)
  * GET    /api/v1/products/{productId}           상품 상세
  * GET    /api/v1/products/{productId}/similar   비슷한 상품
+ * GET    /api/v1/products/recommendations/me     회원 개인화 추천 (회원님을 위한 추천 · 기준 상품별 섹션)
+ * GET    /api/v1/products/recommendations/recent 최근 본 상품 기반 추천
  * GET    /api/v1/categories                     카테고리 트리
  * GET    /api/v1/seller/products                판매자 상품 목록 (PageResponse)
  * GET    /api/v1/seller/products/counts         판매자 상품 탭별 개수
@@ -194,6 +196,64 @@ export const getProduct = (productId: number | string) => api<ProductDetail>(`/a
  */
 export const getSimilarProducts = (productId: number, size = 10) =>
   api<ProductSummary[]>(`/api/v1/products/${productId}/similar`, { query: { size } })
+
+// ── 개인화 추천 ──────────────────────────────────────────
+
+/** 추천 기준 상품의 출처 */
+export type RecommendBasis =
+  /** 별점 4점 이상을 준 상품 */
+  | 'HIGH_RATING'
+  /** 결제한 상품 */
+  | 'PURCHASE'
+  /** 찜한 상품 */
+  | 'WISH'
+  /** 장바구니에 담은 상품 */
+  | 'CART'
+  /** 최근 본 상품 */
+  | 'RECENT_VIEW'
+
+/** 추천 이유: "찜한 ○○와 비슷해요" */
+export type RecommendationReason = { basis: RecommendBasis; productId: number; productName: string }
+
+export type RecommendedProduct = {
+  product: ProductSummary
+  /** 기준 상품과 이어지지 않은 추천(인기순 등)이면 null */
+  reason: RecommendationReason | null
+}
+
+/** 기준 상품별 섹션 ("○○을 찜하셨네요") */
+export type RecommendationSection = {
+  basis: RecommendBasis
+  seedProductId: number
+  seedProductName: string
+  /** 기준 상품 대표 이미지 (제목 옆 썸네일). 대표 이미지가 없으면 null */
+  seedThumbnailUrl: string | null
+  items: ProductSummary[]
+}
+
+export type MemberRecommendations = {
+  /** 회원 행동으로 추천했는지. 비로그인이거나 이력이 없으면 false이고 forYou는 인기순, sections는 빈 목록 */
+  personalized: boolean
+  forYou: RecommendedProduct[]
+  /** 같은 상품은 forYou나 앞 섹션에 한 번만 나와요 */
+  sections: RecommendationSection[]
+}
+
+/**
+ * 회원 개인화 추천. 구매·높게 평가한(별점 4점 이상)·찜·장바구니 상품과 비슷한 상품이에요.
+ * 이미 산·찜한·담은 상품, 1~2점 준 상품, 품절 상품은 빠져요. size는 1~50(기본 20).
+ */
+export const getMemberRecommendations = (size = 20) =>
+  api<MemberRecommendations>('/api/v1/products/recommendations/me', { query: { size } })
+
+/**
+ * 최근 본 상품과 비슷한 상품. 최근 본 상품 ID를 최근 순으로 보내요(앞의 20개만 써요). 로그인하지 않아도 돼요.
+ * 보낸 상품과 품절 상품은 빠지고, 기준 상품이 없으면 빈 목록이에요. size는 1~50(기본 20).
+ */
+export const getRecentRecommendations = (recentViewIds: number[], size = 20) =>
+  api<ProductSummary[]>('/api/v1/products/recommendations/recent', {
+    query: { recentViewIds: recentViewIds.join(','), size },
+  })
 
 // ── 판매자 상품 ──────────────────────────────────────────
 

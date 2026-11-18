@@ -135,7 +135,10 @@
   color: #d8d8dc;
 }
 .why {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   margin-top: 4px;
   font-size: 11px;
   color: var(--sub);
