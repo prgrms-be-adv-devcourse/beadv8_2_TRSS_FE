@@ -297,6 +297,17 @@ export const issueProductCoupon = (body: ProductCouponIssueRequest) =>
 export const getSellerCoupons = (query: PageQuery & { status?: CouponDisplayStatus } = {}) =>
   api<PageResponse<ProductCoupon>>('/api/v1/seller/coupons', { query })
 export const getSellerCoupon = (couponId: number) => api<ProductCoupon>(`/api/v1/seller/coupons/${couponId}`)
+
+/** 판매자 상품 쿠폰의 한 달 사용 집계 (사용 시각 기준, USED만) */
+export type SellerCouponMonthlyStats = {
+  /** yyyy-MM */
+  month: string
+  usedCount: number
+  usedDiscountAmount: number
+}
+/** month(yyyy-MM)가 없으면 이번 달 */
+export const getSellerCouponMonthlyStats = (month?: string) =>
+  api<SellerCouponMonthlyStats>('/api/v1/seller/coupons/stats', { query: { month } })
 export const updateProductCoupon = (couponId: number, body: ProductCouponUpdateRequest) =>
   api<void>(`/api/v1/seller/coupons/${couponId}`, { method: 'PATCH', body })
 export const stopSellerCoupon = (couponId: number) =>

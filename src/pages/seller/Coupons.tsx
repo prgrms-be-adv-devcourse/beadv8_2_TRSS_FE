@@ -12,6 +12,7 @@ import {
   COUPON_DISPLAY_STATUS_LABEL,
   COUPON_STOPPED_BY_LABEL,
   getSellerCoupon,
+  getSellerCouponMonthlyStats,
   getSellerCoupons,
   stopSellerCoupon,
   updateProductCoupon,
@@ -182,13 +183,10 @@ export default function SellerCouponsPage() {
   const [page, setPage] = useState(1)
   const list = useApi(() => getSellerCoupons({ page: toPageParam(page), size: PAGE_SIZE }), [page])
   const active = useApi(() => getSellerCoupons({ status: 'ACTIVE', size: 1 }), [])
-  // 사용·할인 합계는 최근 100개 쿠폰으로 계산해요.
-  // TODO(API 미구현): 이번 달 쿠폰 사용 횟수·할인 총액 집계 — 쿠폰별 누적 값만 있어 누적으로 보여요.
-  const recent = useApi(() => getSellerCoupons({ size: 100 }), [])
-  const sums = (recent.data?.items ?? []).reduce(
-    (acc, x) => ({ used: acc.used + x.usedCount, amount: acc.amount + x.usedDiscountAmount }),
-    { used: 0, amount: 0 },
-  )
+  // 이번 달(사용 시각 기준) 쿠폰 사용 횟수와 할인 총액
+  const monthly = useApi(() => getSellerCouponMonthlyStats(), [])
+  const usedThisMonth = monthly.data ? `${monthly.data.usedCount.toLocaleString('ko-KR')}회` : '-'
+  const discountThisMonth = monthly.data ? won(monthly.data.usedDiscountAmount) : '-'
 
   const [editing, setEditing] = useState<Editing | null>(null)
   const [stopping, setStopping] = useState<ProductCoupon | null>(null)
@@ -198,7 +196,7 @@ export default function SellerCouponsPage() {
   const reloadAll = () => {
     list.reload()
     active.reload()
-    recent.reload()
+    monthly.reload()
   }
 
   async function confirmStop() {
@@ -353,12 +351,12 @@ export default function SellerCouponsPage() {
             <p className={c.kpiValue}>{active.data?.totalElements ?? '-'}개</p>
           </div>
           <div className={c.kpi}>
-            <p className={c.kpiLabel}>누적 사용</p>
-            <p className={c.kpiValue}>{sums.used.toLocaleString('ko-KR')}회</p>
+            <p className={c.kpiLabel}>이번 달 사용</p>
+            <p className={c.kpiValue}>{usedThisMonth}</p>
           </div>
           <div className={c.kpi}>
-            <p className={c.kpiLabel}>누적 할인 총액</p>
-            <p className={c.kpiValue}>{won(sums.amount)}</p>
+            <p className={c.kpiLabel}>이번 달 할인 총액</p>
+            <p className={c.kpiValue}>{discountThisMonth}</p>
             <p className={c.kpiSub}>할인은 판매자 부담 · 정산은 할인 후 금액 기준</p>
           </div>
         </div>
@@ -370,12 +368,12 @@ export default function SellerCouponsPage() {
               <b>{active.data?.totalElements ?? '-'}</b>
             </div>
             <div>
-              <p>누적 사용</p>
-              <b>{sums.used.toLocaleString('ko-KR')}회</b>
+              <p>이번 달 사용</p>
+              <b>{usedThisMonth}</b>
             </div>
             <div>
-              <p>할인 총액</p>
-              <b>{won(sums.amount)}</b>
+              <p>이번 달 할인 총액</p>
+              <b>{discountThisMonth}</b>
             </div>
           </div>
           <p className={`${s.faintLine} ${s.mobileBlock}`}>
