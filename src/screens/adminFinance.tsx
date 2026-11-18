@@ -11,7 +11,7 @@ export const adminFinanceScreens: ScreenRoute[] = [
   { path: '/admin/settlements', title: '월 정산', auth: 'ADMIN', group: '관리자', element: <AdminSettlements /> },
   { path: '/admin/failed', title: '실패 거래', auth: 'ADMIN', group: '관리자', element: <AdminFailed /> },
   { path: '/admin/reviews', title: '리뷰', auth: 'ADMIN', group: '관리자', element: <AdminReviews /> },
-  { path: '/admin/coupons', title: '쿠폰 · 협약', auth: 'ADMIN', group: '관리자', element: <AdminCoupons /> },
+  { path: '/admin/coupons', title: '쿠폰, 협약', auth: 'ADMIN', group: '관리자', element: <AdminCoupons /> },
   { path: '/admin/faqs', title: '챗봇 FAQ', auth: 'ADMIN', group: '관리자', element: <AdminFaqs /> },
   // 예전 AI 문서 주소는 챗봇 FAQ로 보냄
   {

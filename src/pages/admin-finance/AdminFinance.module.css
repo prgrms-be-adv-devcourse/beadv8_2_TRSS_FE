@@ -114,6 +114,22 @@
   border-radius: 12px;
   overflow: hidden;
 }
+/* 창이 좁으면 표 안에서만 가로로 밀어 보기. 금액은 줄바꿈하지 않아요 */
+.innerScroll {
+  overflow-x: auto;
+}
+.innerScroll > div {
+  min-width: 600px;
+}
+.nowrap {
+  white-space: nowrap;
+}
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
 .excelBtn {
   border-color: var(--ink);
 }

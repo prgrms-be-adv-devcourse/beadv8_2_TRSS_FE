@@ -136,7 +136,7 @@ export default function SellerCouponFormPage() {
             </option>
             {products.map((p) => (
               <option key={p.productId} value={p.productId}>
-                {p.name} · {won(p.price)}
+                {p.name}, {won(p.price)}
               </option>
             ))}
           </select>
@@ -149,7 +149,7 @@ export default function SellerCouponFormPage() {
         <CouponFields form={form} setForm={setForm} />
         <ul className={s.ruleList}>
           <li>쿠폰마다 코드가 자동으로 1개 만들어져요.</li>
-          <li>같은 인플루언서·같은 상품으로 기간이 겹치는 쿠폰은 발행할 수 없어요.</li>
+          <li>같은 인플루언서, 같은 상품으로 기간이 겹치는 쿠폰은 발행할 수 없어요.</li>
           <li>할인액은 그 상품 금액(단가 × 수량)을 넘지 않아요. 구매자 1명당 1번 쓸 수 있어요.</li>
         </ul>
         {error && <Notice tone="error">{error}</Notice>}

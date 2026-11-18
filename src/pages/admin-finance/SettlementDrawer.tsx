@@ -82,7 +82,7 @@ export default function SettlementDrawer({
 
   return (
     <Drawer
-      title={st ? `${sellerName(st)} · ${fmtMonth(st.settlementMonth)}` : '정산서 상세'}
+      title={st ? `${sellerName(st)}, ${fmtMonth(st.settlementMonth)}` : '정산서 상세'}
       onClose={onClose}
       footer={footer}
     >
@@ -123,10 +123,10 @@ export default function SettlementDrawer({
                 {detail.data.candidates.map((cd) => (
                   <li key={cd.candidateId}>
                     <span>
-                      주문 #{cd.orderId} · 품목 #{cd.orderItemId}
+                      주문 #{cd.orderId}, 품목 #{cd.orderItemId}
                       <span className={s.meta}>
-                        {mmdd(cd.confirmedAt)} 구매 확정 · 판매 {won(cd.salePrice)} · 수수료 {won(cd.fee)}
-                        {cd.settlementMonth !== st.settlementMonth && ` · ${fmtMonth(cd.settlementMonth)}에서 이월`}
+                        {mmdd(cd.confirmedAt)} 구매 확정, 판매 {won(cd.salePrice)}, 수수료 {won(cd.fee)}
+                        {cd.settlementMonth !== st.settlementMonth && `, ${fmtMonth(cd.settlementMonth)}에서 이월`}
                       </span>
                     </span>
                     <b>{won(cd.payoutAmount)}</b>
@@ -153,15 +153,15 @@ export default function SettlementDrawer({
                     <div className={s.cardHead}>
                       <b>
                         {SETTLEMENT_HISTORY_STAGE_LABEL[h.stage] ?? h.stage}
-                        {h.attemptNo > 0 && ` · ${h.attemptNo}회차`}
+                        {h.attemptNo > 0 && `, ${h.attemptNo}회차`}
                       </b>
                       <Badge tone={RESULT_TONE[h.result] ?? 'neutral'}>
                         {SETTLEMENT_HISTORY_RESULT_LABEL[h.result] ?? h.result}
                       </Badge>
                     </div>
                     <span className={s.meta}>
-                      {ymdhm(h.processedAt)} · {SETTLEMENT_TRIGGER_LABEL[h.trigger] ?? h.trigger}
-                      {h.batchExecutionId !== null && ` · 배치 #${h.batchExecutionId}`}
+                      {ymdhm(h.processedAt)}, {SETTLEMENT_TRIGGER_LABEL[h.trigger] ?? h.trigger}
+                      {h.batchExecutionId !== null && `, 배치 #${h.batchExecutionId}`}
                     </span>
                     {h.failReason && (
                       <span className={s.metaRed}>
@@ -169,7 +169,7 @@ export default function SettlementDrawer({
                         {h.failReason}
                       </span>
                     )}
-                    {h.adminReason && <span className={s.meta}>관리자 사유 · {h.adminReason}</span>}
+                    {h.adminReason && <span className={s.meta}>관리자 사유, {h.adminReason}</span>}
                   </li>
                 ))}
               </ol>
@@ -192,9 +192,9 @@ export default function SettlementDrawer({
                 {candidates.data.items.map((cd) => (
                   <li key={cd.candidateId}>
                     <span>
-                      주문 #{cd.orderId} · {won(cd.payoutAmount)}
+                      주문 #{cd.orderId}, {won(cd.payoutAmount)}
                       <span className={s.meta}>
-                        {fmtMonth(cd.settlementMonth)} · {mmdd(cd.confirmedAt)} 구매 확정
+                        {fmtMonth(cd.settlementMonth)}, {mmdd(cd.confirmedAt)} 구매 확정
                       </span>
                     </span>
                     <Button variant="dangerOutline" size="sm" onClick={() => setExcludeTarget(cd)}>

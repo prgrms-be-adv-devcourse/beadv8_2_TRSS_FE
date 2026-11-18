@@ -86,11 +86,11 @@ function useDetail(selectedId: number | null) {
 export default function SellerSettlementsPage() {
   const desktop = useIsDesktop()
   const { seller } = useActiveSeller()
-  // 기본 조회 기간: 지난달까지 3개월
-  const [period, setPeriod] = useState<Period>(() => initialPeriod('3'))
+  // 기본 조회 기간: 지난 달 한 달 (관리자 화면과 같음)
+  const [period, setPeriod] = useState<Period>(() => initialPeriod('1'))
   const { from, to } = period
   const [months] = useState(monthOptions)
-  /** 지난달 지급액 카드의 정산월. 조회 기간과 상관없이 항상 지난달이에요 */
+  /** 지난 달 지급액 카드의 정산월. 조회 기간과 상관없이 항상 지난 달이에요 */
   const [prevMonth] = useState(lastMonth)
   const [page, setPage] = useState(1)
   const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -108,7 +108,7 @@ export default function SellerSettlementsPage() {
   const exp = expected.data
   const nextMonth = exp?.months[0]
   const paidCount = summary.data?.paidCount ?? 0
-  /** 지난달 정산서가 지급 완료됐을 때만 있어요 */
+  /** 지난 달 정산서가 지급 완료됐을 때만 있어요 */
   const prevPaid = prevSummary.data?.latestPaid ?? null
   const changePage = (n: number) => {
     setPage(n)
@@ -187,7 +187,7 @@ export default function SellerSettlementsPage() {
           </ul>
         )}
         <p className={s.faintLine}>
-          이월 표시는 지난달 정산서가 만들어진 뒤에 구매 확정되어 이번 정산서에 들어온 품목이에요.
+          이월 표시는 지난 달 정산서가 만들어진 뒤에 구매 확정되어 이번 정산서에 들어온 품목이에요.
         </p>
       </div>
     )
@@ -242,7 +242,7 @@ export default function SellerSettlementsPage() {
   else if (items.length === 0)
     listState = (
       <Empty title="이 기간에 정산서가 없어요">
-        매달 10일에 지난달 구매 확정분으로 만들어져요. 기간을 바꿔 보세요.
+        매달 10일에 지난 달 구매 확정분으로 만들어져요. 기간을 바꿔 보세요.
       </Empty>
     )
 
@@ -353,7 +353,7 @@ export default function SellerSettlementsPage() {
       variant="seller"
       active="settlements"
       title="정산 내역"
-      description="매월 10일에 지난달 구매 확정 금액을 예치금 지갑으로 지급해요. 판매 대금은 상품 쿠폰 할인 후 금액이에요."
+      description="매월 10일에 지난 달 구매 확정 금액을 예치금 지갑으로 지급해요. 판매 대금은 상품 쿠폰 할인 후 금액이에요."
     >
       <div className={s.settlementPage}>
         {cardError && (
@@ -395,7 +395,7 @@ export default function SellerSettlementsPage() {
             정산 조회
           </h2>
           <div className={st.toolbarRow}>
-            <PeriodFilter value={period} quickOptions={['3', '6', '12']} months={months} onChange={changePeriod} />
+            <PeriodFilter value={period} quickOptions={['1', '3', '6', '12']} months={months} onChange={changePeriod} />
             {allButton(desktop ? undefined : 'sm')}
           </div>
           <StatCard

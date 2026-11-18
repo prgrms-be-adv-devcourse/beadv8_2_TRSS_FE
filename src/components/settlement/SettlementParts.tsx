@@ -3,19 +3,19 @@ import { fmtMonth, type YearMonth } from '../../lib/api/settlement'
 import { fixRange, recentRange } from '../../lib/monthRange'
 import st from './settlement.module.css'
 
-/** 빠른 기간 값. 숫자는 지난달까지 n개월, custom은 시작 월 ~ 끝 월을 직접 고른 상태 */
+/** 빠른 기간 값. 숫자는 지난 달까지 n개월, custom은 시작 월 ~ 끝 월을 직접 고른 상태 */
 export type QuickRange = '1' | '3' | '6' | '12' | 'custom'
 export type Period = { quick: QuickRange; from: YearMonth; to: YearMonth }
 
 const QUICK_LABEL: Record<QuickRange, string> = {
-  '1': '지난달',
+  '1': '지난 달',
   '3': '3개월',
   '6': '6개월',
   '12': '12개월',
   custom: '직접 선택',
 }
 
-/** 처음 기간 (지난달까지 n개월) */
+/** 처음 기간 (지난 달까지 n개월) */
 export const initialPeriod = (months: Exclude<QuickRange, 'custom'>): Period => ({
   quick: months,
   ...recentRange(Number(months)),

@@ -54,6 +54,9 @@
   padding: 8px 0 20px;
   box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.4);
 }
+.sheetWide {
+  max-width: 760px;
+}
 .sheetHead {
   display: flex;
   align-items: center;
