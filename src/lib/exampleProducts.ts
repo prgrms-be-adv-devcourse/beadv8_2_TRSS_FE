@@ -134,6 +134,9 @@ export function getExampleProduct(productId: number): ProductDetail | null {
       },
     ],
     wished: false,
+    wishCount: 0,
+    reviewCount: 0,
+    averageRating: 0,
     ingredientsText: null,
   }
 }
