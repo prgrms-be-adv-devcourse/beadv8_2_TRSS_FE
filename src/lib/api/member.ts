@@ -232,9 +232,10 @@ export type AdminMemberDetail = {
   sellerStatus: SellerStatus | null
   /** 인플루언서 신청 이력이 없으면 null */
   influencerStatus: InfluencerStatus | null
-  wallet: { balance: number; heldAmount: number }
-  /** 최신순, 주문이 없으면 빈 목록 */
-  recentOrders: { orderId: number; status: string; totalAmount: number; orderedAt: string }[]
+  /** 결제 서비스를 조회하지 못했거나 지갑이 없으면 null (두 경우를 구분하지 않음) */
+  wallet: { balance: number; heldAmount: number } | null
+  /** 최신순, 주문이 없으면 빈 목록. 주문을 조회하지 못하면 null */
+  recentOrders: { orderId: number; status: string; totalAmount: number; orderedAt: string }[] | null
 }
 
 /** 회원 목록. 가입일 최신순 고정, 탈퇴 회원 포함. email은 부분 검색 */
