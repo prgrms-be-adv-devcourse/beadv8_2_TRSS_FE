@@ -3,16 +3,6 @@
  * 뷰티 설문·맞춤 추천·크리에이터 추천은 lib/api/ai.ts의 실제 API를 써요.
  */
 
-// TODO(API 미구현): AI 피부 맞춤 분석(상품 상세) — 상세 맞춤도 화면(DetailMatch)만 쓰는 목업 프로필
-export type MockBeautyProfile = {
-  type: string[]
-  concern: string[]
-}
-export const MOCK_PROFILE: MockBeautyProfile = {
-  type: ['지성'],
-  concern: ['트러블', '모공'],
-}
-
 /** 찜 기반 추천 이유 문구 (목업). 상품 순서대로 돌려 써요. */
 // TODO(API 미구현): 찜 기반 추천 API가 없어 이유 문구도 목업이에요
 export const MOCK_WHY = [

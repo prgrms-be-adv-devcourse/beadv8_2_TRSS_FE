@@ -7,16 +7,12 @@ import PageHeader from '../../components/ui/PageHeader'
 import { Empty, ErrorView, Loading, Thumb, won } from '../../components/ui/Misc'
 import { useApi } from '../../lib/useApi'
 import { AiTag, imageOf, loadProduct } from './common'
-import { MOCK_PROFILE } from './mock'
 import styles from './DetailMatch.module.css'
 
 // TODO(API 미구현): AI 피부 맞춤 분석 — 맞춤도·이유·주요 성분·전성분(판매자 입력)이 API에 없어 고정 목업이에요
 const MATCH = {
   rate: 92,
-  reasons: [
-    '선호 성분 2개 포함 · 시카(병풀), 나이아신아마이드',
-    '피하는 성분(인공 향료 · 알코올) 없음',
-  ],
+  reasons: ['선호 성분 2개 포함 · 시카(병풀), 나이아신아마이드', '피하는 성분(인공 향료 · 알코올) 없음'],
   creator: '[크리에이터 A]',
   ingredients: [
     { name: '시카(병풀)', mine: true },
@@ -72,7 +68,6 @@ export default function DetailMatchPage() {
                 <h2 id="mm">
                   내 피부와 잘 맞아요 <AiTag />
                 </h2>
-                <p>{[...MOCK_PROFILE.type, ...MOCK_PROFILE.concern].join(' · ')} 기준</p>
               </div>
             </div>
             <ul className={styles.reasons}>
