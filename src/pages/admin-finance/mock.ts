@@ -2,6 +2,7 @@
  * 관리자 화면 목업 데이터 (백엔드 API가 아직 없는 부분)
  * API가 생기면 이 파일의 해당 상수를 지우고 화면에서 API를 불러요.
  */
+// TODO(API 미구현): 관리자 리뷰 목록 API — GET /api/v1/admin/reviews ?keyword (상품명·작성자)
 export type AdminReview = {
   reviewId: number
   productName: string
