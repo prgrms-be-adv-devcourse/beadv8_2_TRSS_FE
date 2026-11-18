@@ -12,12 +12,3 @@ export const MOCK_PROFILE: MockBeautyProfile = {
   type: ['지성'],
   concern: ['트러블', '모공'],
 }
-
-/** 찜 기반 추천 이유 문구 (목업). 상품 순서대로 돌려 써요. */
-// TODO(API 미구현): 찜 기반 추천 API가 없어 이유 문구도 목업이에요
-export const MOCK_WHY = [
-  '시카 포함 · 트러블 피부 추천',
-  '무향료 · 지성 피부 산뜻한 마무리',
-  '나이아신아마이드 포함 · 모공 고민',
-  '[크리에이터 A]의 pick · 지성 피부',
-]

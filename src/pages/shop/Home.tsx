@@ -4,22 +4,13 @@ import AppFrame from '../../components/ui/AppFrame'
 import Icon from '../../components/ui/Icon'
 import CartHeaderIcon from '../../components/ui/CartHeaderIcon'
 import PageHeader, { HeaderIcon } from '../../components/ui/PageHeader'
-import { ErrorView, Loading, Thumb } from '../../components/ui/Misc'
 import { useApi } from '../../lib/useApi'
 import { useAuth } from '../../lib/auth'
-import {
-  ExampleNotice,
-  MiniCard,
-  SectionHead,
-  imageOf,
-  loadProducts,
-  loadRecommendations,
-  usePopularKeywords,
-} from './common'
+import { ExampleNotice, MiniCard, SectionHead, loadRecommendations, usePopularKeywords } from './common'
 import { useNotificationCount } from '../../lib/notificationCount'
-import { MOCK_WHY } from './mock'
 import { basisText } from '../../lib/api/ai'
 import CategoryDrawer from './CategoryDrawer'
+import HomePersonal from './HomePersonal'
 import HomeRecent from './HomeRecent'
 import { HOME_TABS, HomeTabList, type HomeTab } from './HomeTabs'
 import { SearchPanel } from './Search'
@@ -53,13 +44,10 @@ export default function HomePage() {
   const [searching, setSearching] = useState(false)
   const searchHint = useSearchHint()
   const closeSearch = useCallback(() => setSearching(false), [])
-  // 회원 맞춤 추천: GET /api/v1/ai/recommendations (비회원·설문 전이면 뷰티 최신순)
+  // 내 피부 맞춤 추천(AI 설문): GET /api/v1/ai/recommendations (비회원·설문 전이면 뷰티 최신순)
+  // 그 아래 상품 개인화 추천은 HomePersonal, 최근 본 상품 기반은 HomeRecent
   const rec = useApi(() => loadRecommendations(6), [loggedIn])
   const recs = rec.data?.items ?? []
-  // TODO(API 미구현): 찜 기반 추천 — API가 없어 최신 상품으로 자리를 채워요. 최근 본 상품은 HomeRecent
-  const products = useApi(() => loadProducts({ size: 12 }), [])
-  const items = products.data?.items ?? []
-  const wishRecs = items.slice(6, 12).length ? items.slice(6, 12) : items.slice(0, 6)
   const hasUnread = !!useNotificationCount()
   // 헤더 탭은 URL(?tab=)에 두어 뒤로 가기·새로고침해도 유지돼요. 추천이 기본이에요.
   const [params] = useSearchParams()
@@ -149,15 +137,13 @@ export default function HomePage() {
             </span>
           </Link>
 
-          {(products.data?.example || rec.data?.example) && <ExampleNotice />}
-          {products.loading && !products.data && <Loading />}
-          {products.error && <ErrorView message={products.error} onRetry={products.reload} />}
+          {rec.data?.example && <ExampleNotice />}
 
           {recs.length > 0 && (
-            <section aria-label="회원님을 위한 추천" className={styles.sec}>
+            <section aria-label="내 피부 맞춤 추천" className={styles.sec}>
               {rec.data?.personalized && rec.data.basis ? (
                 <SectionHead
-                  title="회원님을 위한 추천"
+                  title="내 피부 맞춤 추천"
                   ai
                   desc={
                     <>
@@ -185,26 +171,7 @@ export default function HomePage() {
             </section>
           )}
 
-          {loggedIn && wishRecs.length > 0 && (
-            <section aria-label="찜한 상품과 비슷해요" className={styles.sec}>
-              <div className={styles.secPad}>
-                <h2 className={styles.h2}>찜한 상품과 비슷해요</h2>
-                {/* TODO(API 미구현): 찜 기반 추천 — 기준 상품 바꾸기 */}
-                <Link to="/wishlist" className={styles.basis}>
-                  <Thumb src={imageOf(wishRecs[0])} width={28} height={28} radius={99} />
-                  <span>
-                    <b>{wishRecs[0].name}</b> 찜 기준
-                  </span>
-                  <span className={styles.basisMore}>바꾸기 ›</span>
-                </Link>
-              </div>
-              <div className={styles.row}>
-                {wishRecs.map((p, i) => (
-                  <MiniCard key={p.productId} p={p} why={MOCK_WHY[i % MOCK_WHY.length]} />
-                ))}
-              </div>
-            </section>
-          )}
+          <HomePersonal />
 
           <HomeRecent />
 
