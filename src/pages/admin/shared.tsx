@@ -2,6 +2,7 @@
  * 관리자(운영) 화면 공통 조각: 페이지 번호, 상세 정보 줄, 처리 결과 안내, 날짜 표기
  */
 import type { ReactNode } from 'react'
+import type { InfluencerStatus } from '../../lib/api/influencer'
 import type { SellerStatus } from '../../lib/api/member'
 import type { Tone } from '../../components/ui/Misc'
 import s from './admin.module.css'
@@ -14,6 +15,13 @@ export const SELLER_STATUS: Record<SellerStatus, [string, Tone]> = {
   WITHDRAW_REQUESTED: ['철회 심사 중', 'neutral'],
   WITHDRAWN: ['철회됨', 'neutral'],
   SANCTIONED: ['제재됨', 'red'],
+}
+
+/** 인플루언서 상태 [이름, 배지 색]. 관리자 화면 표기 */
+export const INFLUENCER_STATUS: Record<InfluencerStatus, [string, Tone]> = {
+  PENDING: ['심사 중', 'amber'],
+  APPROVED: ['승인됨', 'green'],
+  REJECTED: ['반려됨', 'red'],
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')

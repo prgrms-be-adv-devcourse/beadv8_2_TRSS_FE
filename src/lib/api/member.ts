@@ -15,6 +15,7 @@
  */
 
 import type { MemberRole } from '../auth'
+import type { InfluencerStatus } from './influencer'
 import { api, type PageQuery, type PageResponse } from '.'
 
 export type SellerStatus =
@@ -213,6 +214,8 @@ export type AdminMember = {
   createdAt: string
   /** 판매자 상태. 신청 이력이 없으면 null */
   sellerStatus: SellerStatus | null
+  /** 인플루언서 상태. 신청 이력이 없으면 null */
+  influencerStatus: InfluencerStatus | null
 }
 
 /** 관리자 회원 상세 */
@@ -227,6 +230,8 @@ export type AdminMemberDetail = {
   createdAt: string
   /** 판매자 신청 이력이 없으면 null */
   sellerStatus: SellerStatus | null
+  /** 인플루언서 신청 이력이 없으면 null */
+  influencerStatus: InfluencerStatus | null
   wallet: { balance: number; heldAmount: number }
   /** 최신순, 주문이 없으면 빈 목록 */
   recentOrders: { orderId: number; status: string; totalAmount: number; orderedAt: string }[]
