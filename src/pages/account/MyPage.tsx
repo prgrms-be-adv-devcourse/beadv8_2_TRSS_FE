@@ -72,6 +72,10 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
 
   const sm = sellerView ? sellerMenu(sellerView) : null
   const infMeta = inf.view ? INFLUENCER_META[inf.view] : null
+  // 한쪽이 승인되면 반대쪽 신청 메뉴는 숨겨요 (내 정보 화면과 같은 기준)
+  const approvedSeller = sellerView === 'APPROVED'
+  const showSellerMenu = !approvedInfluencer || approvedSeller
+  const showInfluencerApply = !approvedSeller
 
   return (
     <AppFrame tab="my">
@@ -152,13 +156,13 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
         <Link to="/mypage/reviews" className={s.menuItem}>
           내 리뷰<span className={s.menuRight}>{reviews.data ? `쓴 리뷰 ${reviews.data} ` : ''}›</span>
         </Link>
-        {sm && sellerView && (
+        {sm && sellerView && showSellerMenu && (
           <Link to={sm.to} className={s.menuItem}>
             {sm.label}
             <span className={s.menuRight}>{SELLER_META[sellerView].tag} ›</span>
           </Link>
         )}
-        {infMeta && !approvedInfluencer && (
+        {infMeta && !approvedInfluencer && showInfluencerApply && (
           <Link to={inf.view === '신청 전' ? '/influencer/apply' : '/influencer/status'} className={s.menuItem}>
             {inf.view === '신청 전' ? '인플루언서 신청' : '인플루언서 신청 상태'}
             <span className={s.menuRight}>{infMeta.tag} ›</span>
