@@ -240,7 +240,8 @@ export default function TopupPage() {
   return (
     <AppFrame
       bottom={
-        <BottomBar note={payError ? undefined : '토스페이먼츠 결제창으로 이동해요'}>
+        // PG는 충전 준비 응답에서 정해지므로(토스 장애 시 헥토) 결제사 이름을 넣지 않는다
+        <BottomBar note={payError ? undefined : '결제창으로 이동해요'}>
           <Button size="lg" onClick={startTopup} disabled={(!toss.ready && !toss.error) || !amountValid || paying}>
             {paying ? '결제를 준비하고 있어요…' : `${won(amount)} 충전하기`}
           </Button>
