@@ -22,6 +22,8 @@ import s from './admin.module.css'
 
 const PAGE_SIZE = 20
 const COLS = { gridTemplateColumns: '1fr 1.3fr 1fr 1fr .8fr .8fr' }
+/** 결제 탭은 배송비 열이 하나 더 있다 */
+const PAYMENT_COLS = { gridTemplateColumns: '1fr 1.3fr 1fr 1fr .7fr .8fr .8fr' }
 
 // 환불 탭은 payment_refund가 생기면 추가해요 (10/17 기준 미구현)
 type TabKey = 'PAYMENT' | 'TOPUP'
@@ -30,6 +32,7 @@ type TabKey = 'PAYMENT' | 'TOPUP'
 const PAYMENT_STATUS: Record<PaymentStatus, [string, Tone]> = {
   PAID: ['결제 완료', 'green'],
   REFUNDED: ['환불', 'blue'],
+  CANCELED: ['결제 취소', 'neutral'],
   FAILED_INSUFFICIENT_BALANCE: ['잔액 부족', 'red'],
   FAILED_ORDER_EXPIRED: ['주문 만료', 'neutral'],
   FAILED_SYSTEM_ERROR: ['시스템 오류', 'red'],
@@ -293,11 +296,12 @@ function DesktopPayments({ v }: { v: View }) {
             <span className={s.right}>남은 금액</span>
           </div>
         ) : (
-          <div role="row" className={`${c.tr} ${c.thead}`} style={COLS}>
+          <div role="row" className={`${c.tr} ${c.thead}`} style={PAYMENT_COLS}>
             <span>주문번호</span>
             <span>회원</span>
             <span>결제 일시</span>
             <span className={s.right}>결제 금액</span>
+            <span className={s.right}>배송비</span>
             <span>결제 결과</span>
             <span>보관 상태</span>
           </div>
@@ -308,13 +312,15 @@ function DesktopPayments({ v }: { v: View }) {
           v.paymentItems.map((p) => {
             const [label, tone] = PAYMENT_STATUS[p.status] ?? [p.status, 'neutral']
             return (
-              <div role="row" key={p.paymentId} className={c.tr} style={COLS}>
+              <div role="row" key={p.paymentId} className={c.tr} style={PAYMENT_COLS}>
                 <span className={`${c.ellipsis} ${c.strong}`} title={`주문 ID ${p.orderId}`}>
                   {orDash(p.orderNumber)}
                 </span>
                 <span className={c.ellipsis}>{orDash(p.memberEmail)}</span>
                 <span className={c.num}>{fmtDateTime(p.createdAt)}</span>
                 <span className={`${s.right} ${c.num}`}>{won(p.amount)}</span>
+                {/* 배송비 필드가 없는 이전 응답이면 0원이 아니라 '-' */}
+                <span className={`${s.right} ${c.num}`}>{p.shippingFee == null ? '-' : won(p.shippingFee)}</span>
                 <span title={p.failReason ?? undefined}>
                   <Badge tone={tone}>{label}</Badge>
                 </span>
