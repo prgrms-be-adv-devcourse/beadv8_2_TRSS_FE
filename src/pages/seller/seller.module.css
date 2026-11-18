@@ -85,6 +85,16 @@
   grid-template-columns: 1fr 1fr;
   gap: 0 10px;
 }
+/* 세로 칸 안의 선택 탭이 칸 너비만큼 늘어나지 않고 탭 크기만큼만 */
+.fitField {
+  align-items: flex-start;
+}
+/* 폼 맨 아래 버튼 줄 (오른쪽 정렬) */
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
 .sectionHead {
   display: flex;
   justify-content: space-between;

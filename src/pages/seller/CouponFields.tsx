@@ -30,7 +30,7 @@ export default function CouponFields({
           onChange={(e) => set('name', e.target.value)}
         />
       </div>
-      <div className={f.field}>
+      <div className={`${f.field} ${s.fitField}`}>
         <span className={f.label}>할인 방식</span>
         <Segment
           label="할인 방식"
@@ -99,7 +99,7 @@ export default function CouponFields({
           />
         </div>
       </div>
-      <div className={f.field}>
+      <div className={`${f.field} ${s.fitField}`}>
         <span className={f.label}>수량 제한</span>
         <Segment
           label="수량 제한"
