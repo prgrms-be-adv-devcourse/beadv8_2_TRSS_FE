@@ -21,6 +21,7 @@ import type { OrderStatus } from './order'
 export type PaymentStatus =
   | 'PAID' // 결제 완료
   | 'REFUNDED' // 환불
+  | 'CANCELED' // 결제 취소 (결제 후 주문 처리 실패)
   | 'FAILED_INSUFFICIENT_BALANCE' // 잔액 부족
   | 'FAILED_ORDER_EXPIRED' // 주문 만료
   | 'FAILED_SYSTEM_ERROR' // 시스템 오류
@@ -47,7 +48,8 @@ export type AdminPayment = {
   orderNumber: string | null
   memberId: number
   memberEmail: string | null // 회원을 찾을 수 없으면 null
-  amount: number
+  amount: number // 배송비를 포함한 결제 금액
+  shippingFee: number // amount에 포함된 배송비, 무료 배송이면 0 (BE PR #442)
   status: PaymentStatus
   failReason: string | null // 실패 건만
   holdingStatus: HoldingStatus | null
