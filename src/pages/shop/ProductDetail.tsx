@@ -8,14 +8,28 @@ import PageHeader from '../../components/ui/PageHeader'
 import { Empty, ErrorView, Loading, Thumb, won } from '../../components/ui/Misc'
 import { errorMessage } from '../../lib/api'
 import { addCartItem } from '../../lib/api/cart'
-import { getProductReviews, getReviewSummary } from '../../lib/api/review'
+import { getProductReviews } from '../../lib/api/review'
 import { useAuth } from '../../lib/auth'
 import { useApi } from '../../lib/useApi'
 import { recordRecentView } from '../../lib/recentViewed'
-import type { ProductOption } from '../../lib/api/product'
-import { ExampleNotice, HeartButton, PriceTag, Stars, imageOf, loadProduct, useRequireLogin, useWishes } from './common'
+import Icon from '../../components/ui/Icon'
+import { getSimilarProducts, type ProductOption } from '../../lib/api/product'
+import {
+  ExampleNotice,
+  HeartButton,
+  MiniCard,
+  PriceTag,
+  Stars,
+  imageOf,
+  loadProduct,
+  useRequireLogin,
+  useWishes,
+} from './common'
 import styles from './ProductDetail.module.css'
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '../../lib/shipping'
+
+/** 비슷한 상품 개수 (GET /products/{id}/similar size 1~20) */
+const SIMILAR_SIZE = 10
 
 /** 백엔드 장바구니 최대 수량 (custom.order.cartMaxQuantity) */
 const CART_MAX_QTY = 99
@@ -50,8 +64,10 @@ export default function ProductDetailPage() {
 
   const loaded = useApi(() => loadProduct(productId), [productId])
   const product = loaded.data
-  const summary = useApi(
-    () => (product && !product.example ? getReviewSummary(productId) : Promise.resolve(null)),
+  // 비슷한 상품은 보조 정보라 실패해도 상세는 그대로 보여 주고 섹션만 숨겨요.
+  const similar = useApi(
+    () =>
+      product && !product.example ? getSimilarProducts(productId, SIMILAR_SIZE).catch(() => []) : Promise.resolve([]),
     [product],
   )
   const reviews = useApi(
@@ -139,8 +155,11 @@ export default function ProductDetailPage() {
       picked.map((x, j) => (j === i ? v : x)),
     )
   const valuesOf = (i: number) => Array.from(new Set(product.options.map((o) => o.values[i])))
-  const reviewCount = summary.data?.reviewCount ?? 0
+  const reviewCount = product.reviewCount
+  const averageRating = product.averageRating
   const wished = wishes.has(product.productId)
+  /** 찜 수는 상세를 받은 때 값이라, 그 뒤에 이 화면에서 찜·해제한 만큼 바로 더하고 빼요 (실패해서 되돌리면 숫자도 돌아가요). */
+  const wishCount = Math.max(0, product.wishCount + Number(wished) - Number(product.wished))
 
   const addToCart = async () => {
     if (!option || disabled || !requireLogin()) return
@@ -171,7 +190,9 @@ export default function ProductDetailPage() {
                   : undefined
           }
         >
-          <HeartButton on={wished} onClick={() => wishes.toggle(product.productId)} className={styles.wish} />
+          <HeartButton on={wished} onClick={() => wishes.toggle(product.productId)} className={styles.wish}>
+            <span className={styles.wishCount}>{wishCount.toLocaleString('ko-KR')}</span>
+          </HeartButton>
           <Button disabled={disabled} onClick={addToCart}>
             {busy === 'cart' ? '담는 중이에요' : '장바구니 담기'}
           </Button>
@@ -220,11 +241,17 @@ export default function ProductDetailPage() {
         <h2 id="pname" className={styles.name}>
           {product.name}
         </h2>
-        <Link to={`/product/${product.productId}/reviews`} className={styles.rating}>
-          <Stars value={summary.data?.averageRating ?? 0} />
-          <b>{(summary.data?.averageRating ?? 0).toFixed(1)}</b>
-          <span>리뷰 {reviewCount.toLocaleString('ko-KR')}</span>
-        </Link>
+        <div className={styles.ratingRow}>
+          <Link to={`/product/${product.productId}/reviews`} className={styles.rating}>
+            <Stars value={averageRating} />
+            <b>{averageRating.toFixed(1)}</b>
+            <span className={styles.ratingCount}>리뷰 {reviewCount.toLocaleString('ko-KR')}</span>
+          </Link>
+          <span aria-hidden="true" className={styles.ratingSep}>
+            |
+          </span>
+          <span>찜 {wishCount.toLocaleString('ko-KR')}</span>
+        </div>
         <div className={styles.priceRow}>
           <PriceTag
             layout="inline"
@@ -239,7 +266,10 @@ export default function ProductDetailPage() {
           {product.soldOut && <span className={styles.lowTag}>품절</span>}
         </div>
         {product.salePrice != null && product.discountEndsAt && (
-          <p className={styles.saleUntil}>{fmtUntil(product.discountEndsAt)}까지 할인</p>
+          <p className={styles.saleUntil}>
+            <Icon name="clock" size={14} />
+            {fmtUntil(product.discountEndsAt)}까지 할인
+          </p>
         )}
       </section>
 
@@ -364,7 +394,7 @@ export default function ProductDetailPage() {
       <section id="reviews" aria-labelledby="rv" className={styles.reviews}>
         <div className={styles.rvHead}>
           <h2 id="rv">
-            리뷰 <span className={styles.star}>★</span> {(summary.data?.averageRating ?? 0).toFixed(1)}{' '}
+            리뷰 <span className={styles.star}>★</span> {averageRating.toFixed(1)}{' '}
             <span className={styles.rvCount}>({reviewCount})</span>
           </h2>
           <Link to={`/product/${product.productId}/reviews`}>전체 보기 ›</Link>
@@ -382,6 +412,17 @@ export default function ProductDetailPage() {
         ))}
         {reviews.data && reviews.data.items.length === 0 && <p className={styles.noReview}>아직 리뷰가 없어요.</p>}
       </section>
+
+      {!!similar.data?.length && (
+        <section aria-labelledby="sim" className={styles.similar}>
+          <h2 id="sim">비슷한 상품</h2>
+          <div className={styles.simRow}>
+            {similar.data.map((p) => (
+              <MiniCard key={p.productId} p={p} />
+            ))}
+          </div>
+        </section>
+      )}
     </AppFrame>
   )
 }

@@ -78,8 +78,23 @@
   font-weight: 700;
   line-height: 1.35;
 }
-.rating {
+.ratingRow {
   margin-top: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--sub);
+}
+.ratingSep {
+  color: var(--line-strong);
+}
+.ratingCount {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.rating {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -430,14 +445,26 @@
 
 .wish {
   flex: none;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
+  flex-direction: column;
+  gap: 0;
   border-radius: var(--radius-pill);
   border: 1px solid var(--input-line);
+}
+/* 하트 아래 찜 수 */
+.wishCount {
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--sub);
 }
 
 .saleUntil {
   margin: 6px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--red);
