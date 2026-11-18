@@ -6,7 +6,6 @@
  * 최근 본 상품이 없으면 대신 "지금 많이 찾는 상품"(인기 상품)을 보여 줘요.
  *
  * TODO(API 미구현): 함께 본 상품 추천 — 조회 기록 기반 추천 API가 없어 상품 이름 관련도로 대신해요.
- * TODO(API 미구현): 인기 상품 — 판매량·찜 기준 정렬이 없어 랭킹 탭과 같이 최신순으로 채워요.
  */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -42,7 +41,7 @@ export default function HomeRecent() {
     return { related: related.items, sameCategory: sameCategory.items }
   }, [basis?.productId, basis?.categoryId])
   const popularRes = useApi(
-    () => (basis ? Promise.resolve(null) : loadProducts({ sort: 'LATEST', size: POPULAR_SHOWN })),
+    () => (basis ? Promise.resolve(null) : loadProducts({ sort: 'POPULAR', size: POPULAR_SHOWN })),
     [!basis],
   )
   if (!basis) {

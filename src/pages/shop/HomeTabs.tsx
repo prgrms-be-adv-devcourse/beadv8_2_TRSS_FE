@@ -1,10 +1,10 @@
 /**
  * 홈 헤더 탭(전체 · 랭킹 · 특가 · 신상 · 기획전 · 이벤트)의 내용. 추천 탭은 Home.tsx의 기존 섹션이에요.
  * 전체 탭만 오른쪽 위에서 정렬을 골라요 (URL 쿼리 sort).
+ * - 랭킹: 인기순(POPULAR, 찜·별점·최근 30일 판매량)
+ * - 특가: 지금 할인 중인 상품만(discounted=true), 할인율 높은순(DISCOUNT_RATE)
+ * - 신상: 최신순
  *
- * TODO(API 미구현): 판매량순·찜 많은순 정렬 — 백엔드 정렬이 없어 '준비 중'으로 막아 뒀어요.
- * TODO(API 미구현): 랭킹 — 랭킹 기준(집계 기간·점수)이 정해지지 않아 최신순으로 자리를 채워요.
- * TODO(API 미구현): 특가 — 할인 중인 상품만 거르는 검색 조건이 없어, 최근 상품을 받아 화면에서 할인 중인 것만 골라요.
  * TODO(API 미구현): 기획전 · 이벤트 — 백엔드에 기획전·이벤트 데이터가 없어 '준비 중' 안내만 보여요.
  */
 import { useEffect, useState } from 'react'
@@ -45,29 +45,31 @@ const PLACEHOLDER: Record<PlaceholderTab, { title: string; empty: string; desc: 
   },
 }
 
-type SortOption = { value: string; label: string; disabled?: boolean }
-/** 전체 탭 정렬. 판매량·찜은 백엔드 정렬이 생기면 열어요. */
-const ALL_SORTS: SortOption[] = [
+/** 전체 탭 정렬 */
+const ALL_SORTS: Array<{ value: ProductSort; label: string }> = [
   { value: 'LATEST', label: '최신순' },
-  { value: 'SALES', label: '판매량순 (준비 중)', disabled: true },
-  { value: 'WISH', label: '찜 많은순 (준비 중)', disabled: true },
+  { value: 'SALES', label: '판매량순' },
+  { value: 'WISH', label: '찜 많은순' },
   { value: 'PRICE_ASC', label: '낮은 가격순' },
   { value: 'PRICE_DESC', label: '높은 가격순' },
 ]
 
-/** 특가: 화면에서 거를 때 받아 오는 최근 상품 수 (백엔드 size 최대 50) */
-const SALE_SCAN = 50
 const LIST_SIZE = 20
 
-const CONFIG: Record<ProductTab, { title: string; desc: string; size: number }> = {
+const CONFIG: Record<ProductTab, { title: string; desc: string; sort: ProductSort; discounted?: boolean }> = {
   ranking: {
     title: '지금 많이 찾는 상품',
-    desc: '랭킹 기준을 준비하고 있어요. 지금은 최신 등록순으로 보여요.',
-    size: LIST_SIZE,
+    desc: '찜·별점·최근 30일 판매량을 합쳐 매긴 순위예요.',
+    sort: 'POPULAR',
   },
-  sale: { title: '기간 한정 특가', desc: '지금 할인 중인 상품이에요. 할인율이 높은 순서예요.', size: SALE_SCAN },
-  new: { title: '새로 들어온 상품', desc: '최근에 등록된 순서예요.', size: LIST_SIZE },
-  all: { title: '전체 상품', desc: '판매 중인 모든 상품이에요.', size: LIST_SIZE },
+  sale: {
+    title: '기간 한정 특가',
+    desc: '지금 할인 중인 상품이에요. 할인율이 높은 순서예요.',
+    sort: 'DISCOUNT_RATE',
+    discounted: true,
+  },
+  new: { title: '새로 들어온 상품', desc: '최근에 등록된 순서예요.', sort: 'LATEST' },
+  all: { title: '전체 상품', desc: '판매 중인 모든 상품이에요.', sort: 'LATEST' },
 }
 
 /** 추천 외 탭의 내용 */
@@ -95,17 +97,16 @@ function PlaceholderTabView({ tab }: { tab: PlaceholderTab }) {
 }
 
 function ProductTabList({ tab }: { tab: ProductTab }) {
-  const { title, desc, size } = CONFIG[tab]
+  const { title, desc, sort: tabSort, discounted } = CONFIG[tab]
   const [params, setParams] = useSearchParams()
   const sorts = tab === 'all' ? ALL_SORTS : null
-  const sort = sorts?.find((o) => o.value === params.get('sort') && !o.disabled)?.value ?? 'LATEST'
-  /** 서버에 보낼 정렬. 전체 탭만 고른 정렬, 나머지는 최신순이에요. */
-  const apiSort: ProductSort = tab === 'all' ? (sort as ProductSort) : 'LATEST'
-  // '더 보기'는 이 자리에서 다음 페이지를 이어 붙여요. 탭·정렬이 바뀌면 1페이지부터예요. (특가는 화면에서 거르는 거라 더 보기 없음)
-  const key = `${tab}|${apiSort}`
+  /** 서버에 보낼 정렬. 전체 탭은 고른 정렬, 나머지는 탭마다 정해진 정렬이에요. */
+  const sort: ProductSort = sorts?.find((o) => o.value === params.get('sort'))?.value ?? tabSort
+  // '더 보기'는 이 자리에서 다음 페이지를 이어 붙여요. 탭·정렬이 바뀌면 1페이지부터예요.
+  const key = `${tab}|${sort}`
   const [pager, setPager] = useState({ key, page: 0 })
   const page = pager.key === key ? pager.page : 0
-  const res = useApi(() => loadProducts({ sort: apiSort, size, page }), [key, page])
+  const res = useApi(() => loadProducts({ sort, discounted, size: LIST_SIZE, page }), [key, page])
   const [acc, setAcc] = useState<{ key: string; items: ProductSummary[] }>({ key, items: [] })
   useEffect(() => {
     if (!res.data) return
@@ -113,7 +114,7 @@ function ProductTabList({ tab }: { tab: ProductTab }) {
     setAcc((prev) => (page === 0 || prev.key !== key ? { key, items: next } : { key, items: [...prev.items, ...next] }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [res.data])
-  const hasMore = tab !== 'sale' && !!res.data && page + 1 < res.data.totalPages
+  const hasMore = !!res.data && page + 1 < res.data.totalPages
   const changeSort = (v: string) =>
     setParams(
       (prev) => {
@@ -126,11 +127,7 @@ function ProductTabList({ tab }: { tab: ProductTab }) {
     )
   const wishes = useWishes()
 
-  const all = acc.key === key ? acc.items : []
-  const items: ProductSummary[] =
-    tab === 'sale'
-      ? all.filter((p) => p.salePrice != null).sort((a, b) => (b.discountRate ?? 0) - (a.discountRate ?? 0))
-      : all
+  const items = acc.key === key ? acc.items : []
 
   return (
     <section aria-label={title} className={styles.tabSec}>
@@ -145,7 +142,7 @@ function ProductTabList({ tab }: { tab: ProductTab }) {
             <span className={styles.sr}>정렬</span>
             <select value={sort} onChange={(e) => changeSort(e.target.value)}>
               {sorts.map((o) => (
-                <option key={o.value} value={o.value} disabled={o.disabled}>
+                <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
               ))}
@@ -154,7 +151,7 @@ function ProductTabList({ tab }: { tab: ProductTab }) {
         )}
       </div>
       {res.data?.example && <ExampleNotice />}
-      {res.loading && all.length === 0 && <Loading />}
+      {res.loading && items.length === 0 && <Loading />}
       {res.error && page === 0 && <ErrorView message={res.error} onRetry={res.reload} />}
       {wishes.error && (
         <p role="alert" className={styles.tabDesc}>
