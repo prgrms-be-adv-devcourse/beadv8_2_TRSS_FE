@@ -3,6 +3,8 @@
  *
  * POST /api/v1/influencers     인플루언서 신청. 반려된 뒤에는 같은 API로 다시 신청
  * GET  /api/v1/influencers/me  내 신청 정보. 신청한 적이 없으면 404
+ * GET  /api/v1/influencers/{influencerId}  공개 프로필. 승인된 인플루언서만, 아니면 404
+ * GET  /api/v1/seller/influencers?keyword=&page&size  협약 요청할 승인된 인플루언서 검색 (판매 중 판매자만, 아니면 403)
  * GET  /api/v1/admin/influencers?status= (목록 + 탭별 건수) | /{influencerId} (상세)   (ADMIN)
  * POST /api/v1/admin/influencers/{influencerId}/approve | reject                     (ADMIN, 심사 중만)
  *
@@ -40,6 +42,24 @@ export function getMyInfluencer() {
 
 export function applyInfluencer(body: InfluencerApplyRequest) {
   return api<MyInfluencer>('/api/v1/influencers', { method: 'POST', body })
+}
+
+// ── 공개 프로필 · 판매자 검색 ───────────────────────────
+
+/** BE InfluencerProfileResponse. 승인된 인플루언서의 공개 정보 */
+export type InfluencerProfile = {
+  influencerId: number
+  activityName: string
+  introduction: string | null
+}
+
+export function getInfluencerProfile(influencerId: number) {
+  return api<InfluencerProfile>(`/api/v1/influencers/${influencerId}`)
+}
+
+/** 판매자가 협약을 요청할 승인된 인플루언서 검색. keyword는 활동명 기준, 비우면 전체 */
+export function searchInfluencers(query: PageQuery & { keyword?: string } = {}) {
+  return api<PageResponse<InfluencerProfile>>('/api/v1/seller/influencers', { query })
 }
 
 // ── 관리자 인플루언서 심사 (ADMIN) ───────────────────────

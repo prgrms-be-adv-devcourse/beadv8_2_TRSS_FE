@@ -14,7 +14,6 @@ import { getMyReviews } from '../../lib/api/review'
 import { getWallet } from '../../lib/api/wallet'
 import { useAuth } from '../../lib/auth'
 import { useApi } from '../../lib/useApi'
-import { MOCK_PICKS } from '../influencer/mock'
 import { INFLUENCER_META, useInfluencerStatus } from '../influencer/influencerStatus'
 import { notFoundAsNull, sellerMenu, SELLER_META, type SellerView } from './util'
 import s from './account.module.css'
@@ -172,9 +171,6 @@ export default function MyPagePage(props: { sellerStatus?: SellerView; influence
           <h2 id="inf-menu">
             인플루언서 메뉴 <span>승인된 인플루언서에게만 보여요</span>
           </h2>
-          <Link to="/influencer/picks" className={s.menuItem}>
-            내 pick<span className={s.menuRight}>{MOCK_PICKS.length} ›</span>
-          </Link>
           <Link to="/influencer/partners" className={s.menuItem}>
             협약 · 발행받은 쿠폰
             <span className={s.menuRight}>{requested.data ? `요청 ${requested.data} ` : ''}›</span>

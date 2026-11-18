@@ -32,11 +32,15 @@ const COUPON_TONE: Record<CouponDisplayStatus, Tone> = {
 const ACTION_TEXT: Record<Action['kind'], { title: string; body: string; label: string }> = {
   accept: {
     title: '협약을 수락할까요?',
-    body: '수락하면 판매자가 내 pick 상품에 쿠폰을 발행할 수 있어요. 판매자와 협약은 한 번에 하나만 진행할 수 있어요.',
+    body: '수락하면 판매자가 나에게 상품 쿠폰을 발행할 수 있어요. 판매자와 협약은 한 번에 하나만 진행할 수 있어요.',
     label: '수락하기',
   },
   reject: { title: '협약 요청을 거절할까요?', body: '거절하면 판매자에게 알려져요.', label: '거절하기' },
-  end: { title: '협약을 종료할까요?', body: '종료하면 이 협약으로 발행된 상품 쿠폰도 모두 중지돼요.', label: '종료하기' },
+  end: {
+    title: '협약을 종료할까요?',
+    body: '종료하면 이 협약으로 발행된 상품 쿠폰도 모두 중지돼요.',
+    label: '종료하기',
+  },
 }
 
 function discountText(c: ProductCoupon) {
@@ -135,7 +139,11 @@ export default function InfluencerPartnersPage() {
                 {p.requestMessage && <p className={s.quote}>“{p.requestMessage}”</p>}
                 <p className={s.meta}>{fmtMd(p.requestedAt)} 요청 · 판매자와 협약은 한 번에 하나만 진행할 수 있어요</p>
                 <div className={s.btns}>
-                  <Button variant="outline" size="sm" onClick={() => (setActionError(''), setAction({ kind: 'reject', p }))}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => (setActionError(''), setAction({ kind: 'reject', p }))}
+                  >
                     거절
                   </Button>
                   <Button size="sm" onClick={() => (setActionError(''), setAction({ kind: 'accept', p }))}>
@@ -206,8 +214,7 @@ export default function InfluencerPartnersPage() {
               </Button>
             </div>
             <p className={s.meta}>
-              사용 {c.usedCount}회
-              {c.remainingQuantity !== null ? ` · 남은 수량 ${c.remainingQuantity}` : ''}
+              사용 {c.usedCount}회{c.remainingQuantity !== null ? ` · 남은 수량 ${c.remainingQuantity}` : ''}
               {c.stopReason ? ` · 중지 사유: ${c.stopReason}` : ''}
             </p>
           </div>

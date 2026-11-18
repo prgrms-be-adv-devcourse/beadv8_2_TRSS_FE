@@ -8,7 +8,8 @@ import { Modal } from '../../components/ui/Overlay'
 import f from '../../components/ui/form.module.css'
 import { errorMessage } from '../../lib/api'
 import { issueProductCoupon, type ProductCouponIssueResult } from '../../lib/api/coupon'
-import { getPickedProducts, getSellerPartnerships } from '../../lib/api/partnership'
+import { getSellerPartnerships } from '../../lib/api/partnership'
+import { getSellerProducts } from '../../lib/api/product'
 import { useApi } from '../../lib/useApi'
 import { useIsDesktop } from '../../lib/useMedia'
 import CouponFields from './CouponFields'
@@ -16,7 +17,7 @@ import { couponProblem, emptyCouponForm, type CouponForm } from './couponRules'
 import { Notice, endExclusiveOf, startOf } from './shared'
 import s from './seller.module.css'
 
-/** S11 상품 쿠폰 발행 (진행 중 협약 인플루언서가 pick한 내 판매 중 상품) */
+/** S11 상품 쿠폰 발행 (진행 중 협약 인플루언서 + 내 판매 중 상품) */
 export default function SellerCouponFormPage() {
   const desktop = useIsDesktop()
   const navigate = useNavigate()
@@ -33,16 +34,14 @@ export default function SellerCouponFormPage() {
     if (!partners.data) return
     setForm((x) => {
       if (x.partnershipId && active.some((p) => String(p.partnershipId) === x.partnershipId)) return x
-      return { ...x, partnershipId: active.length === 1 ? String(active[0].partnershipId) : '', productId: '' }
+      return { ...x, partnershipId: active.length === 1 ? String(active[0].partnershipId) : '' }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partners.data])
 
-  const picked = useApi(
-    () => (form.partnershipId ? getPickedProducts(Number(form.partnershipId)) : Promise.resolve([])),
-    [form.partnershipId],
-  )
-  const products = picked.data ?? []
+  // 대상 상품: 내 판매 중 상품 (최근 100개). 내 상품·판매 중 여부는 발행할 때 백엔드가 다시 확인해요
+  const onSale = useApi(() => getSellerProducts({ status: 'ON_SALE', size: 100 }), [])
+  const products = onSale.data?.items ?? []
 
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
@@ -110,7 +109,7 @@ export default function SellerCouponFormPage() {
             id="cp-partner"
             className={f.select}
             value={form.partnershipId}
-            onChange={(e) => setForm((x) => ({ ...x, partnershipId: e.target.value, productId: '' }))}
+            onChange={(e) => setForm((x) => ({ ...x, partnershipId: e.target.value }))}
           >
             <option value="">고르기</option>
             {active.map((p) => (
@@ -129,17 +128,11 @@ export default function SellerCouponFormPage() {
             id="cp-product"
             className={f.select}
             value={form.productId}
-            disabled={!form.partnershipId || picked.loading}
+            disabled={onSale.loading}
             onChange={(e) => setForm((x) => ({ ...x, productId: e.target.value }))}
           >
             <option value="">
-              {!form.partnershipId
-                ? '인플루언서를 먼저 골라 주세요'
-                : picked.loading
-                  ? '불러오는 중이에요'
-                  : products.length === 0
-                    ? 'pick한 상품이 없어요'
-                    : '고르기'}
+              {onSale.loading ? '불러오는 중이에요' : products.length === 0 ? '판매 중인 상품이 없어요' : '고르기'}
             </option>
             {products.map((p) => (
               <option key={p.productId} value={p.productId}>
@@ -147,10 +140,10 @@ export default function SellerCouponFormPage() {
               </option>
             ))}
           </select>
-          {picked.error ? (
-            <p className={f.error}>{picked.error}</p>
+          {onSale.error ? (
+            <p className={f.error}>{onSale.error}</p>
           ) : (
-            <p className={f.help}>그 인플루언서가 pick한 내 판매 중 상품만 보여요</p>
+            <p className={f.help}>내 판매 중 상품만 보여요</p>
           )}
         </div>
         <CouponFields form={form} setForm={setForm} />
@@ -186,9 +179,7 @@ export default function SellerCouponFormPage() {
         <Modal
           title="쿠폰을 발행했어요"
           onClose={() => navigate('/seller/coupons', { replace: true })}
-          actions={
-            <Button onClick={() => navigate('/seller/coupons', { replace: true })}>쿠폰 목록으로</Button>
-          }
+          actions={<Button onClick={() => navigate('/seller/coupons', { replace: true })}>쿠폰 목록으로</Button>}
         >
           <p>인플루언서가 구독자에게 이 코드를 전달해요.</p>
           <p className={s.issuedCode}>
