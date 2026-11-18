@@ -5,8 +5,7 @@ import Button from '../../components/ui/Button'
 import ProfileAvatar from '../../components/ui/ProfileAvatar'
 import PageHeader from '../../components/ui/PageHeader'
 import { Badge, won } from '../../components/ui/Misc'
-import { Modal, Sheet } from '../../components/ui/Overlay'
-import f from '../../components/ui/form.module.css'
+import { Modal } from '../../components/ui/Overlay'
 import { errorMessage } from '../../lib/api'
 import { getWithdrawalCheck, unlinkKakao } from '../../lib/api/member'
 import { loadMe, memberTypeLabel, useAuth } from '../../lib/auth'
@@ -73,108 +72,6 @@ function useKakaoLink() {
   }
 }
 
-/** 이름 변경·비밀번호 변경 (목업) */
-function EditSheet({
-  kind,
-  name,
-  onClose,
-  onDone,
-}: {
-  kind: 'name' | 'password'
-  name: string
-  onClose: () => void
-  onDone: (m: string) => void
-}) {
-  const [value, setValue] = useState(kind === 'name' ? name : '')
-  const [next, setNext] = useState('')
-  const [next2, setNext2] = useState('')
-  const valid =
-    kind === 'name'
-      ? value.trim().length > 0 && value.trim() !== name
-      : value.length > 0 && /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!-/:-@[-`{-~])[!-~]{8,20}$/.test(next) && next === next2
-
-  function save() {
-    // TODO(API 미구현): PATCH /api/v1/users/me { name } — 이름 변경
-    // TODO(API 미구현): PATCH /api/v1/users/me/password { currentPassword, newPassword } — 비밀번호 변경
-    onDone(
-      kind === 'name'
-        ? '이름을 바꿨어요. (목업: 서버에는 아직 저장되지 않아요)'
-        : '비밀번호를 바꿨어요. (목업: 서버에는 아직 저장되지 않아요)',
-    )
-  }
-
-  return (
-    <Sheet
-      title={kind === 'name' ? '이름 바꾸기' : '비밀번호 바꾸기'}
-      onClose={onClose}
-      footer={
-        <Button size="lg" disabled={!valid} onClick={save}>
-          저장하기
-        </Button>
-      }
-    >
-      {kind === 'name' ? (
-        <div className={f.field}>
-          <label htmlFor="pf-name" className={f.label}>
-            이름
-          </label>
-          <input
-            id="pf-name"
-            className={f.input}
-            maxLength={20}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-          />
-        </div>
-      ) : (
-        <>
-          <div className={f.field}>
-            <label htmlFor="pf-cur" className={f.label}>
-              지금 비밀번호
-            </label>
-            <input
-              id="pf-cur"
-              type="password"
-              autoComplete="current-password"
-              className={f.input}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-            />
-          </div>
-          <div className={f.field}>
-            <label htmlFor="pf-new" className={f.label}>
-              새 비밀번호
-            </label>
-            <input
-              id="pf-new"
-              type="password"
-              autoComplete="new-password"
-              className={f.input}
-              value={next}
-              onChange={(e) => setNext(e.target.value)}
-            />
-            <p className={f.help}>영문, 숫자, 특수문자를 섞어 8~20자</p>
-          </div>
-          <div className={f.field}>
-            <label htmlFor="pf-new2" className={f.label}>
-              새 비밀번호 확인
-            </label>
-            <input
-              id="pf-new2"
-              type="password"
-              autoComplete="new-password"
-              className={f.input}
-              value={next2}
-              onChange={(e) => setNext2(e.target.value)}
-            />
-            {next2 && next !== next2 && <p className={f.error}>비밀번호가 서로 달라요.</p>}
-          </div>
-        </>
-      )}
-    </Sheet>
-  )
-}
-
 /** ⑨-1 내 정보 (화면 확인용: ?sellerStatus=…, ?influencerStatus=…) */
 export default function ProfilePage(props: { sellerStatus?: SellerView; influencerStatus?: string }) {
   const { me } = useAuth()
@@ -185,22 +82,20 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
     sellerView === 'REJECTED' && !props.sellerStatus && seller?.reason ? `반려 사유: ${seller.reason}` : sm.text
   const inf = useInfluencerStatus(props.influencerStatus)
   const im = INFLUENCER_META[inf.view ?? '신청 전']
+  // 한쪽이 승인되면 반대쪽 신청 카드는 숨겨요. 심사 중·반려는 그대로 보여 주고,
+  // 백엔드가 중복 신청을 막지 않아 둘 다 승인된 경우에는 두 카드를 모두 보여 줘요.
+  const sellerApproved = sellerView === 'APPROVED'
+  const influencerApproved = inf.view === 'APPROVED'
+  const showSeller = !influencerApproved || sellerApproved
+  const showInfluencer = !sellerApproved || influencerApproved
   const check = useApi(getWithdrawalCheck, [])
   const k = useKakaoLink()
-  const [edit, setEdit] = useState<'name' | 'password' | null>(null)
-  const [saved, setSaved] = useState('')
   const c = check.data
   const typeLabel = me ? memberTypeLabel(me.role, seller?.status) : '…'
 
   return (
     <AppFrame>
       <PageHeader title="내 정보" back="/mypage" />
-
-      {saved && (
-        <p role="status" className={`${s.success} ${s.card}`}>
-          {saved}
-        </p>
-      )}
 
       <section aria-labelledby="pf-basic" className={s.card}>
         <div className={s.cardHead}>
@@ -226,14 +121,6 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
             <dd>{fmtDate(me?.createdAt)}</dd>
           </div>
         </dl>
-        <div className={`${s.actions} ${s.cardFoot} ${s.centerActions}`}>
-          <Button variant="outline" size="sm" onClick={() => setEdit('name')}>
-            이름 바꾸기
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setEdit('password')}>
-            비밀번호 바꾸기
-          </Button>
-        </div>
       </section>
 
       <section aria-labelledby="pf-kakao" className={s.card}>
@@ -269,31 +156,35 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
         )}
       </section>
 
-      <section aria-labelledby="pf-seller" className={s.card}>
-        <div className={s.cardHead}>
-          <h2 id="pf-seller">판매자로 활동하기</h2>
-          <Badge tone={sm.tone}>{sm.tag}</Badge>
-        </div>
-        <p className={s.cardText}>{sellerText}</p>
-        <div className={s.rightActions}>
-          <Button to={sm.to} size="sm" variant="outline">
-            {sm.act ?? '신청 상태 보기'}
-          </Button>
-        </div>
-      </section>
+      {showSeller && (
+        <section aria-labelledby="pf-seller" className={s.card}>
+          <div className={s.cardHead}>
+            <h2 id="pf-seller">판매자로 활동하기</h2>
+            <Badge tone={sm.tone}>{sm.tag}</Badge>
+          </div>
+          <p className={s.cardText}>{sellerText}</p>
+          <div className={s.rightActions}>
+            <Button to={sm.to} size="sm" variant="outline">
+              {sm.act ?? '신청 상태 보기'}
+            </Button>
+          </div>
+        </section>
+      )}
 
-      <section aria-labelledby="pf-inf" className={s.card}>
-        <div className={s.cardHead}>
-          <h2 id="pf-inf">인플루언서로 활동하기</h2>
-          <Badge tone={im.tone}>{im.tag}</Badge>
-        </div>
-        <p className={s.cardText}>{im.text}</p>
-        <div className={s.rightActions}>
-          <Button to={im.to} size="sm" variant="outline">
-            {im.act ?? '신청 상태 보기'}
-          </Button>
-        </div>
-      </section>
+      {showInfluencer && (
+        <section aria-labelledby="pf-inf" className={s.card}>
+          <div className={s.cardHead}>
+            <h2 id="pf-inf">인플루언서로 활동하기</h2>
+            <Badge tone={im.tone}>{im.tag}</Badge>
+          </div>
+          <p className={s.cardText}>{im.text}</p>
+          <div className={s.rightActions}>
+            <Button to={im.to} size="sm" variant="outline">
+              {im.act ?? '신청 상태 보기'}
+            </Button>
+          </div>
+        </section>
+      )}
 
       <section aria-labelledby="pf-leave" className={`${s.card} ${s.lastCard}`}>
         <div className={s.cardHead}>
@@ -352,18 +243,6 @@ export default function ProfilePage(props: { sellerStatus?: SellerView; influenc
             </p>
           )}
         </Modal>
-      )}
-
-      {edit && me && (
-        <EditSheet
-          kind={edit}
-          name={me.name}
-          onClose={() => setEdit(null)}
-          onDone={(m) => {
-            setEdit(null)
-            setSaved(m)
-          }}
-        />
       )}
     </AppFrame>
   )

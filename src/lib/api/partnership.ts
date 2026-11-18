@@ -45,6 +45,8 @@ export type Partnership = {
   /** 인플루언서 활동명. 조회 실패 시 null */
   activityName: string | null
   status: PartnershipStatus
+  /** 인플루언서 수수료율(%). TRSS-224 전에 만든 협약은 null */
+  commissionRate: number | null
   requestMessage: string | null
   requestedAt: string
   acceptedAt: string | null
@@ -56,9 +58,16 @@ export type Partnership = {
 type PartnershipQuery = PageQuery & { status?: PartnershipStatus }
 
 // ── 판매자 ──
-/** influencerId는 influencer.id (회원 ID 아님). message는 선택, 최대 500자 */
-export const requestPartnership = (influencerId: number, message?: string) =>
-  api<{ partnershipId: number }>('/api/v1/seller/partnerships', { method: 'POST', body: { influencerId, message } })
+/** 인플루언서 수수료율(%) 범위 (BE PartnershipRequestRequest와 같음) */
+export const COMMISSION_RATE_MIN = 15
+export const COMMISSION_RATE_MAX = 30
+
+/** influencerId는 influencer.id (회원 ID 아님). commissionRate는 15~30 정수(필수), message는 선택, 최대 500자 */
+export const requestPartnership = (influencerId: number, commissionRate: number, message?: string) =>
+  api<{ partnershipId: number }>('/api/v1/seller/partnerships', {
+    method: 'POST',
+    body: { influencerId, commissionRate, message },
+  })
 export const getSellerPartnerships = (query: PartnershipQuery = {}) =>
   api<PageResponse<Partnership>>('/api/v1/seller/partnerships', { query })
 export const endSellerPartnership = (partnershipId: number) =>

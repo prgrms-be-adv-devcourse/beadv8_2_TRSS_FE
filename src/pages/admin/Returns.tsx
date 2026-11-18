@@ -179,7 +179,7 @@ function ReturnBody({ v, r }: { v: View; r: AdminReturn }) {
       {r.items.map((i) => (
         <div key={i.orderItemId} className={s.returnItem}>
           <Thumb src={thumbOf(i)} width={40} height={40} />
-          <span>
+          <span className={s.returnInfo}>
             <b>{i.productName}</b>
             <span>
               {i.optionName} · {i.quantity}개 · {i.sellerName}

@@ -9,6 +9,8 @@ import { errorMessage, toPageParam } from '../../lib/api'
 import { getSellerCoupons } from '../../lib/api/coupon'
 import { searchInfluencers, type InfluencerProfile } from '../../lib/api/influencer'
 import {
+  COMMISSION_RATE_MAX,
+  COMMISSION_RATE_MIN,
   PARTNERSHIP_ENDED_BY_LABEL,
   endSellerPartnership,
   getSellerPartnerships,
@@ -24,7 +26,7 @@ import { Notice, Pager, fmtMD } from './shared'
 import s from './seller.module.css'
 
 const PAGE_SIZE = 20
-const COLS = '1fr 1.4fr .8fr 1fr .8fr 1.4fr'
+const COLS = '1fr 1.4fr .7fr .8fr 1fr .8fr 1.4fr'
 const MESSAGE_MAX = 500
 const SEARCH_SIZE = 10
 
@@ -110,20 +112,24 @@ export default function SellerPartnersPage() {
   const found = usePaged((pg) => searchInfluencers({ keyword: q || undefined, page: pg, size: SEARCH_SIZE }), [q])
   const [selected, setSelected] = useState<InfluencerProfile | null>(null)
   const [message, setMessage] = useState('')
+  const [rate, setRate] = useState('')
+  const rateNum = Number(rate)
+  const rateOk = /^\d+$/.test(rate) && rateNum >= COMMISSION_RATE_MIN && rateNum <= COMMISSION_RATE_MAX
   const [sending, setSending] = useState(false)
   const [formError, setFormError] = useState('')
   const [done, setDone] = useState('')
 
-  async function send(targetId: number, name: string, msg?: string) {
+  async function send(targetId: number, name: string, commissionRate: number, msg?: string) {
     if (sending) return
     setSending(true)
     setFormError('')
     setDone('')
     try {
-      await requestPartnership(targetId, msg?.trim() || undefined)
+      await requestPartnership(targetId, commissionRate, msg?.trim() || undefined)
       setDone(`${name}에게 협약을 요청했어요. 수락하면 진행 중으로 바뀌어요.`)
       setSelected(null)
       setMessage('')
+      setRate('')
       list.reload()
       counts.reload()
     } catch (e) {
@@ -178,12 +184,29 @@ export default function SellerPartnersPage() {
       )
     if (p.status === 'REJECTED' || p.status === 'ENDED')
       return (
-        <Button variant="outline" size="sm" onClick={() => send(p.influencerId, who(p))} disabled={sending}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            // 다시 요청은 지난 협약의 수수료율을 그대로 써요. 없으면(TRSS-224 전 협약) 입력칸 값을 써요
+            const r = p.commissionRate ?? (rateOk ? rateNum : null)
+            if (r === null) {
+              setDone('')
+              setFormError(
+                `다시 요청하려면 아래 수수료율(${COMMISSION_RATE_MIN}~${COMMISSION_RATE_MAX}%)을 먼저 입력해 주세요.`,
+              )
+              return
+            }
+            send(p.influencerId, who(p), r)
+          }}
+          disabled={sending}
+        >
           다시 요청
         </Button>
       )
     return null
   }
+  const rateText = (p: Partnership) => (p.commissionRate !== null ? `${p.commissionRate}%` : '—')
   const couponText = (p: Partnership) => {
     const { total, stopped } = couponCount(p.partnershipId)
     if (total === 0) return '—'
@@ -251,6 +274,26 @@ export default function SellerPartnersPage() {
         </div>
       </div>
       <div className={f.field}>
+        <label htmlFor="pt-rate" className={f.label}>
+          인플루언서 수수료율 (%)
+        </label>
+        <input
+          id="pt-rate"
+          className={f.input}
+          inputMode="numeric"
+          placeholder={`${COMMISSION_RATE_MIN}~${COMMISSION_RATE_MAX} 사이 정수`}
+          value={rate}
+          aria-invalid={rate !== '' && !rateOk}
+          aria-describedby="pt-rate-help"
+          onChange={(e) => setRate(e.target.value.replace(/\D/g, '').slice(0, 2))}
+        />
+        <p id="pt-rate-help" className={rate !== '' && !rateOk ? f.error : f.help}>
+          {rate !== '' && !rateOk
+            ? `${COMMISSION_RATE_MIN}~${COMMISSION_RATE_MAX} 사이 정수로 입력해 주세요.`
+            : '쿠폰으로 팔린 금액에서 인플루언서가 받는 비율이에요.'}
+        </p>
+      </div>
+      <div className={f.field}>
         <label htmlFor="pt-msg" className={f.label}>
           메시지 (선택)
         </label>
@@ -266,8 +309,8 @@ export default function SellerPartnersPage() {
       {formError && <Notice tone="error">{formError}</Notice>}
       <div className={desktop ? s.right : undefined}>
         <Button
-          onClick={() => selected && send(selected.influencerId, selected.activityName, message)}
-          disabled={!selected || sending}
+          onClick={() => selected && rateOk && send(selected.influencerId, selected.activityName, rateNum, message)}
+          disabled={!selected || !rateOk || sending}
         >
           {sending ? '보내는 중' : '협약 요청 보내기'}
         </Button>
@@ -294,6 +337,7 @@ export default function SellerPartnersPage() {
         <div role="row" className={`${c.tr} ${c.thead}`} style={{ gridTemplateColumns: COLS }}>
           <span>인플루언서</span>
           <span>요청 메시지</span>
+          <span>수수료율</span>
           <span>상태</span>
           <span>기간</span>
           <span>쿠폰</span>
@@ -308,6 +352,7 @@ export default function SellerPartnersPage() {
               <span className={`${c.ellipsis} ${s.faint}`} title={p.requestMessage ?? undefined}>
                 {p.requestMessage || '—'}
               </span>
+              <span className={c.num}>{rateText(p)}</span>
               <span>
                 <Badge tone={tone}>{label}</Badge>
               </span>
@@ -340,6 +385,7 @@ export default function SellerPartnersPage() {
               </div>
               <p className={s.faintLine}>
                 {mobileNote(p)}
+                {p.commissionRate !== null && ` · 수수료 ${p.commissionRate}%`}
                 {p.status === 'ACTIVE' && ` · 쿠폰 ${total}개`}
               </p>
               {acts && <div className={s.cardActions}>{acts}</div>}

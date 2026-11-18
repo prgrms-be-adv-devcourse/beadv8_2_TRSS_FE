@@ -14,6 +14,7 @@ import {
   type AdminFailureType,
 } from '../../lib/api/failure'
 import { useApi } from '../../lib/useApi'
+import DeliveryCompleteModal from '../logistics/DeliveryCompleteModal'
 import { useIsDesktop } from '../../lib/useMedia'
 import { mmddhm } from './format'
 import s from './AdminFinance.module.css'
@@ -33,6 +34,8 @@ export type FailedRow = {
   handle: string
   /** 월 정산 화면에서 열 정산서 ID (정산 수동 필요만) */
   settlementId?: number
+  /** 배송 수동 완료할 배송 ID (배송 추적 실패만) */
+  deliveryId?: number
 }
 
 /** 서비스 한 곳의 결과. 다른 서비스가 실패해도 이 탭만 오류로 보여요 */
@@ -104,6 +107,7 @@ function toRow(item: AdminFailureItem): FailedRow {
     cause: item.reasonLabel,
     handle: item.handlingLabel,
     settlementId: item.type === 'SETTLEMENT_MANUAL_REQUIRED' ? item.refId : undefined,
+    deliveryId: item.type === 'DELIVERY_TRACKING_FAILED' ? item.refId : undefined,
   }
 }
 
@@ -129,10 +133,12 @@ async function loadFailed(): Promise<Source[]> {
   ])
 }
 
-/** 관리자 · 실패 거래 (A7, 조회 전용) */
+/** 관리자 · 실패 거래 (A7). 수동 처리는 월 정산 재처리(이동)와 배송 수동 완료만 */
 export default function AdminFailed() {
   const desktop = useIsDesktop()
   const [tab, setTab] = useState<Tab>('ALL')
+  const [completing, setCompleting] = useState<FailedRow | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const data = useApi(loadFailed, [])
   const sources = useMemo(() => data.data ?? [], [data.data])
   const all = useMemo(() => sources.flatMap((x) => x.rows).sort((a, b) => b.at.localeCompare(a.at)), [sources])
@@ -156,9 +162,12 @@ export default function AdminFailed() {
       <Button variant="outline" size="sm" to={settlementTo(r)}>
         월 정산으로
       </Button>
-    ) : r.kind === 'delivery' ? (
-      <span className={c.sub}>{r.handle}</span>
+    ) : r.deliveryId !== undefined ? (
+      <Button variant="outline" size="sm" onClick={() => setCompleting(r)}>
+        배송 완료 처리
+      </Button>
     ) : null
+  const deliveryLabel = (r: FailedRow) => `배송 #${r.deliveryId}`
 
   const body =
     data.loading && !data.data ? (
@@ -168,22 +177,18 @@ export default function AdminFailed() {
     ) : rows.length === 0 && notices.length === 0 ? (
       <Empty title="실패한 거래가 없어요." />
     ) : null
+  const allNotices = notice ? [notice, ...notices] : notices
   const noticeView =
-    notices.length > 0 ? (
+    allNotices.length > 0 ? (
       <div className={s.foot} role="status">
-        {notices.map((n) => (
+        {allNotices.map((n) => (
           <p key={n}>{n}</p>
         ))}
       </div>
     ) : null
 
   return (
-    <ConsoleShell
-      variant="admin"
-      active="failed"
-      title={<span className={s.titleWithBadge}>실패 거래 {!desktop && <Badge>조회 전용</Badge>}</span>}
-      actions={<Badge>조회 전용</Badge>}
-    >
+    <ConsoleShell variant="admin" active="failed" title="실패 거래">
       <div className={s.page}>
         {desktop ? (
           <>
@@ -215,7 +220,7 @@ export default function AdminFailed() {
                   <span className={c.ellipsis} title={r.cause}>
                     {r.cause}
                   </span>
-                  <span className={c.sub}>{r.settlementId !== undefined || r.kind === 'delivery' ? '' : r.handle}</span>
+                  <span className={c.sub}>{r.settlementId !== undefined ? '' : r.handle}</span>
                   <span>{handle(r)}</span>
                 </div>
               ))}
@@ -247,16 +252,34 @@ export default function AdminFailed() {
                   ) : (
                     <p className={s.meta}>{r.handle}</p>
                   )}
+                  {r.deliveryId !== undefined && (
+                    <Button variant="outline" size="sm" onClick={() => setCompleting(r)}>
+                      배송 완료 처리
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>
           </>
         )}
         <p className={s.foot}>
-          조회 전용이에요. 수동 처리는 월 정산 재처리만 할 수 있어요. 배송 문제는 물류 담당자가 처리해요. 유형마다 최근{' '}
-          {SIZE}건까지 보여요.
+          수동 처리는 월 정산 재처리와 배송 완료 처리만 할 수 있어요. 배송 완료 처리는 물류 담당자가 송장·택배사 상태를
+          확인한 뒤에 해 주세요. 유형마다 최근 {SIZE}건까지 보여요.
         </p>
       </div>
+      {completing?.deliveryId !== undefined && (
+        <DeliveryCompleteModal
+          deliveryId={completing.deliveryId}
+          label={deliveryLabel(completing)}
+          shippedAt={completing.at}
+          onClose={() => setCompleting(null)}
+          onDone={() => {
+            setNotice(`${deliveryLabel(completing)}을 배송 완료로 바꿨어요.`)
+            setCompleting(null)
+            data.reload()
+          }}
+        />
+      )}
     </ConsoleShell>
   )
 }

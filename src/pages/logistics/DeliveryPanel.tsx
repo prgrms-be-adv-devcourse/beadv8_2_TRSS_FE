@@ -1,14 +1,12 @@
-import { useState } from 'react'
-import Button from '../../components/ui/Button'
 import { Badge, Thumb } from '../../components/ui/Misc'
-import { Modal } from '../../components/ui/Overlay'
 import { DELIVERY_STATUS_LABEL, changeDeliveryTracking, type LogisticsDelivery } from '../../lib/api/logistics'
 import { TrackingForm, courierName, daysSince, mmddhm, needsCheck, trackingLabel } from './shared'
 import s from './Logistics.module.css'
 
 /**
  * 배송 상세 (PC 오른쪽 패널 · 모바일 상세 화면 공통)
- * 받는 분 · 상품 · 택배 이동 · 송장 수정(배송 중만) · 배송 완료 처리(목업)
+ * 받는 분 · 상품 · 택배 이동 · 송장 수정(배송 중만)
+ * 배송 완료 수동 처리는 관리자 전용 API라, 관리자 실패 거래 화면의 배송 행에서 해요
  */
 export default function DeliveryPanel({
   delivery: d,
@@ -19,7 +17,6 @@ export default function DeliveryPanel({
   onChanged: (next: LogisticsDelivery) => void
   onNotice: (msg: string) => void
 }) {
-  const [askComplete, setAskComplete] = useState(false)
   const shipping = d.status === 'SHIPPED'
   const check = shipping && needsCheck(d)
 
@@ -116,39 +113,10 @@ export default function DeliveryPanel({
           <p className={s.meta}>송장을 고쳐도 구매자에게 알림을 다시 보내지 않아요.</p>
           {check && (
             <div className={s.completeBox}>
-              <span>택배사 조회가 안 되는데 실제로 배송이 끝났다면 직접 완료로 바꿀 수 있어요.</span>
-              <Button variant="outline" size="sm" onClick={() => setAskComplete(true)}>
-                배송 완료 처리
-              </Button>
+              <span>택배사 조회가 안 되는데 실제로 배송이 끝났다면 관리자에게 배송 완료 처리를 요청해 주세요.</span>
             </div>
           )}
         </section>
-      )}
-
-      {askComplete && (
-        <Modal
-          title="배송 완료로 바꿀까요?"
-          onClose={() => setAskComplete(false)}
-          actions={
-            <>
-              <Button variant="outline" onClick={() => setAskComplete(false)}>
-                취소
-              </Button>
-              <Button
-                onClick={() => {
-                  // TODO(API 미구현): 배송 완료 수동 처리 API — 지금은 화면 안 상태만 바꿔요
-                  onChanged({ ...d, status: 'DELIVERED', deliveredAt: new Date().toISOString() })
-                  onNotice(`${d.orderNumber}을 배송 완료로 바꿨어요. (예시 동작)`)
-                  setAskComplete(false)
-                }}
-              >
-                완료 처리
-              </Button>
-            </>
-          }
-        >
-          택배사 조회를 기다리지 않고 배송 완료로 바꿔요. 구매자 주문에도 배송 완료로 보여요.
-        </Modal>
       )}
     </div>
   )

@@ -52,74 +52,73 @@ export default function LoginPage() {
 
   return (
     <AppFrame tabBar={false}>
-      <div className={m.brand}>
-        <h1 className={s.authLogo}>
-          <Link to="/">
-            <img src="/images/logo.png" alt="Palette" />
-          </Link>
-        </h1>
-        <div className={m.dots} aria-hidden="true">
-          <span className={m.dot} />
-          <span className={m.dot} />
-          <span className={m.dot} />
-          <span className={m.dot} />
+      <div className={s.loginPage}>
+        <div className={m.brand}>
+          <h1 className={s.authLogo}>
+            <Link to="/">
+              <img src="/images/logo.png" alt="Palette" />
+            </Link>
+          </h1>
+          <div className={m.dots} aria-hidden="true">
+            <span className={m.dot} />
+            <span className={m.dot} />
+            <span className={m.dot} />
+            <span className={m.dot} />
+          </div>
+        </div>
+        <div className={s.loginBox}>
+          <form className={s.authForm} onSubmit={onSubmit}>
+            <input
+              id="login-email"
+              className={s.authInput}
+              type="email"
+              autoComplete="email"
+              placeholder="이메일"
+              aria-label="이메일"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <input
+              id="login-pw"
+              className={s.authInput}
+              type="password"
+              autoComplete="current-password"
+              placeholder="비밀번호"
+              aria-label="비밀번호"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {error && (
+              <p role="alert" className={s.alert}>
+                {error}
+              </p>
+            )}
+            <Button type="submit" size="lg" block className={`${s.authSubmit} ${m.submit}`} disabled={pending}>
+              {pending ? '로그인 중…' : '로그인'}
+            </Button>
+          </form>
+          <p className={`${s.authFoot} ${s.loginSignup}`}>
+            처음이신가요? <Link to="/signup">회원가입</Link>
+          </p>
+          <div className={s.kakaoWrap}>
+            <button
+              type="button"
+              className={s.kakao}
+              onClick={() => {
+                setError('')
+                // 카카오 REST API 키(VITE_KAKAO_REST_API_KEY)가 없으면 인가 화면으로 가지 않아요
+                if (!startKakao('login', from))
+                  setError('카카오 로그인을 아직 사용할 수 없어요. 잠시 후 다시 시도해 주세요.')
+              }}
+            >
+              <KakaoSymbol />
+              카카오 로그인
+            </button>
+          </div>
         </div>
       </div>
-      <form className={s.authForm} onSubmit={onSubmit}>
-        <input
-          id="login-email"
-          className={s.authInput}
-          type="email"
-          autoComplete="email"
-          placeholder="이메일"
-          aria-label="이메일"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          id="login-pw"
-          className={s.authInput}
-          type="password"
-          autoComplete="current-password"
-          placeholder="비밀번호"
-          aria-label="비밀번호"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        {error && (
-          <p role="alert" className={s.alert}>
-            {error}
-          </p>
-        )}
-        <Button type="submit" size="lg" block className={`${s.authSubmit} ${m.submit}`} disabled={pending}>
-          {pending ? '로그인 중…' : '로그인'}
-        </Button>
-      </form>
-      <div className={s.divider} aria-hidden="true">
-        <span />
-        또는
-        <span />
-      </div>
-      <div className={s.kakaoWrap}>
-        <button
-          type="button"
-          className={s.kakao}
-          onClick={() => {
-            setError('')
-            // 카카오 REST API 키(VITE_KAKAO_REST_API_KEY)가 없으면 인가 화면으로 가지 않아요
-            if (!startKakao('login', from))
-              setError('카카오 로그인을 아직 사용할 수 없어요. 잠시 후 다시 시도해 주세요.')
-          }}
-        >
-          <KakaoSymbol />
-          카카오 로그인
-        </button>
-      </div>
-      <p className={s.authFoot}>
-        처음이신가요? <Link to="/signup">회원가입</Link>
-      </p>
     </AppFrame>
   )
 }

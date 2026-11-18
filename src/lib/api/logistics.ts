@@ -5,6 +5,9 @@
  * GET   /api/v1/logistics/deliveries/{deliveryId}                      배송 상세 (배송지 포함)
  * POST  /api/v1/logistics/deliveries/{deliveryId}/ship                 송장 등록 { courier, trackingNumber } READY → SHIPPED
  * PATCH /api/v1/logistics/deliveries/{deliveryId}/tracking             송장 수정 { courier, trackingNumber } (SHIPPED만)
+ *
+ * 관리자 배송 API (ADMIN 전용, /api/v1/admin/**)
+ * POST  /api/v1/admin/deliveries/{deliveryId}/complete                 배송 수동 완료 { deliveredAt, reason } SHIPPED → DELIVERED
  */
 import { api, type PageQuery, type PageResponse } from '.'
 
@@ -76,3 +79,10 @@ export const shipDelivery = (deliveryId: number, body: TrackingRequest) =>
 /** 같은 값이면 바꾸지 않아요. */
 export const changeDeliveryTracking = (deliveryId: number, body: TrackingRequest) =>
   api<LogisticsDelivery>(`/api/v1/logistics/deliveries/${deliveryId}/tracking`, { method: 'PATCH', body })
+
+/** 배송 수동 완료 요청. deliveredAt은 오프셋 없는 KST 'yyyy-MM-ddTHH:mm:ss' (미래·송장 등록 시각 이전 불가), reason은 300자 이내 */
+export type DeliveryCompleteRequest = { deliveredAt: string; reason: string }
+
+/** 관리자 전용: 택배사 조회로 완료되지 않은 배송 중 배송을 완료로 바꿔요. */
+export const completeDeliveryManually = (deliveryId: number, body: DeliveryCompleteRequest) =>
+  api<LogisticsDelivery>(`/api/v1/admin/deliveries/${deliveryId}/complete`, { method: 'POST', body })
