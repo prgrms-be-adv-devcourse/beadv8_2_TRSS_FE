@@ -9,7 +9,15 @@ import PageHeader from '../../components/ui/PageHeader'
 import { won } from '../../components/ui/Misc'
 import f from '../../components/ui/form.module.css'
 import { getOrder, isPayable } from '../../lib/api/order'
-import { checkoutPath, failTopup, getWallet, prepareTopup, savePendingTopup } from '../../lib/api/wallet'
+import {
+  checkoutPath,
+  failTopup,
+  getWallet,
+  prepareTopup,
+  savePendingTopup,
+  type TopupPrepare,
+} from '../../lib/api/wallet'
+import { codeOf } from '../../lib/notices/common'
 import {
   TOPUP_NOTICE_KEY,
   topupCanceledNotice,
@@ -31,6 +39,39 @@ const WIDGET_AGREEMENT_ID = 'toss-agreement'
 const MIN_AMOUNT = 10000
 const MAX_AMOUNT = 1000000
 const PRESETS = [10000, 30000, 50000, 100000]
+
+/**
+ * 헥토 결제창으로 이동한다. 서버가 준 params를 그대로 hidden input에 담아 현재 창에서 form POST로 보낸다.
+ * 결과는 서버가 받아 /wallet/topup-result로 넘겨 주므로 돌아올 주소는 따로 넣지 않는다
+ */
+function submitHectoCheckout(checkout: NonNullable<TopupPrepare['checkout']>) {
+  const form = document.createElement('form')
+  form.method = 'POST'
+  form.action = checkout.url
+  for (const [name, value] of Object.entries(checkout.params)) {
+    const input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = name
+    input.value = value
+    form.appendChild(input)
+  }
+  document.body.appendChild(form)
+  form.submit()
+}
+
+/** 서버가 헥토를 골랐을 때. 생김새가 다른 결제창이 뜨고 수단도 신용카드로 바뀌어서, 넘어가기 전에 알린다 */
+const hectoNotice = (checkout: NonNullable<TopupPrepare['checkout']>): Notice => ({
+  title: '다른 결제창으로 연결할게요',
+  body: '지금 토스 결제에 문제가 있어 헥토파이낸셜 결제창으로 충전해요. 이 결제창에서는 신용카드만 쓸 수 있어요.',
+  actions: [{ label: '닫기' }, { label: '계속', primary: true, onClick: () => submitHectoCheckout(checkout) }],
+})
+
+/** 충전 준비 503 TOPUP_PG_UNAVAILABLE: 토스·헥토 모두 장애. 서버 메시지 대신 화면 말투에 맞춘 문구를 쓴다 */
+const pgUnavailableNotice = (): Notice => ({
+  title: '지금은 충전할 수 없어요',
+  body: '결제사 장애로 지금은 충전할 수 없어요. 잠시 후 다시 시도해 주세요.',
+  actions: [{ label: '확인', primary: true }],
+})
 
 /** 토스 결제위젯(결제수단·약관)을 화면에 한 번 그리고, 충전 금액이 바뀌면 위젯 금액도 바꿔요. */
 function useTossWidgets(amount: number) {
@@ -125,8 +166,8 @@ export default function TopupPage() {
   }, [])
 
   async function startTopup() {
-    const widgets = toss.widgetsRef.current
-    if (!widgets) {
+    // 위젯을 못 불러왔어도(toss.error) 서버가 헥토를 고를 수 있으니 충전 준비는 진행한다
+    if (!toss.ready && !toss.error) {
       setPayError('결제 수단을 불러오는 중이에요. 잠시 후 다시 눌러 주세요.')
       return
     }
@@ -135,10 +176,10 @@ export default function TopupPage() {
     setPayError('')
     let topupId: number | null = null
     try {
-      // 1) 백엔드에 충전 건을 만들고 토스 주문번호(orderId)를 받아요
+      // 1) 백엔드에 충전 건을 만들고 주문번호(orderId)와 서버가 고른 PG를 받아요
       const prepared = await prepareTopup(amount)
       topupId = prepared.topupId
-      // 2) 결제 요청 전에 topupId를 저장해요 (사용자 취소 시 토스가 orderId를 안 줘요)
+      // 2) 결제창으로 가기 전에 topupId를 저장해요 (결제창을 닫으면 토스·헥토 모두 topupId를 안 줘요)
       savePendingTopup({
         topupId: prepared.topupId,
         orderId: prepared.orderId,
@@ -146,6 +187,16 @@ export default function TopupPage() {
         orderNumber,
         shortage: shortage || null,
       })
+      // 헥토: 토스 위젯 대신 헥토 결제창으로 간다. 수단이 신용카드로 바뀌니 먼저 알리고 동의를 받는다
+      if (prepared.pgProvider === 'HECTO' && prepared.checkout) {
+        setNotice(hectoNotice(prepared.checkout))
+        return
+      }
+      const widgets = toss.widgetsRef.current
+      if (!widgets) {
+        setPayError('결제 수단을 불러오지 못했어요. 새로고침해 주세요.')
+        return
+      }
       await widgets.setAmount({ currency: 'KRW', value: prepared.amount })
       // 3) 결제를 요청하면 토스가 successUrl 또는 failUrl로 이동시켜요
       // 결과 화면에서 토스가 붙이는 orderId(TOPUP-…)와 겹치지 않게 returnOrderId로 넘겨요
@@ -171,6 +222,8 @@ export default function TopupPage() {
         setNotice(topupCanceledNotice())
       } else if (code) {
         setPayError((e as Error).message || '결제를 진행하지 못했어요.') // 약관 미동의 등 토스 안내 문구
+      } else if (codeOf(e) === 'TOPUP_PG_UNAVAILABLE') {
+        setNotice(pgUnavailableNotice()) // 토스·헥토 모두 장애라 결제창을 열지 않는다
       } else {
         setNotice(topupNotice(e, noticeCtx)) // 충전 준비 API 실패 (TOPUP_AMOUNT_INVALID, 로그인 만료 등)
       }
@@ -187,8 +240,9 @@ export default function TopupPage() {
   return (
     <AppFrame
       bottom={
-        <BottomBar note={payError ? undefined : '토스페이먼츠 결제창으로 이동해요'}>
-          <Button size="lg" onClick={startTopup} disabled={!toss.ready || !amountValid || paying}>
+        // PG는 충전 준비 응답에서 정해지므로(토스 장애 시 헥토) 결제사 이름을 넣지 않는다
+        <BottomBar note={payError ? undefined : '결제창으로 이동해요'}>
+          <Button size="lg" onClick={startTopup} disabled={(!toss.ready && !toss.error) || !amountValid || paying}>
             {paying ? '결제를 준비하고 있어요…' : `${won(amount)} 충전하기`}
           </Button>
         </BottomBar>

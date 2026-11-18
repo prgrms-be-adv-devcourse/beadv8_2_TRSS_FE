@@ -59,7 +59,19 @@ export type TopupCancel = {
   canceledAmount: number | null // 이 충전 건에서 PG 취소가 확정된 금액 합계
   balance: number | null // 취소 후 예치금 잔액
 }
-export type TopupPrepare = { topupId: number; orderId: string; amount: number }
+/** 충전 PG. 서버가 고른다 (토스가 기본, 토스 장애로 서킷이 열리면 헥토, BE PR #447) */
+export type PgProvider = 'TOSS' | 'HECTO'
+/**
+ * BE TopupPrepareDto. checkout은 헥토일 때만 있고, url로 params를 form POST로 보낸다
+ * (params는 서버가 만든 그대로 보낸다. 금액 암호화·해시 포함). 토스는 null이고 위젯 requestPayment를 쓴다
+ */
+export type TopupPrepare = {
+  topupId: number
+  orderId: string
+  amount: number
+  pgProvider: PgProvider
+  checkout: { url: string; params: Record<string, string> } | null
+}
 /** status DONE이면 balance는 반영 후 잔액, PROCESSING이면 null */
 export type TopupConfirm = {
   topupId: number
