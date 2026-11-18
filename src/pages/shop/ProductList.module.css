@@ -191,9 +191,11 @@
 }
 
 /* PC(1024px 이상)에서 컬럼이 넓어지면 3열 */
+/* PC: 한 줄 3개, 카드 사이를 넓혀 덜 빽빽하게 (상품 목록·홈 탭이 같은 값) */
 @media (min-width: 1024px) {
   .grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px 16px;
   }
 }
 

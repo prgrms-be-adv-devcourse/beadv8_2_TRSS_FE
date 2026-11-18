@@ -288,6 +288,9 @@ export type CardProduct = {
   businessName?: string
   soldOut?: boolean
   remainingStock?: number | null
+  /** 상품 목록 응답에만 있어요. 없으면 카드에 별점 줄을 그리지 않아요 */
+  reviewCount?: number
+  averageRating?: number
 }
 
 /** 목록 2열 카드 */
@@ -314,9 +317,25 @@ export function ProductCard({
         {p.businessName && <span className={styles.brand}>{p.businessName}</span>}
         <span className={styles.name}>{p.name}</span>
         <PriceTag price={p.price} salePrice={p.salePrice} discountRate={p.discountRate} />
+        {p.reviewCount != null && <CardRating reviewCount={p.reviewCount} averageRating={p.averageRating ?? 0} />}
       </Link>
       {onWish && <HeartButton on={!!wished} onClick={onWish} className={styles.cardHeart} />}
     </div>
+  )
+}
+
+/** 카드 아래 별점 줄: "★ 4.9 (312)". 리뷰가 없으면 회색 별과 "(0)"만 보여 줘요 */
+function CardRating({ reviewCount, averageRating }: { reviewCount: number; averageRating: number }) {
+  const none = reviewCount === 0
+  const rating = averageRating.toFixed(1)
+  const count = reviewCount.toLocaleString('ko-KR')
+  return (
+    <span className={styles.cardRating}>
+      <span className={styles.srOnly}>{none ? '리뷰 없음' : `별점 ${rating}, 리뷰 ${count}개`}</span>
+      <span aria-hidden="true">
+        <b className={none ? styles.cardStarOff : styles.cardStar}>★</b> {none ? '(0)' : `${rating} (${count})`}
+      </span>
+    </span>
   )
 }
 
