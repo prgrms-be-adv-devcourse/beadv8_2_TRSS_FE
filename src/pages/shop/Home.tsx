@@ -12,6 +12,7 @@ import { basisText, getCreatorRecommendations } from '../../lib/api/ai'
 import CategoryDrawer from './CategoryDrawer'
 import HomePersonal from './HomePersonal'
 import HomeRecent from './HomeRecent'
+import { HomeCategoryBest, HomeExploreTop, useHomeExplore } from './HomeExplore'
 import { HOME_TABS, HomeTabList, type HomeTab } from './HomeTabs'
 import { SearchPanel } from './Search'
 import styles from './Home.module.css'
@@ -19,6 +20,9 @@ import styles from './Home.module.css'
 /** 검색창 안내에 돌려 보여 줄 인기 검색어 수와 간격 */
 const HINT_COUNT = 5
 const HINT_INTERVAL_MS = 3000
+/** 맞춤 추천·새로 들어온 뷰티 개수. 위 섹션과 겹치는 상품을 빼고도 채우도록 넉넉히 받아요 */
+const REC_SIZE = 6
+const REC_FETCH_SIZE = 12
 
 /**
  * 홈 검색창 안내 문구. 인기 검색어를 몇 초마다 바꿔 보여 줘요.
@@ -47,9 +51,13 @@ export default function HomePage() {
   // 내 피부 맞춤 추천(AI 설문): GET /api/v1/ai/recommendations (비회원·설문 전이면 뷰티 최신순)
   // 순서: 설문 카드(설문 전) 또는 맞춤 추천 → 비슷한 크리에이터 → HomePersonal → HomeRecent
   // 그 아래 상품 개인화 추천은 HomePersonal, 최근 본 상품 기반은 HomeRecent
-  const rec = useApi(() => loadRecommendations(6), [loggedIn])
-  const recs = rec.data?.items ?? []
+  const rec = useApi(() => loadRecommendations(REC_FETCH_SIZE), [loggedIn])
   const personalized = !!rec.data?.personalized
+  // 탐색 섹션(인기 검색어·랭킹·특가·카테고리). 비개인화면 새로 들어온 뷰티에서 랭킹·특가 상품을 빼요
+  const explore = useHomeExplore()
+  const shownIds = new Set(explore.shownIds)
+  const recs = (rec.data?.items ?? []).filter((p) => personalized || !shownIds.has(p.productId)).slice(0, REC_SIZE)
+  const exploreExclude = [...explore.shownIds, ...recs.map((p) => p.productId)]
   // 피부가 비슷한 크리에이터: 로그인하고 설문을 마쳤을 때만 불러요. 실패해도 섹션만 숨겨요
   const creators = useApi(
     () => (loggedIn && personalized ? getCreatorRecommendations(3).catch(() => null) : Promise.resolve(null)),
@@ -154,6 +162,9 @@ export default function HomePage() {
 
           {rec.data?.example && <ExampleNotice />}
 
+          {/* 비로그인: 설문 → 탐색(위) → 새로 들어온 뷰티 → 탐색(아래). 로그인은 개인화 섹션 뒤에 탐색을 둬요 */}
+          {!loggedIn && <HomeExploreTop data={explore} />}
+
           {recs.length > 0 && (
             <section aria-label={personalized ? '내 피부 맞춤 추천' : '새로 들어온 뷰티'} className={styles.sec}>
               {personalized && rec.data?.basis ? (
@@ -207,6 +218,9 @@ export default function HomePage() {
           <HomePersonal />
 
           <HomeRecent />
+
+          {loggedIn && <HomeExploreTop data={explore} />}
+          <HomeCategoryBest excludeIds={exploreExclude} />
         </>
       )}
 
