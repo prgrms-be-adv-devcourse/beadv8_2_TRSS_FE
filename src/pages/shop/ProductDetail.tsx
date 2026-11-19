@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import BottomBar from '../../components/ui/BottomBar'
 import Button from '../../components/ui/Button'
@@ -7,12 +7,14 @@ import CartHeaderIcon from '../../components/ui/CartHeaderIcon'
 import PageHeader from '../../components/ui/PageHeader'
 import { Empty, ErrorView, Loading, Thumb, won } from '../../components/ui/Misc'
 import { errorMessage } from '../../lib/api'
-import { addCartItem } from '../../lib/api/cart'
+import { addCartItem, getCart } from '../../lib/api/cart'
 import { getProductReviews } from '../../lib/api/review'
 import { useAuth } from '../../lib/auth'
 import { useApi } from '../../lib/useApi'
 import { recordRecentView } from '../../lib/recentViewed'
 import Icon from '../../components/ui/Icon'
+import { Modal } from '../../components/ui/Overlay'
+import { newIdempotencyKey } from '../../lib/api/order'
 import { getSimilarProducts, matchOption } from '../../lib/api/product'
 import {
   ExampleNotice,
@@ -56,6 +58,7 @@ export default function ProductDetailPage() {
   /** 관리자는 구매할 수 없어 담기·구매 버튼을 꺼 둬요. (TRSS-54) */
   const isAdmin = me?.role === 'ADMIN'
   const requireLogin = useRequireLogin()
+  const navigate = useNavigate()
   const wishes = useWishes()
 
   const loaded = useApi(() => loadProduct(productId), [productId])
@@ -75,7 +78,9 @@ export default function ProductDetailPage() {
   /** 옵션 이름마다 고른 값 (옵션 없는 상품이면 빈 목록) */
   const [picked, setPicked] = useState<string[]>([])
   const [qty, setQty] = useState(1)
-  const [busy, setBusy] = useState<'' | 'cart'>('')
+  const [busy, setBusy] = useState<'' | 'cart' | 'buy'>('')
+  /** 바로 구매할 옵션이 장바구니에 이미 있을 때 확인창에 쓸 값 (그 항목의 지금 수량) */
+  const [merge, setMerge] = useState<{ optionId: number; quantity: number; inCart: number } | null>(null)
   const [added, setAdded] = useState<number | null>(null)
   const [actionError, setActionError] = useState('')
 
@@ -172,6 +177,55 @@ export default function ProductDetailPage() {
     }
   }
 
+  /**
+   * 바로 구매 (TRSS-332). 주문 생성 API가 장바구니 항목 id만 받아서, 장바구니에 담은 뒤 그 항목 하나만 주문서로 넘겨요.
+   * 같은 옵션을 담으면 백엔드가 수량을 합치니, 이미 있으면 먼저 확인창을 띄워요. 결제가 끝나면 백엔드가 그 항목을 장바구니에서 지워요.
+   */
+  const buyNow = async () => {
+    if (!option || disabled || !requireLogin()) return
+    setBusy('buy')
+    setAdded(null)
+    setActionError('')
+    try {
+      const inCart = (await getCart()).items.find((i) => i.optionId === option.optionId)
+      if (inCart) {
+        setMerge({ optionId: option.optionId, quantity: qty, inCart: inCart.quantity })
+        setBusy('')
+        return
+      }
+      await goCheckout(option.optionId, qty)
+    } catch (e) {
+      setActionError(errorMessage(e))
+      setBusy('')
+    }
+  }
+
+  /** 담고 장바구니를 다시 불러 그 옵션의 항목 id를 찾아 주문서로 가요. (담기 응답에는 항목 id가 없어요) */
+  const goCheckout = async (optionId: number, quantity: number) => {
+    await addCartItem(optionId, quantity)
+    const item = (await getCart()).items.find((i) => i.optionId === optionId)
+    if (!item) {
+      setActionError('장바구니에 담았는데 주문서로 넘기지 못했어요. 장바구니에서 주문해 주세요.')
+      setBusy('')
+      return
+    }
+    navigate('/checkout', { state: { cartItemIds: [item.itemId], idempotencyKey: newIdempotencyKey() } })
+  }
+
+  const confirmMerge = async () => {
+    if (!merge) return
+    setBusy('buy')
+    setActionError('')
+    try {
+      await goCheckout(merge.optionId, merge.quantity)
+    } catch (e) {
+      setActionError(errorMessage(e))
+      setBusy('')
+    } finally {
+      setMerge(null)
+    }
+  }
+
   return (
     <AppFrame
       bottom={
@@ -189,8 +243,11 @@ export default function ProductDetailPage() {
           <HeartButton on={wished} onClick={() => wishes.toggle(product.productId)} className={styles.wish}>
             <span className={styles.wishCount}>{wishCount.toLocaleString('ko-KR')}</span>
           </HeartButton>
-          <Button disabled={disabled} onClick={addToCart}>
-            {busy === 'cart' ? '담는 중이에요' : '장바구니 담기'}
+          <Button variant="outline" disabled={disabled} onClick={addToCart} className={styles.buyBtn}>
+            {busy === 'cart' ? '담는 중이에요' : '장바구니'}
+          </Button>
+          <Button disabled={disabled} onClick={buyNow} className={styles.buyBtn}>
+            {busy === 'buy' ? '준비 중이에요' : '바로 구매'}
           </Button>
         </BottomBar>
       }
@@ -418,6 +475,25 @@ export default function ProductDetailPage() {
             ))}
           </div>
         </section>
+      )}
+
+      {merge && (
+        <Modal
+          title={`장바구니에 같은 상품이 ${merge.inCart}개 있어요, 함께 주문할까요?`}
+          onClose={() => busy !== 'buy' && setMerge(null)}
+          actions={
+            <>
+              <Button variant="outline" onClick={() => setMerge(null)} disabled={busy === 'buy'}>
+                취소
+              </Button>
+              <Button onClick={confirmMerge} disabled={busy === 'buy'}>
+                {busy === 'buy' ? '준비 중이에요' : '함께 주문'}
+              </Button>
+            </>
+          }
+        >
+          같은 옵션은 한 줄로 합쳐져서, 함께 주문하면 {merge.inCart + merge.quantity}개를 주문해요.
+        </Modal>
       )}
     </AppFrame>
   )
