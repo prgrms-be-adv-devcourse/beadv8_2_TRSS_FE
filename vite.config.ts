@@ -22,7 +22,7 @@ const LOCAL_ROUTES: Array<[RegExp, number]> = [
     /^\/api\/v1\/(products|categories|cart|orders|wishlist|reviews|coupons|influencer|seller\/products|seller\/order-items|seller\/partnerships|seller\/coupons|admin\/products|admin\/categories|admin\/product-stop-requests|admin\/coupons|admin\/partnerships|admin\/returns)([/?]|$)/,
     8082,
   ],
-  [/^\/api\/v1\/(wallet|topups|admin\/payments|admin\/topups)([/?]|$)/, 8083],
+  [/^\/api\/v1\/(wallet|topups|payments|admin\/payments|admin\/topups)([/?]|$)/, 8083],
   [/^\/api\/v1\/(admin\/settlements|admin\/settlement-candidates|seller\/settlements)([/?]|$)/, 8084],
   [/^\/api\/v1\/logistics([/?]|$)/, 8085],
   [/^\/api\/v1\/notifications([/?]|$)/, 8086],

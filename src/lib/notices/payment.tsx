@@ -4,11 +4,11 @@
  */
 
 import type { Notice } from '../../components/NoticeModal'
-import { ApiError } from '../api'
-import type { InsufficientBalance } from '../api/payment'
+import { ApiError, errorMessage } from '../api'
+import type { InsufficientBalance, PickupFeeShortage } from '../api/payment'
 import { topupPath } from '../api/wallet'
 import { won } from '../ui'
-import { LOGIN, codeOf, commonNotice } from './common'
+import { LOGIN, OK, codeOf, commonNotice } from './common'
 import { orderNotice } from './order'
 
 type Ctx = {
@@ -84,7 +84,9 @@ export function paymentNotice(e: unknown, ctx: Ctx): Notice {
       ...LOGIN,
       body: '로그인한 지 오래되어 안전을 위해 로그아웃됐어요. 다시 로그인하면 주문을 이어서 결제할 수 있어요.',
       // 로그인하면 같은 주문서로 돌아와요 (Login.tsx의 state.from)
-      actions: [{ label: '로그인하기', to: '/login', state: { from: `/checkout?orderId=${ctx.orderId}` }, primary: true }],
+      actions: [
+        { label: '로그인하기', to: '/login', state: { from: `/checkout?orderId=${ctx.orderId}` }, primary: true },
+      ],
     }
   // 서버 오류: 주문은 결제 실패(PAYMENT_FAILED)로 남고 예치금은 빠져나가지 않아요
   if (e instanceof ApiError && e.status >= 500)
@@ -95,4 +97,40 @@ export function paymentNotice(e: unknown, ctx: Ctx): Notice {
       actions: [{ label: '다시 결제하기', onClick: ctx.onRetry, primary: true }],
     }
   return commonNotice(e)
+}
+
+/** 반품 회수 택배비 결제(POST /payments/refunds/{orderId}/pickup-fee)가 실패했을 때. 화면은 닫힌 뒤 환불 내역을 다시 불러와요 */
+export function pickupFeeNotice(e: unknown, ctx: { pickupFee: number }): Notice {
+  switch (codeOf(e)) {
+    case 'INSUFFICIENT_BALANCE': {
+      // 주문 결제의 잔액 부족 안내와 같은 모양이에요. 남은 시간은 없어요
+      const d = (e as ApiError).data as PickupFeeShortage | null
+      return pickupFeeShortageNotice(ctx.pickupFee, d?.shortage ?? 0, d?.chargeAmount)
+    }
+    // 이미 처리됐거나(단순 변심이 아님·처리 중·실패) 정산이 시작된 경우. 서버 문구를 그대로 보여 줘요
+    case 'REFUND_PICKUP_FEE_NOT_REQUIRED':
+    case 'REFUND_HOLDING_SETTLED':
+    case 'REFUND_NOT_FOUND':
+      return { title: '회수 택배비를 결제할 수 없어요', body: errorMessage(e), actions: OK }
+  }
+  return commonNotice(e)
+}
+
+/** 회수 택배비보다 예치금이 적을 때. 결제 전에 잔액으로 알았을 때와 402 응답 모두 써요 */
+export function pickupFeeShortageNotice(pickupFee: number, shortage: number, chargeAmount?: number): Notice {
+  const rec = chargeAmount ?? Math.ceil(shortage / 10000) * 10000
+  return {
+    title: `예치금이 ${won(shortage)}원 모자라요`,
+    rows: [
+      { label: '회수 택배비', value: `${won(pickupFee)}원` },
+      { label: '내 예치금', value: `${won(Math.max(0, pickupFee - shortage))}원` },
+      { label: '모자란 금액', value: `${won(shortage)}원` },
+      { label: '충전할 금액', value: `${won(rec)}원`, strong: true },
+    ],
+    body: '회수 택배비는 환불금과 따로 예치금에서 먼저 빠져요. 충전한 뒤 주문 상세에서 다시 결제해 주세요.',
+    actions: [
+      { label: '나중에 하기' },
+      { label: `${won(rec)}원 충전하기`, to: `/wallet/topup?amount=${rec}`, primary: true },
+    ],
+  }
 }
