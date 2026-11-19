@@ -472,3 +472,8 @@
 .optGroup {
   margin-top: 14px;
 }
+
+/* 하단 장바구니 · 바로 구매 버튼은 남은 폭을 반씩 나눠요 */
+.buyBtn {
+  flex: 1 1 0;
+}
