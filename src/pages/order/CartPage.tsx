@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import BottomBar from '../../components/ui/BottomBar'
@@ -8,6 +8,7 @@ import { Empty, ErrorView, Loading, Thumb, won } from '../../components/ui/Misc'
 import { Sheet } from '../../components/ui/Overlay'
 import PageHeader from '../../components/ui/PageHeader'
 import {
+  addCartItem,
   deleteCartItems,
   getCart,
   selectAllCartItems,
@@ -17,6 +18,7 @@ import {
   type UnorderableReason,
 } from '../../lib/api/cart'
 import { newIdempotencyKey } from '../../lib/api/order'
+import { getProduct, matchOption, type ProductOption } from '../../lib/api/product'
 import { getWallet } from '../../lib/api/wallet'
 import { cartNotice } from '../../lib/notices/order'
 import { productImage } from '../../lib/products'
@@ -65,8 +67,6 @@ export default function CartPage() {
   const wallet = useApi(getWallet)
   const [notice, setNotice] = useState<Notice | null>(null)
   const [optionFor, setOptionFor] = useState<CartItem | null>(null)
-  // TODO(API 미구현): PATCH /api/v1/cart/items/{itemId} 옵션 변경 — 지금은 화면에서만 바꾼 옵션 이름을 보여 줘요
-  const [optionLabel, setOptionLabel] = useState<Record<number, string>>({})
 
   /**
    * 화면을 먼저 바꾸고 API를 부른 뒤, 서버 기준 값으로 다시 불러와요.
@@ -103,6 +103,35 @@ export default function CartPage() {
       (list) => list.map((i) => (i.itemId === b.itemId ? { ...i, quantity: q, lineAmount: i.price * q } : i)),
       name,
     )
+  }
+
+  /**
+   * 옵션 변경 시트의 "변경하기". 옵션을 바꾸는 API가 없어서 새 옵션을 담고(같은 옵션이 있으면 수량이 합쳐져요)
+   * 성공하면 기존 항목을 지워요. 옵션이 그대로면 수량만 바꿔요.
+   */
+  const applyOption = async (target: CartItem, next: ProductOption | null, qty: number) => {
+    const name = target.productName ?? ''
+    if (!next || next.optionId === target.optionId) {
+      changeQty(target, qty, name)
+      return
+    }
+    try {
+      await addCartItem(next.optionId, qty)
+    } catch (e) {
+      setNotice(cartNotice(e, { name }))
+      reload()
+      return
+    }
+    try {
+      await deleteCartItems([target.itemId])
+    } catch {
+      setNotice({
+        title: '옵션을 다 바꾸지 못했어요',
+        body: `${next.name} 옵션은 담았지만 원래 담긴 ${target.optionName ?? '옵션'}을 지우지 못했어요. 장바구니에서 직접 지워 주세요.`,
+        actions: [{ label: '확인', primary: true }],
+      })
+    }
+    reload()
   }
 
   const toggleAll = () => {
@@ -180,7 +209,7 @@ export default function CartPage() {
               const locked = !b.orderable && !fixable(reason)
               const gone = locked && reason !== 'IN_PENDING_ORDER'
               const name = b.productName ?? '판매하지 않는 상품'
-              const option = optionLabel[b.itemId] ?? b.optionName ?? ''
+              const option = b.optionName ?? ''
               return (
                 <li key={b.itemId} className={`${styles.item} ${gone ? styles.gone : ''}`}>
                   <input
@@ -210,7 +239,8 @@ export default function CartPage() {
                           <p className={styles.name}>{name}</p>
                         )}
                         <p className={styles.opt}>{option || '옵션 없음'}</p>
-                        {!locked && option && (
+                        {/* 삭제된 상품(productId 없음)은 옵션을 불러올 수 없어 버튼을 숨겨요. 이유는 아래 사유 문구로 보여요 */}
+                        {!locked && option && b.productId != null && (
                           <button type="button" className={styles.optBtn} onClick={() => setOptionFor(b)}>
                             옵션 변경
                           </button>
@@ -307,20 +337,12 @@ export default function CartPage() {
       {optionFor && (
         <OptionSheet
           item={optionFor}
-          currentLabel={optionLabel[optionFor.itemId] ?? optionFor.optionName ?? ''}
+          cartItems={items}
           onClose={() => setOptionFor(null)}
-          onApply={(label, qty) => {
+          onApply={(next, qty) => {
             const target = optionFor
             setOptionFor(null)
-            if (label !== (optionLabel[target.itemId] ?? target.optionName)) {
-              setOptionLabel((m) => ({ ...m, [target.itemId]: label }))
-              setNotice({
-                title: '옵션을 바꿨어요',
-                body: `${label}(으)로 바꿨어요. 옵션 변경 기능은 준비 중이라 지금은 화면에서만 바뀌어요.`,
-                actions: [{ label: '확인', primary: true }],
-              })
-            }
-            if (qty !== target.quantity) changeQty(target, qty, target.productName ?? '')
+            applyOption(target, next, qty)
           }}
         />
       )}
@@ -329,33 +351,52 @@ export default function CartPage() {
   )
 }
 
-// TODO(API 미구현): 상품 상세 옵션 그룹 구조(색상·사이즈) — 지금은 시안의 예시 옵션으로 보여 줘요
-const COLORS: Array<[string, string]> = [
-  ['블랙', '#1b1b1e'],
-  ['아이보리', '#ece6d8'],
-  ['카키', '#6b6a4e'],
-  ['네이비', '#26324a'],
-]
-const SIZES = ['S', 'M', 'L', 'XL']
-const SOLD_OUT_SIZES = ['XL']
-
-/** 옵션 변경 시트 (⑤-1). 수량은 실제로 바뀌고, 옵션은 목업이에요 */
+/**
+ * 옵션 변경 시트 (⑤-1). 열 때 상품 상세를 불러와 실제 옵션을 보여 줘요.
+ * 옵션 그룹(optionNames)이 있으면 그룹별로 값을 고르고, 옵션이 하나뿐이면 수량만 보여 줘요.
+ * 상품 상세를 못 불러오면 옵션은 못 바꾸고 수량만 바꿀 수 있어요.
+ */
 function OptionSheet({
   item,
-  currentLabel,
+  cartItems,
   onClose,
   onApply,
 }: {
   item: CartItem
-  currentLabel: string
+  cartItems: CartItem[]
   onClose: () => void
-  onApply: (label: string, qty: number) => void
+  /** next가 null이면 옵션은 그대로 */
+  onApply: (next: ProductOption | null, qty: number) => void
 }) {
-  const [color, setColor] = useState(0)
-  const [size, setSize] = useState('L')
+  const product = useApi(() => getProduct(item.productId!), [item.productId])
+  const options = product.data?.options ?? []
+  const optionNames = product.data?.optionNames ?? []
+  const [picked, setPicked] = useState<string[]>([])
+  const [pickedId, setPickedId] = useState(item.optionId)
   const [qty, setQty] = useState(item.quantity)
+
+  // 상품을 불러오면 지금 담긴 옵션의 값으로 시작해요
+  useEffect(() => {
+    const list = product.data?.options ?? []
+    // 담긴 옵션이 상품에서 빠졌으면 살 수 있는 첫 옵션으로 시작해요
+    const cur = list.find((o) => o.optionId === item.optionId) ?? list.find((o) => !o.soldOut)
+    if (cur) setPicked(cur.values)
+  }, [product.data, item.optionId])
+
+  const grouped = optionNames.length > 0
+  /** 지금 고른 옵션. 그룹이 있으면 값 조합으로, 없으면 목록에서 고른 옵션 */
+  const selected = grouped ? matchOption(options, picked) : options.find((o) => o.optionId === pickedId)
+  const showPicker = options.length > 1
+  const changed = !!selected && selected.optionId !== item.optionId
+  /** 새 옵션이 이미 장바구니에 있으면 담을 때 수량이 합쳐져요 */
+  const merged = changed ? cartItems.find((c) => c.optionId === selected.optionId) : undefined
+  // 지금 담긴 옵션은 품절이어도 그대로 둘 수 있게 막지 않아요
+  const blocked = (o?: ProductOption) => !o || (o.soldOut && o.optionId !== item.optionId)
+  const canApply = !showPicker || !product.data || (!!selected && !blocked(selected))
   const name = item.productName ?? ''
-  const label = `${COLORS[color][0]} / ${size}`
+  const unitPrice = changed ? selected.price : item.price
+  const extra = (o: ProductOption) => (o.additionalPrice > 0 ? ` +${o.additionalPrice.toLocaleString('ko-KR')}` : '')
+
   return (
     <Sheet
       title="옵션 변경"
@@ -365,7 +406,7 @@ function OptionSheet({
           <Button variant="outline" size="lg" onClick={onClose}>
             취소
           </Button>
-          <Button size="lg" onClick={() => onApply(label, qty)}>
+          <Button size="lg" disabled={!canApply} onClick={() => onApply(changed ? selected : null, qty)}>
             변경하기
           </Button>
         </>
@@ -376,50 +417,83 @@ function OptionSheet({
         <div>
           {item.sellerName && <p className={styles.brand}>{item.sellerName}</p>}
           <p className={styles.sheetName}>{name}</p>
-          <p className={styles.opt}>지금 담긴 옵션 · {currentLabel || '옵션 없음'}</p>
+          <p className={styles.opt}>지금 담긴 옵션 · {item.optionName || '옵션 없음'}</p>
         </div>
       </div>
-      <div role="radiogroup" aria-label="색상" className={styles.optGroup}>
-        <p className={styles.optTitle}>
-          색상 <span>{COLORS[color][0]}</span>
+      {product.loading && !product.data && <Loading label="옵션을 불러오고 있어요" />}
+      {product.error && !product.data && (
+        <p className={styles.sheetError}>
+          옵션을 불러오지 못해 지금은 수량만 바꿀 수 있어요. 잠시 후 다시 시도해 주세요.
         </p>
-        <div className={styles.swatches}>
-          {COLORS.map(([c, hex], i) => (
-            <button
-              key={c}
-              type="button"
-              role="radio"
-              aria-checked={color === i}
-              aria-label={c}
-              className={`${styles.swatch} ${color === i ? styles.swatchOn : ''}`}
-              onClick={() => setColor(i)}
-            >
-              <span style={{ background: hex }} />
-            </button>
-          ))}
-        </div>
-      </div>
-      <div role="radiogroup" aria-label="사이즈" className={styles.optGroup}>
-        <p className={styles.optTitle}>사이즈</p>
-        <div className={styles.sizes}>
-          {SIZES.map((s) => {
-            const out = SOLD_OUT_SIZES.includes(s)
-            return (
+      )}
+      {showPicker &&
+        grouped &&
+        optionNames.map((optName, i) => {
+          const last = i === optionNames.length - 1
+          const values = Array.from(new Set(options.map((o) => o.values[i])))
+          return (
+            <div key={optName} role="radiogroup" aria-label={optName} className={styles.optGroup}>
+              <p className={styles.optTitle}>
+                {optName} <span>{picked[i]}</span>
+              </p>
+              <div className={styles.values}>
+                {values.map((v) => {
+                  // 마지막 옵션에서만 품절·추가금을 붙여요 (앞 옵션은 뒤 옵션에 따라 달라져서)
+                  const o = matchOption(
+                    options,
+                    picked.map((x, j) => (j === i ? v : x)),
+                  )
+                  const on = picked[i] === v
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      disabled={last && blocked(o)}
+                      className={`${styles.value} ${on ? styles.valueOn : ''}`}
+                      onClick={() => setPicked((p) => p.map((x, j) => (j === i ? v : x)))}
+                    >
+                      {v}
+                      {last && o ? extra(o) : ''}
+                      {last && o?.soldOut ? ' 품절' : ''}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      {showPicker && !grouped && (
+        <div role="radiogroup" aria-label="옵션" className={styles.optGroup}>
+          <p className={styles.optTitle}>옵션</p>
+          <div className={styles.values}>
+            {options.map((o) => (
               <button
-                key={s}
+                key={o.optionId}
                 type="button"
                 role="radio"
-                aria-checked={size === s}
-                aria-disabled={out}
-                className={`${styles.size} ${out ? styles.sizeOut : size === s ? styles.sizeOn : ''}`}
-                onClick={() => !out && setSize(s)}
+                aria-checked={pickedId === o.optionId}
+                disabled={blocked(o)}
+                className={`${styles.value} ${pickedId === o.optionId ? styles.valueOn : ''}`}
+                onClick={() => setPickedId(o.optionId)}
               >
-                {out ? `${s} 품절` : s}
+                {o.name}
+                {extra(o)}
+                {o.soldOut ? ' 품절' : ''}
               </button>
-            )
-          })}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+      {showPicker && grouped && product.data && !selected && (
+        <p className={styles.sheetError}>이 조합은 판매하지 않아요. 다른 값을 골라 주세요.</p>
+      )}
+      {merged && (
+        <p className={styles.sheetNote}>
+          이 옵션은 이미 {merged.quantity}개 담겨 있어요. 바꾸면 수량이 합쳐져 {merged.quantity + qty}개가 돼요.
+        </p>
+      )}
       <div className={styles.qtyRow}>
         <span className={styles.optTitle}>수량</span>
         <div className={styles.roundStepper}>
@@ -434,9 +508,9 @@ function OptionSheet({
       </div>
       <div className={styles.optSummary}>
         <span>
-          {label} · {qty}개
+          {(changed ? selected.name : item.optionName) || '옵션 없음'} · {qty}개
         </span>
-        <b>{won(item.price * qty)}</b>
+        <b>{won(unitPrice * qty)}</b>
       </div>
     </Sheet>
   )
