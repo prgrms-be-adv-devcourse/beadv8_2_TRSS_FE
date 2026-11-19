@@ -1,4 +1,4 @@
-/* 관리자 · 정산·실패 거래·리뷰·쿠폰·AI 공통 */
+/* 관리자 · 정산·실패 거래·쿠폰·AI 공통 */
 .page {
   padding: 4px 16px 32px;
 }
@@ -66,25 +66,6 @@
   background: var(--blue-bg);
   padding: 6px 8px;
   border-radius: 8px;
-}
-.body {
-  margin: 6px 0 0;
-  font-size: 14px;
-  line-height: 1.55;
-}
-.quote {
-  margin: 14px 0 0;
-  padding: 14px;
-  background: var(--surface-soft);
-  border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.6;
-}
-.stars {
-  color: var(--ink);
-  letter-spacing: 1px;
-  font-size: 12px;
-  white-space: nowrap;
 }
 
 /* 블록 (미리 보기 등) */

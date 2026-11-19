@@ -11,9 +11,14 @@
  * GET    /api/v1/admin/topups              충전 탭, keyword = 회원 이메일(정확히 일치) 또는 충전번호 TOPUP-…(앞부분 일치, 10자 이상), from·to = 충전 준비일
  * (예정) 환불 탭 — payment_refund 구현 후
  *
+ * [반품 환불 · 구매자] (ApiV1PaymentRefundController)
+ * GET    /api/v1/payments/refunds/{orderId}             반품 환불 조회. 404-REFUND_NOT_FOUND = 반품 승인 전이거나 본인 주문이 아님
+ * POST   /api/v1/payments/refunds/{orderId}/pickup-fee  단순 변심 반품의 회수 택배비를 예치금으로 결제하고 이어서 상품값을 환불 (한 번에, 멱등)
+ *   실패: 402-INSUFFICIENT_BALANCE(data: PickupFeeShortage), 409-REFUND_PICKUP_FEE_NOT_REQUIRED, 409-REFUND_HOLDING_SETTLED
+ *
  * 공통: 최신순 고정, page는 0부터, size 기본 20·최대 100, 기간이 거꾸로면 400-PAYMENT_PERIOD_INVALID, 관리자가 아니면 403
  */
-import { api, type PageQuery, type PageResponse } from '.'
+import { ApiError, api, type PageQuery, type PageResponse } from '.'
 import type { TopupStatus } from './wallet'
 import type { OrderStatus } from './order'
 
@@ -97,3 +102,43 @@ export type InsufficientBalance = {
 
 /** 결제 대기·결제 실패이고 만료 전인 주문만 예치금으로 결제할 수 있어요. */
 export const payOrder = (orderId: number) => api<OrderPay>(`/api/v1/orders/${orderId}/payment`, { method: 'POST' })
+
+/** BE PaymentRefundStatus. FAILED_*는 관리자가 확인해요 (FAILED_SYSTEM_ERROR만 자동 재시도) */
+export type PaymentRefundStatus =
+  | 'REQUESTED' // 처리 중
+  | 'PICKUP_FEE_REQUIRED' // 단순 변심: 회수 택배비를 결제하면 환불
+  | 'COMPLETED' // 환불 완료
+  | 'FAILED_AMOUNT_MISMATCH'
+  | 'FAILED_HOLDING_SETTLED'
+  | 'FAILED_PAYMENT_NOT_PAID'
+  | 'FAILED_PLATFORM_BALANCE'
+  | 'FAILED_SYSTEM_ERROR'
+
+/** 반품 환불 한 건. 백엔드: RefundDto */
+export type Refund = {
+  orderId: number
+  status: PaymentRefundStatus
+  /** 돌려받는(받은) 금액. 완료 전이면 받을 예정 금액 (단순 변심은 상품값만, 그 밖에는 결제 금액 전부) */
+  refundAmount: number
+  /** 내야 하는(낸) 회수 택배비. 단순 변심만, 그 밖에는 0 */
+  pickupFee: number
+  /** 환불 시각. 완료 전이면 null */
+  refundedAt: string | null
+}
+
+/** 회수 택배비 결제의 402-INSUFFICIENT_BALANCE data. 백엔드: InsufficientBalanceDto (주문 결제와 달리 남은 시간이 없어요) */
+export type PickupFeeShortage = Pick<InsufficientBalance, 'shortage'> & {
+  /** 충전 권장 금액 */
+  chargeAmount: number
+}
+
+/** 반품 환불 조회. 환불 내역이 없으면(404-REFUND_NOT_FOUND) null */
+export const getRefund = (orderId: number) =>
+  api<Refund>(`/api/v1/payments/refunds/${orderId}`).catch((e: unknown) => {
+    if (e instanceof ApiError && e.status === 404) return null
+    throw e
+  })
+
+/** 단순 변심 반품의 회수 택배비를 예치금으로 결제하고 상품값을 환불해요. 이미 처리했으면 같은 결과를 돌려줘요 */
+export const payRefundPickupFee = (orderId: number) =>
+  api<Refund>(`/api/v1/payments/refunds/${orderId}/pickup-fee`, { method: 'POST' })

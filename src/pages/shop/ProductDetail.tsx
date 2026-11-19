@@ -13,7 +13,7 @@ import { useAuth } from '../../lib/auth'
 import { useApi } from '../../lib/useApi'
 import { recordRecentView } from '../../lib/recentViewed'
 import Icon from '../../components/ui/Icon'
-import { getSimilarProducts, type ProductOption } from '../../lib/api/product'
+import { getSimilarProducts, matchOption } from '../../lib/api/product'
 import {
   ExampleNotice,
   HeartButton,
@@ -47,10 +47,6 @@ const scrollToSection = (id: string) => (e: MouseEvent<HTMLAnchorElement>) => {
   // 예전 # 링크처럼 바로 그 자리로 옮겨요
   document.getElementById(id)?.scrollIntoView({ block: 'start' })
 }
-
-/** 옵션 이름 순서대로 고른 값과 같은 조합 */
-const matchOption = (options: ProductOption[], picked: string[]) =>
-  options.find((o) => o.values.length === picked.length && o.values.every((v, i) => v === picked[i]))
 
 /** ④ 상품 상세 */
 export default function ProductDetailPage() {

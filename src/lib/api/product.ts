@@ -190,6 +190,10 @@ export type ProductDetail = DiscountFields & {
 /** 판매 중지·삭제·카테고리 사용 중지 상품은 404-PRODUCT_NOT_FOUND */
 export const getProduct = (productId: number | string) => api<ProductDetail>(`/api/v1/products/${productId}`)
 
+/** 옵션 값 조합(optionNames 순서)에 맞는 옵션. 판매하지 않는 조합이면 undefined */
+export const matchOption = (options: ProductOption[], picked: string[]) =>
+  options.find((o) => o.values.length === picked.length && o.values.every((v, i) => v === picked[i]))
+
 /**
  * 비슷한 상품 (상세 하단). 같은 대분류에서 설명이 비슷하고, 같은 소분류·가까운 가격대·찜·별점·판매량이 높은 순이에요.
  * 기준 상품과 품절 상품은 빠져요. size는 1~20(기본 10). 기준 상품이 판매 중이 아니면 404예요.

@@ -2,13 +2,17 @@ import { useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import BottomBar from '../../components/ui/BottomBar'
+import type { NoticeRow } from '../../components/NoticeModal'
 import Button from '../../components/ui/Button'
 import Icon from '../../components/ui/Icon'
 import { ErrorView, Loading, Thumb, won } from '../../components/ui/Misc'
 import PageHeader from '../../components/ui/PageHeader'
 import { cancelOrder, confirmOrder, isPayable } from '../../lib/api/order'
+import { getRefund, payRefundPickupFee, type Refund } from '../../lib/api/payment'
 import { RETURN_REASON_LABEL, type RefundStatus } from '../../lib/api/returns'
+import { getWallet } from '../../lib/api/wallet'
 import { orderNotice } from '../../lib/notices/order'
+import { pickupFeeNotice, pickupFeeShortageNotice } from '../../lib/notices/payment'
 import { ORDER_STATUS, PAYMENT_STATUS, autoConfirmDate, md } from '../../lib/orderStatus'
 import { useApi } from '../../lib/useApi'
 import { mmss, useRemaining } from '../../lib/useRemaining'
@@ -39,9 +43,43 @@ const REFUND_LABEL: Record<RefundStatus, string> = {
   UNKNOWN: '환불 상태를 불러오지 못했어요. 잠시 후 다시 확인해 주세요',
 }
 
+/** 결제 서비스의 환불 내역 한 줄 (반품 승인 뒤). 환불 내역을 못 불러오면 주문 상세의 refundStatus로 대신 보여 줘요 */
+function RefundRow({ refund }: { refund: Refund }) {
+  const fee = refund.pickupFee > 0 ? `회수 택배비 ${won(refund.pickupFee)}` : null
+  let head: string
+  let desc: string
+  switch (refund.status) {
+    case 'COMPLETED':
+      head = `${refund.refundedAt ? `${mdhm(refund.refundedAt)} · ` : ''}${won(refund.refundAmount)}`
+      desc = fee ? `${fee}를 결제하고 상품값을 예치금으로 돌려드렸어요` : '예치금으로 돌려드렸어요'
+      break
+    case 'PICKUP_FEE_REQUIRED':
+      head = `${won(refund.refundAmount)} 예정`
+      desc = `${fee ?? '회수 택배비'}를 예치금으로 결제하면 상품값을 돌려드려요`
+      break
+    case 'REQUESTED':
+      head = `${won(refund.refundAmount)} 예정`
+      desc = '예치금으로 환불하고 있어요'
+      break
+    default: // FAILED_*
+      head = `${won(refund.refundAmount)} 예정`
+      desc = '환불을 마치지 못해 관리자가 확인하고 있어요. 확인되면 예치금으로 돌려드려요'
+  }
+  return (
+    <div>
+      <dt>환불</dt>
+      <dd>
+        {head}
+        <span>{desc}</span>
+      </dd>
+    </div>
+  )
+}
+
 /** 반품 진행 (요청·승인·거절). 거절되면 주문은 결제 완료·구매 확정으로 돌아가지만 거절 사유는 계속 보여 줘요 */
-function ReturnInfo({ o }: { o: OrderDetailX }) {
+function ReturnInfo({ o, refund }: { o: OrderDetailX; refund: Refund | null }) {
   const rejected = !!o.returnRejectedAt
+  const changeOfMind = o.returnReasonCode === 'CHANGE_OF_MIND'
   const title =
     o.status === 'RETURNED' ? '반품을 승인했어요' : rejected ? '반품 요청이 거절됐어요' : '반품 요청을 확인하고 있어요'
   return (
@@ -69,16 +107,31 @@ function ReturnInfo({ o }: { o: OrderDetailX }) {
             <dt>승인</dt>
             <dd>
               {mdhm(o.returnedAt)} · 결제 금액 {won(payAmountOf(o))}
-              {o.refundStatus && o.refundStatus !== 'NONE' && <span>{REFUND_LABEL[o.refundStatus]}</span>}
+              {!refund && o.refundStatus && o.refundStatus !== 'NONE' && <span>{REFUND_LABEL[o.refundStatus]}</span>}
             </dd>
           </div>
         )}
+        {o.status === 'RETURNED' && refund && <RefundRow refund={refund} />}
       </dl>
       {!rejected && o.status === 'RETURN_REQUESTED' && (
-        <p>승인되면 배송비를 포함한 결제 금액을 예치금으로 돌려드려요.</p>
+        <p>
+          {changeOfMind
+            ? '단순 변심 반품은 승인된 뒤 회수 택배비를 예치금으로 결제하면 상품값(배송비 제외)을 예치금으로 돌려드려요.'
+            : '승인되면 배송비를 포함한 결제 금액을 예치금으로 돌려드려요.'}
+        </p>
       )}
     </div>
   )
+}
+
+/** 주문 상품 아래 안내. 반품 승인 주문은 환불 내역이 있으면 그 상태에 맞춰요 (환불 전이면 반품 영역이 안내해요) */
+function holdOf(o: OrderDetailX, refund: Refund | null) {
+  if (o.status === 'PAID') return null
+  if (o.status === 'RETURNED' && refund) {
+    if (refund.status !== 'COMPLETED') return null
+    if (refund.pickupFee > 0) return '회수 택배비를 결제해 상품값을 예치금으로 돌려드렸어요.'
+  }
+  return ORDER_STATUS[o.status].hold ?? null
 }
 
 /** 결제 내역 줄 (결제 시도 오래된 순, 실패 포함). payments가 없는 예전 서버 응답이면 결제 완료 한 줄만 만들어요 */
@@ -109,6 +162,10 @@ export default function OrderDetailPage() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<Notice | null>(null)
   const [copied, setCopied] = useState(false)
+  // 반품 승인(RETURNED) 주문만 환불 내역을 불러와요. 없으면(404) null
+  const returned = o?.status === 'RETURNED'
+  const refundApi = useApi(() => (returned ? getRefund(orderId) : Promise.resolve(null)), [orderId, returned])
+  const refund = returned ? refundApi.data : null
 
   /** 버튼 동작을 부르고 주문을 다시 불러와요. 실패하면 안내 모달을 띄워요. */
   const run = async (call: () => Promise<unknown>) => {
@@ -139,6 +196,47 @@ export default function OrderDetailPage() {
     ask('주문을 취소할까요?', '잡아 둔 재고가 풀리고, 상품은 장바구니에 그대로 남아요.', '주문 취소하기', () =>
       cancelOrder(orderId),
     )
+
+  /** 회수 택배비 결제: 예치금에서 빠질 금액과 돌려받을 금액을 보여 주고 확인받아요 */
+  const askPickupFee = async (r: Refund) => {
+    if (busy) return
+    // 결제 뒤 예치금을 미리 보여 주려고 잔액을 불러와요. 실패해도 확인 모달은 띄워요
+    const balance = await getWallet()
+      .then((w) => w.balance)
+      .catch(() => null)
+    // 회수 택배비만큼 없으면 결제해도 402라 바로 충전을 안내해요 (환불금과 상관없이 택배비가 먼저 빠져요)
+    if (balance != null && balance < r.pickupFee) {
+      setNotice(pickupFeeShortageNotice(r.pickupFee, r.pickupFee - balance))
+      return
+    }
+    const rows: NoticeRow[] = [
+      { label: '회수 택배비 (예치금에서 결제)', value: `−${won(r.pickupFee)}` },
+      { label: '돌려받을 상품값', value: `+${won(r.refundAmount)}` },
+    ]
+    if (balance != null) {
+      rows.unshift({ label: '내 예치금', value: won(balance) })
+      rows.push({ label: '결제 후 예치금', value: won(balance - r.pickupFee + r.refundAmount), strong: true })
+    }
+    setNotice({
+      title: `회수 택배비 ${won(r.pickupFee)}을 결제할까요?`,
+      rows,
+      body: '예치금에서 회수 택배비가 먼저 빠지고, 이어서 상품값을 예치금으로 돌려드려요.',
+      actions: [{ label: '돌아가기' }, { label: '결제하기', primary: true, onClick: () => payPickupFee(r) }],
+    })
+  }
+  const payPickupFee = async (r: Refund) => {
+    if (busy) return
+    setBusy(true)
+    try {
+      await payRefundPickupFee(orderId)
+    } catch (e) {
+      setNotice(pickupFeeNotice(e, { pickupFee: r.pickupFee }))
+    } finally {
+      setBusy(false)
+      refundApi.reload()
+      order.reload()
+    }
+  }
 
   const copy = async (text: string) => {
     try {
@@ -173,6 +271,14 @@ export default function OrderDetailPage() {
         </Button>
       </BottomBar>
     )
+  else if (refund?.status === 'PICKUP_FEE_REQUIRED')
+    bottom = (
+      <BottomBar note={`결제하면 ${won(refund.refundAmount)}을 예치금으로 돌려드려요`}>
+        <Button size="lg" onClick={() => askPickupFee(refund)} disabled={busy}>
+          회수 택배비 {won(refund.pickupFee)} 결제
+        </Button>
+      </BottomBar>
+    )
   else if (o && isPayable(o.status) && remaining > 0)
     bottom = (
       <BottomBar equal>
@@ -192,7 +298,7 @@ export default function OrderDetailPage() {
       {order.error && !o && <ErrorView message={order.error} onRetry={order.reload} />}
       {o && (
         <>
-          <StatusSection o={o} remaining={remaining} copied={copied} onCopy={copy} />
+          <StatusSection o={o} refund={refund} remaining={remaining} copied={copied} onCopy={copy} />
           <section aria-labelledby="oi" className={styles.section}>
             <div className={styles.headRow}>
               <h2 id="oi" className={styles.h2}>
@@ -281,9 +387,7 @@ export default function OrderDetailPage() {
                 <dd>{won(payAmountOf(o))}</dd>
               </div>
             </dl>
-            {ORDER_STATUS[o.status].hold && o.status !== 'PAID' && (
-              <p className={styles.hold}>{ORDER_STATUS[o.status].hold}</p>
-            )}
+            {holdOf(o, refund) && <p className={styles.hold}>{holdOf(o, refund)}</p>}
           </section>
           {o.shippingAddress && (
             <section aria-labelledby="sa" className={styles.section}>
@@ -333,11 +437,13 @@ export default function OrderDetailPage() {
 
 function StatusSection({
   o,
+  refund,
   remaining,
   copied,
   onCopy,
 }: {
   o: OrderDetailX
+  refund: Refund | null
   remaining: number
   copied: boolean
   onCopy: (text: string) => void
@@ -430,7 +536,7 @@ function StatusSection({
       {o.status === 'CANCELED' && o.canceledAt && (
         <p className={styles.box}>{mdhm(o.canceledAt)}에 취소된 주문이에요</p>
       )}
-      {o.returnRequestedAt && <ReturnInfo o={o} />}
+      {o.returnRequestedAt && <ReturnInfo o={o} refund={refund} />}
     </section>
   )
 }

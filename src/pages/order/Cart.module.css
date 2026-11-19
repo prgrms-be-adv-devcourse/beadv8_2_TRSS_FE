@@ -261,36 +261,12 @@
   font-weight: 500;
   color: var(--ink);
 }
-.swatches,
-.sizes {
+.values {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   flex-wrap: wrap;
 }
-.sizes {
-  gap: 6px;
-}
-.swatch {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-pill);
-  padding: 0;
-  background: #fff;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  border: 1px solid var(--input-line);
-}
-.swatchOn {
-  border: 2px solid var(--ink);
-}
-.swatch span {
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-pill);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
-}
-.size {
+.value {
   min-width: 44px;
   height: 44px;
   padding: 0 12px;
@@ -303,16 +279,27 @@
   background: #fff;
   color: var(--ink);
 }
-.sizeOn {
+.valueOn {
   border-color: var(--ink);
   background: var(--ink);
   color: #fff;
 }
-.sizeOut {
+.value:disabled {
   border: 1px dashed var(--line-strong);
+  background: #fff;
   color: var(--faint);
   cursor: not-allowed;
   text-decoration: line-through;
+}
+.sheetNote {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--sub);
+}
+.sheetError {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--red-ink);
 }
 .qtyRow {
   display: flex;
