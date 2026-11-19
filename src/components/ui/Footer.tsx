@@ -5,7 +5,7 @@ import styles from './Footer.module.css'
 /**
  * 푸터 (메인 홈 맨 아래에만 보여요 — AppFrame footer)
  * 사업자 정보는 아직 정해지지 않아 예시 값이에요. 실제 값이 정해지면 COMPANY만 바꿔요.
- * 링크할 페이지가 아직 없는 메뉴는 '#'으로 두었어요.
+ * 링크는 사이트에 실제로 있는 페이지만 둬요. 공지사항은 페이지가 생기면 추가해요.
  */
 const COMPANY = {
   name: '(주)팔레트',
@@ -18,12 +18,12 @@ const COMPANY = {
   phone: '1588-0000',
 }
 
+// 자주 찾는 페이지만 한 줄로 보여 줘요 (모두 사이트에 실제로 있는 페이지)
 const LINKS = [
-  { label: '이용약관', to: '#' },
-  { label: '개인정보처리방침', to: '#', strong: true },
-  { label: '공지사항', to: '#' },
-  { label: '자주 묻는 질문', to: '#' },
-  { label: '판매자 입점 안내', to: '/seller/apply' },
+  { label: '이용약관', to: '/terms' },
+  { label: '개인정보처리방침', to: '/privacy', strong: true },
+  { label: '자주 묻는 질문', to: '/faq' },
+  { label: 'AI 도우미', to: '/chatbot' },
 ]
 
 export default function Footer() {
@@ -33,17 +33,11 @@ export default function Footer() {
       <img src="/images/logo.png" alt="Palette" className={styles.logo} />
 
       <nav aria-label="사이트 정보" className={styles.links}>
-        {LINKS.map((l) =>
-          l.to === '#' ? (
-            <a key={l.label} href="#" className={l.strong ? styles.strong : undefined}>
-              {l.label}
-            </a>
-          ) : (
-            <Link key={l.label} to={l.to} className={l.strong ? styles.strong : undefined}>
-              {l.label}
-            </Link>
-          ),
-        )}
+        {LINKS.map((l) => (
+          <Link key={l.label} to={l.to} className={l.strong ? styles.strong : undefined}>
+            {l.label}
+          </Link>
+        ))}
       </nav>
 
       <div className={styles.cs}>

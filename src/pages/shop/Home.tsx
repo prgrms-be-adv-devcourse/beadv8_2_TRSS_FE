@@ -142,7 +142,7 @@ export default function HomePage() {
               </span>
               <span className={styles.surveyText}>
                 <span className={styles.surveyEyebrow}>뷰티 설문 · 30초</span>
-                <b className={styles.surveyTitle}>내 피부에 맞는 상품만 골라 볼까요?</b>
+                <b className={styles.surveyTitle}>내 피부에 맞는 상품만 골라 보세요</b>
                 <span className={styles.surveyDesc}>피부 타입 → 피부 고민 → 피하는 성분</span>
               </span>
               <span className={styles.surveyGo}>
@@ -159,7 +159,6 @@ export default function HomePage() {
               {personalized && rec.data?.basis ? (
                 <SectionHead
                   title="내 피부 맞춤 추천"
-                  ai
                   desc={
                     <>
                       {basisText(rec.data.basis)} 기준이에요 · <Link to="/survey/result">바꾸기</Link>

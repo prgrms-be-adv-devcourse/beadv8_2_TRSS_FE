@@ -2,9 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import Icon from '../../components/ui/Icon'
-import { ErrorView, Loading } from '../../components/ui/Misc'
-import { useApi } from '../../lib/useApi'
-import { loadCategories, usePopularKeywords } from './common'
+import { usePopularKeywords } from './common'
 import styles from './Search.module.css'
 
 const RECENT_KEY = 'palette.recentSearches'
@@ -36,7 +34,7 @@ function trendingAt() {
 /**
  * 검색 (홈 검색창·검색 아이콘에서 들어와요)
  * - 검색어를 입력하면 상품 목록(/products?q=)으로
- * - 입력 전에는 최근 검색어 · 인기 검색어 · 카테고리를 보여줘요
+ * - 입력 전에는 최근 검색어 · 인기 검색어를 보여줘요
  */
 export default function SearchPage() {
   return (
@@ -87,7 +85,6 @@ function SearchView({ onClose }: { onClose?: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [keyword, setKeyword] = useState('')
   const [recent, setRecent] = useState<string[]>(readRecent)
-  const categories = useApi(loadCategories, [])
   const popular = usePopularKeywords()
 
   useEffect(() => {
@@ -180,7 +177,7 @@ function SearchView({ onClose }: { onClose?: () => void }) {
       )}
 
       {popular.length > 0 && (
-        <section aria-labelledby="search-trending" className={styles.sec}>
+        <section aria-labelledby="search-trending" className={`${styles.sec} ${styles.lastSec}`}>
           <div className={styles.secHead}>
             <h2 id="search-trending">인기 검색어</h2>
             <span className={styles.at}>{trendingAt()}</span>
@@ -212,32 +209,6 @@ function SearchView({ onClose }: { onClose?: () => void }) {
           </ol>
         </section>
       )}
-
-      <section aria-labelledby="search-category" className={`${styles.sec} ${styles.lastSec}`}>
-        <div className={styles.secHead}>
-          <h2 id="search-category">카테고리</h2>
-          <Link to="/category" className={styles.textBtn}>
-            전체 보기 ›
-          </Link>
-        </div>
-        {categories.loading && !categories.data && <Loading />}
-        {categories.error && <ErrorView message={categories.error} onRetry={categories.reload} />}
-        {(categories.data ?? []).map((g) => (
-          <div key={g.categoryId} className={styles.group}>
-            <Link to={`/products?categoryId=${g.categoryId}`} className={styles.groupName}>
-              {g.name}
-              <Icon name="chevron" size={14} strokeWidth={2} />
-            </Link>
-            <div className={styles.cats}>
-              {g.children.map((c) => (
-                <Link key={c.categoryId} to={`/products?categoryId=${c.categoryId}`} className={styles.cat}>
-                  {c.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-        ))}
-      </section>
     </>
   )
 }

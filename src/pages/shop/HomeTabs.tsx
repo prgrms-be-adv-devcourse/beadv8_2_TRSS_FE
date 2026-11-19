@@ -56,20 +56,12 @@ const ALL_SORTS: Array<{ value: ProductSort; label: string }> = [
 
 const LIST_SIZE = 20
 
-const CONFIG: Record<ProductTab, { title: string; desc: string; sort: ProductSort; discounted?: boolean }> = {
-  ranking: {
-    title: '지금 많이 찾는 상품',
-    desc: '찜·별점·최근 30일 판매량을 합쳐 매긴 순위예요.',
-    sort: 'POPULAR',
-  },
-  sale: {
-    title: '기간 한정 특가',
-    desc: '지금 할인 중인 상품이에요. 할인율이 높은 순서예요.',
-    sort: 'DISCOUNT_RATE',
-    discounted: true,
-  },
-  new: { title: '새로 들어온 상품', desc: '최근에 등록된 순서예요.', sort: 'LATEST' },
-  all: { title: '전체 상품', desc: '판매 중인 모든 상품이에요.', sort: 'LATEST' },
+// 랭킹: 찜·별점·최근 30일 판매량을 합친 순위 · 특가: 할인 중인 상품을 할인율 높은 순
+const CONFIG: Record<ProductTab, { title: string; sort: ProductSort; discounted?: boolean }> = {
+  ranking: { title: '지금 많이 찾는 상품', sort: 'POPULAR' },
+  sale: { title: '기간 한정 특가', sort: 'DISCOUNT_RATE', discounted: true },
+  new: { title: '새로 들어온 상품', sort: 'LATEST' },
+  all: { title: '전체 상품', sort: 'LATEST' },
 }
 
 /** 추천 외 탭의 내용 */
@@ -97,7 +89,7 @@ function PlaceholderTabView({ tab }: { tab: PlaceholderTab }) {
 }
 
 function ProductTabList({ tab }: { tab: ProductTab }) {
-  const { title, desc, sort: tabSort, discounted } = CONFIG[tab]
+  const { title, sort: tabSort, discounted } = CONFIG[tab]
   const [params, setParams] = useSearchParams()
   const sorts = tab === 'all' ? ALL_SORTS : null
   /** 서버에 보낼 정렬. 전체 탭은 고른 정렬, 나머지는 탭마다 정해진 정렬이에요. */
@@ -132,10 +124,7 @@ function ProductTabList({ tab }: { tab: ProductTab }) {
   return (
     <section aria-label={title} className={styles.tabSec}>
       <div className={`${styles.secPad} ${styles.tabHead}`}>
-        <div>
-          <h2 className={styles.h2}>{title}</h2>
-          <p className={styles.tabDesc}>{desc}</p>
-        </div>
+        <h2 className={styles.h2}>{title}</h2>
         {sorts && (
           <label className={styles.sort}>
             <Icon name="filter" size={16} />

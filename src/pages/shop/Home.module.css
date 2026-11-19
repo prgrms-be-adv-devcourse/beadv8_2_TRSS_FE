@@ -153,19 +153,19 @@
   color: var(--sub);
 }
 
-/* 설문 배너: 홈 추천 탭 맨 위. 흰 바탕 + 검정 테두리, 시작 버튼은 검정 (버튼이 가장 먼저 눈에 띄게)
- * 휴대폰: 아이콘 + 글 / 아래 줄에 시작 버튼, 태블릿·PC: 시작 버튼을 오른쪽에 */
+/* 설문 배너: 홈 추천 탭 맨 위. 흰 바탕 + 회색 테두리, 시작 버튼은 검정 (버튼이 가장 먼저 눈에 띄게)
+ * 아이콘 + 글 / 아래 줄 오른쪽 끝에 짧은 시작 버튼 */
 .surveyCard {
   margin: 12px 16px 0;
-  padding: 20px 18px;
-  border: 1px solid var(--ink);
+  padding: 18px 16px;
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-card);
   background: #fff;
   color: var(--ink);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 16px 14px;
+  gap: 12px 14px;
   text-decoration: none;
   transition: background 0.15s ease;
 }
@@ -174,9 +174,9 @@
   background: var(--surface-soft);
 }
 .surveyIcon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   background: var(--surface);
   display: grid;
   place-items: center;
@@ -193,37 +193,50 @@
   color: var(--muted);
 }
 .surveyTitle {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.35;
   letter-spacing: -0.4px;
 }
 .surveyDesc {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted);
 }
 .surveyGo {
   grid-column: 1 / -1;
-  height: 44px;
+  justify-self: end;
+  height: 36px;
+  padding: 0 14px;
   border-radius: var(--radius-pill);
   background: var(--ink);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  font-size: 15px;
+  gap: 2px;
+  font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
 }
 @media (min-width: 768px) {
   .surveyCard {
-    grid-template-columns: auto minmax(0, 1fr) auto;
     padding: 22px;
   }
+  .surveyIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+  .surveyTitle {
+    font-size: 17px;
+  }
+  .surveyDesc {
+    font-size: 13px;
+  }
   .surveyGo {
-    grid-column: auto;
+    height: 44px;
     padding: 0 20px;
+    font-size: 15px;
   }
 }
 
@@ -289,7 +302,7 @@
 .tabHead {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
 }
 .sort {
