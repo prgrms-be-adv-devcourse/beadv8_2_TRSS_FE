@@ -76,69 +76,6 @@
   font-weight: 700;
 }
 
-.hero {
-  position: relative;
-  display: block;
-  margin: 0 16px;
-  height: 300px;
-  border-radius: var(--radius-card);
-  overflow: hidden;
-  background: #ddd;
-  color: #fff;
-  text-decoration: none;
-}
-.hero img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.heroShade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.18) 0%,
-    rgba(0, 0, 0, 0) 30%,
-    rgba(0, 0, 0, 0) 50%,
-    rgba(0, 0, 0, 0.62) 100%
-  );
-}
-.heroEyebrow {
-  position: absolute;
-  top: 14px;
-  left: 16px;
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 2px;
-}
-.heroText {
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.heroBig {
-  font-family: var(--font-display);
-  font-size: 44px;
-  font-weight: 900;
-  line-height: 1;
-}
-.heroTitle {
-  font-size: 17px;
-  font-weight: 700;
-}
-.heroGo {
-  font-size: 12px;
-  font-weight: 600;
-  opacity: 0.92;
-}
-
 .sec {
   padding-top: 24px;
 }
@@ -185,38 +122,41 @@
   outline-offset: -2px;
 }
 
-.creators {
-  display: flex;
-  gap: 14px;
+.creatorList {
+  list-style: none;
+  margin: 0;
   padding: 0 16px;
-  overflow-x: auto;
 }
-.creator {
-  flex: none;
-  width: 72px;
+.creatorList a {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
+  padding: 10px 0;
   color: var(--ink);
   text-decoration: none;
-  text-align: center;
 }
-.creatorName {
-  margin-top: 2px;
+.creatorText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+.creatorText span {
   font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.creatorTag {
-  font-size: 11px;
   color: var(--muted);
 }
+.creatorGo {
+  flex: none;
+  font-size: 12px;
+  color: var(--sub);
+}
 
-/* 설문 배너: 흰 바탕 + 검정 테두리, 시작 버튼은 검정 (버튼이 가장 먼저 눈에 띄게)
+/* 설문 배너: 홈 추천 탭 맨 위. 흰 바탕 + 검정 테두리, 시작 버튼은 검정 (버튼이 가장 먼저 눈에 띄게)
  * 휴대폰: 아이콘 + 글 / 아래 줄에 시작 버튼, 태블릿·PC: 시작 버튼을 오른쪽에 */
 .surveyCard {
-  margin: 24px 16px 0;
+  margin: 12px 16px 0;
   padding: 20px 18px;
   border: 1px solid var(--ink);
   border-radius: var(--radius-card);
