@@ -1,11 +1,10 @@
 /**
- * 홈 헤더 탭(전체 · 랭킹 · 특가 · 신상 · 기획전 · 이벤트)의 내용. 추천 탭은 Home.tsx의 기존 섹션이에요.
+ * 홈 헤더 탭(전체 · 랭킹 · 특가 · 신상 · 기획전)의 내용. 추천 탭은 Home.tsx의 기존 섹션이에요.
  * 전체 탭만 오른쪽 위에서 정렬을 골라요 (URL 쿼리 sort).
  * - 랭킹: 인기순(POPULAR, 찜·별점·최근 30일 판매량)
  * - 특가: 지금 할인 중인 상품만(discounted=true), 할인율 높은순(DISCOUNT_RATE)
  * - 신상: 최신순
- *
- * TODO(API 미구현): 기획전 · 이벤트 — 백엔드에 기획전·이벤트 데이터가 없어 '준비 중' 안내만 보여요.
+ * - 기획전: 프론트에서 큐레이션한 기획전 카드 목록 (exhibitions.ts · Exhibition.tsx, TRSS-343)
  */
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -15,12 +14,11 @@ import { Empty, ErrorView, Loading } from '../../components/ui/Misc'
 import type { ProductSort, ProductSummary } from '../../lib/api/product'
 import { useApi } from '../../lib/useApi'
 import { ExampleNotice, ProductCard, loadProducts, useWishes } from './common'
+import { ExhibitionTabView } from './Exhibition'
 import styles from './Home.module.css'
 
-export type HomeTab = 'recommend' | 'ranking' | 'sale' | 'new' | 'all' | 'exhibition' | 'event'
-/** 데이터가 아직 없어 안내만 보여 주는 탭 */
-type PlaceholderTab = 'exhibition' | 'event'
-type ProductTab = Exclude<HomeTab, 'recommend' | PlaceholderTab>
+export type HomeTab = 'recommend' | 'ranking' | 'sale' | 'new' | 'all' | 'exhibition'
+type ProductTab = Exclude<HomeTab, 'recommend' | 'exhibition'>
 
 export const HOME_TABS: Array<{ key: HomeTab; label: string }> = [
   { key: 'recommend', label: '추천' },
@@ -29,21 +27,7 @@ export const HOME_TABS: Array<{ key: HomeTab; label: string }> = [
   { key: 'sale', label: '특가' },
   { key: 'new', label: '신상' },
   { key: 'exhibition', label: '기획전' },
-  { key: 'event', label: '이벤트' },
 ]
-
-const PLACEHOLDER: Record<PlaceholderTab, { title: string; empty: string; desc: string }> = {
-  exhibition: {
-    title: '기획전',
-    empty: '진행 중인 기획전이 없어요',
-    desc: '주제별로 모은 상품전을 준비하고 있어요. 곧 만나요.',
-  },
-  event: {
-    title: '이벤트',
-    empty: '진행 중인 이벤트가 없어요',
-    desc: '쿠폰·적립 같은 혜택 이벤트를 준비하고 있어요. 곧 만나요.',
-  },
-}
 
 /** 전체 탭 정렬 */
 const ALL_SORTS: Array<{ value: ProductSort; label: string }> = [
@@ -66,26 +50,8 @@ const CONFIG: Record<ProductTab, { title: string; sort: ProductSort; discounted?
 
 /** 추천 외 탭의 내용 */
 export function HomeTabList({ tab }: { tab: Exclude<HomeTab, 'recommend'> }) {
-  if (tab === 'exhibition' || tab === 'event') return <PlaceholderTabView tab={tab} />
+  if (tab === 'exhibition') return <ExhibitionTabView />
   return <ProductTabList tab={tab} />
-}
-
-function PlaceholderTabView({ tab }: { tab: PlaceholderTab }) {
-  const { title, empty, desc } = PLACEHOLDER[tab]
-  return (
-    <section aria-label={title} className={styles.tabSec}>
-      <Empty
-        title={empty}
-        action={
-          <Button variant="outline" size="sm" to="/?tab=sale">
-            특가 상품 보기
-          </Button>
-        }
-      >
-        {desc}
-      </Empty>
-    </section>
-  )
 }
 
 function ProductTabList({ tab }: { tab: ProductTab }) {

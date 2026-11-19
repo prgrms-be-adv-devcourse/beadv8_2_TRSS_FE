@@ -14,6 +14,7 @@ import SurveyPage from '../pages/shop/Survey'
 import SurveyResultPage from '../pages/shop/SurveyResult'
 import RecommendPage from '../pages/shop/Recommend'
 import ChatbotPage from '../pages/shop/Chatbot'
+import ExhibitionDetailPage from '../pages/shop/ExhibitionDetail'
 
 /** 구매자 · 쇼핑 (홈·카테고리·상품·리뷰·찜·알림·AI) */
 export const buyerShopScreens: ScreenRoute[] = [
@@ -43,6 +44,13 @@ export const buyerShopScreens: ScreenRoute[] = [
     group: '구매자',
     element: <ReviewWritePage />,
     auth: 'login',
+  },
+  {
+    path: '/exhibitions/:id',
+    demo: '/exhibitions/winter-moisture',
+    title: '기획전 상세',
+    group: '구매자',
+    element: <ExhibitionDetailPage />,
   },
   { path: '/wishlist', title: '찜', group: '구매자', element: <WishlistPage />, auth: 'login' },
   { path: '/notifications', title: '알림', group: '구매자', element: <NotificationsPage />, auth: 'login' },
