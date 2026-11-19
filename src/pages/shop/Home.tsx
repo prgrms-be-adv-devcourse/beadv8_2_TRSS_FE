@@ -6,9 +6,9 @@ import CartHeaderIcon from '../../components/ui/CartHeaderIcon'
 import PageHeader, { HeaderIcon } from '../../components/ui/PageHeader'
 import { useApi } from '../../lib/useApi'
 import { useAuth } from '../../lib/auth'
-import { ExampleNotice, MiniCard, SectionHead, loadRecommendations, usePopularKeywords } from './common'
+import { Avatar, ExampleNotice, MiniCard, SectionHead, loadRecommendations, usePopularKeywords } from './common'
 import { useNotificationCount } from '../../lib/notificationCount'
-import { basisText } from '../../lib/api/ai'
+import { basisText, getCreatorRecommendations } from '../../lib/api/ai'
 import CategoryDrawer from './CategoryDrawer'
 import HomePersonal from './HomePersonal'
 import HomeRecent from './HomeRecent'
@@ -45,9 +45,17 @@ export default function HomePage() {
   const searchHint = useSearchHint()
   const closeSearch = useCallback(() => setSearching(false), [])
   // 내 피부 맞춤 추천(AI 설문): GET /api/v1/ai/recommendations (비회원·설문 전이면 뷰티 최신순)
+  // 순서: 설문 카드(설문 전) 또는 맞춤 추천 → 비슷한 크리에이터 → HomePersonal → HomeRecent
   // 그 아래 상품 개인화 추천은 HomePersonal, 최근 본 상품 기반은 HomeRecent
   const rec = useApi(() => loadRecommendations(6), [loggedIn])
   const recs = rec.data?.items ?? []
+  const personalized = !!rec.data?.personalized
+  // 피부가 비슷한 크리에이터: 로그인하고 설문을 마쳤을 때만 불러요. 실패해도 섹션만 숨겨요
+  const creators = useApi(
+    () => (loggedIn && personalized ? getCreatorRecommendations(3).catch(() => null) : Promise.resolve(null)),
+    [loggedIn, personalized],
+  )
+  const creatorList = (loggedIn && personalized && creators.data) || []
   const hasUnread = !!useNotificationCount()
   // 헤더 탭은 URL(?tab=)에 두어 뒤로 가기·새로고침해도 유지돼요. 추천이 기본이에요.
   const [params] = useSearchParams()
@@ -126,25 +134,31 @@ export default function HomePage() {
 
       {tab === 'recommend' && (
         <>
-          <Link to="/?tab=all" className={styles.hero}>
-            <img src="/images/banner/beauty-creator.jpg" alt="" />
-            <span className={styles.heroShade} />
-            <span className={styles.heroEyebrow}>PALETTE PICK</span>
-            <span className={styles.heroText}>
-              <span className={styles.heroBig}>PICK</span>
-              <span className={styles.heroTitle}>이번 주 크리에이터가 고른 스킨케어</span>
-              <span className={styles.heroGo}>보러가기 →</span>
-            </span>
-          </Link>
+          {/* 비로그인·설문 전: 뷰티 설문을 맨 위에 둬요. 회원은 설문 여부를 알 때까지 기다려요 */}
+          {!personalized && (!loggedIn || !rec.loading) && (
+            <Link to="/survey" className={styles.surveyCard}>
+              <span aria-hidden="true" className={styles.surveyIcon}>
+                <Icon name="droplet" size={24} />
+              </span>
+              <span className={styles.surveyText}>
+                <span className={styles.surveyEyebrow}>뷰티 설문 · 30초</span>
+                <b className={styles.surveyTitle}>내 피부에 맞는 상품만 골라 보세요</b>
+                <span className={styles.surveyDesc}>피부 타입 → 피부 고민 → 피하는 성분</span>
+              </span>
+              <span className={styles.surveyGo}>
+                시작하기
+                <Icon name="arrow" size={16} strokeWidth={2.2} />
+              </span>
+            </Link>
+          )}
 
           {rec.data?.example && <ExampleNotice />}
 
           {recs.length > 0 && (
-            <section aria-label="내 피부 맞춤 추천" className={styles.sec}>
-              {rec.data?.personalized && rec.data.basis ? (
+            <section aria-label={personalized ? '내 피부 맞춤 추천' : '새로 들어온 뷰티'} className={styles.sec}>
+              {personalized && rec.data?.basis ? (
                 <SectionHead
                   title="내 피부 맞춤 추천"
-                  ai
                   desc={
                     <>
                       {basisText(rec.data.basis)} 기준이에요 · <Link to="/survey/result">바꾸기</Link>
@@ -153,15 +167,7 @@ export default function HomePage() {
                   more={{ to: '/recommend' }}
                 />
               ) : (
-                <SectionHead
-                  title="새로 들어온 뷰티"
-                  desc={
-                    <>
-                      설문하면 내 피부 맞춤으로 바뀌어요 · <Link to="/survey">설문하기</Link>
-                    </>
-                  }
-                  more={{ to: '/recommend' }}
-                />
+                <SectionHead title="새로 들어온 뷰티" more={{ to: '/recommend' }} />
               )}
               <div className={styles.row}>
                 {recs.map((p) => (
@@ -171,27 +177,36 @@ export default function HomePage() {
             </section>
           )}
 
+          {creatorList.length > 0 && (
+            <section aria-label="나와 피부가 비슷한 크리에이터" className={styles.sec}>
+              <SectionHead
+                title="나와 피부가 비슷한 크리에이터"
+                ai
+                desc="피부 타입과 고민이 겹치는 순서예요"
+                more={{ to: '/recommend?tab=creator' }}
+              />
+              <ul className={styles.creatorList}>
+                {creatorList.map((c) => (
+                  <li key={c.influencerId}>
+                    <Link to={`/influencer/profile?influencerId=${c.influencerId}`}>
+                      <Avatar initial={c.activityName.slice(0, 1)} size={44} />
+                      <span className={styles.creatorText}>
+                        <b>{c.activityName}</b>
+                        <span>{c.reason}</span>
+                      </span>
+                      <span aria-hidden="true" className={styles.creatorGo}>
+                        ›
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           <HomePersonal />
 
           <HomeRecent />
-
-          {/* 설문 전(맞춤 추천이 아닐 때)에만 보여줘요 */}
-          {!rec.loading && !rec.data?.personalized && (
-            <Link to="/survey" className={styles.surveyCard}>
-              <span aria-hidden="true" className={styles.surveyIcon}>
-                <Icon name="droplet" size={24} />
-              </span>
-              <span className={styles.surveyText}>
-                <span className={styles.surveyEyebrow}>뷰티 설문 · 30초</span>
-                <b className={styles.surveyTitle}>내 피부에 맞는 상품만 골라 볼까요?</b>
-                <span className={styles.surveyDesc}>피부 타입 → 피부 고민 → 피하는 성분</span>
-              </span>
-              <span className={styles.surveyGo}>
-                시작하기
-                <Icon name="arrow" size={16} strokeWidth={2.2} />
-              </span>
-            </Link>
-          )}
         </>
       )}
 

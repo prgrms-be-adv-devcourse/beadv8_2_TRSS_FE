@@ -7,6 +7,7 @@ import { influencerScreens } from './screens/influencer'
 import { adminOpsScreens } from './screens/adminOps'
 import { adminFinanceScreens } from './screens/adminFinance'
 import { logisticsScreens } from './screens/logistics'
+import { infoScreens } from './screens/info'
 
 /**
  * auth: 들어가는 데 필요한 권한
@@ -36,6 +37,7 @@ export const screens: ScreenRoute[] = [
   ...buyerShopScreens,
   ...buyerOrderScreens,
   ...buyerAccountScreens,
+  ...infoScreens,
   ...sellerScreens,
   ...influencerScreens,
   ...adminOpsScreens,

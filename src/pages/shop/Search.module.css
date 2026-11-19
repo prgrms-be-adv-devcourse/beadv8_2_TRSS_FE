@@ -188,40 +188,6 @@
   color: var(--green-ink);
 }
 
-/* 카테고리 */
-.group + .group {
-  margin-top: 18px;
-}
-.groupName {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-/* 소분류: 글씨 칩 (줄바꿈) */
-.cats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.cat {
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--input-line);
-  border-radius: var(--radius-pill);
-  display: inline-flex;
-  align-items: center;
-  font-size: 13px;
-  color: var(--sub);
-  white-space: nowrap;
-}
-.cat:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-
 /* 홈 반 높이 검색 패널: 구매자 컬럼 안에서 위에서 내려와요 */
 .backdrop {
   position: fixed;
@@ -266,9 +232,6 @@
 }
 .panel .trendItem {
   height: 34px;
-}
-.panel .group + .group {
-  margin-top: 12px;
 }
 @media (prefers-reduced-motion: reduce) {
   .backdrop,

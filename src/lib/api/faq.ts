@@ -58,3 +58,22 @@ export const modifyFaq = (faqId: number, body: FaqContent) =>
 /** 노출 변경. 끄면 챗봇 검색에서 빠지고, 다시 켜면 바로 검색된다. 404-FAQ_NOT_FOUND */
 export const changeFaqVisibility = (faqId: number, visible: boolean) =>
   api<AdminFaq>(`/api/v1/admin/faqs/${faqId}/visibility`, { method: 'PATCH', body: { visible } })
+
+// ── 회원용 FAQ 검색 ────────────────────────────────────
+
+/** 회원용 FAQ 검색 결과 하나. similarity는 0~1 (높을수록 질문과 뜻이 가까움) */
+export type FaqSearchItem = {
+  faqId: number
+  category: FaqCategory
+  categoryLabel: string
+  question: string
+  answer: string
+  similarity: number
+}
+
+/**
+ * FAQ 의미 기반 검색 (노출 중인 FAQ만). 질문은 200자까지, 로그인 필요.
+ * 관련 FAQ가 없으면 빈 목록. 502-EXTERNAL_SERVICE_ERROR: 질문 임베딩 실패
+ */
+export const searchFaqs = (query: string) =>
+  api<{ faqs: FaqSearchItem[] }>('/api/v1/ai/faqs/search', { query: { query } }).then((r) => r.faqs)
