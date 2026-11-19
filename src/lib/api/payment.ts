@@ -19,7 +19,7 @@
  * 공통: 최신순 고정, page는 0부터, size 기본 20·최대 100, 기간이 거꾸로면 400-PAYMENT_PERIOD_INVALID, 관리자가 아니면 403
  */
 import { ApiError, api, type PageQuery, type PageResponse } from '.'
-import type { TopupStatus } from './wallet'
+import type { PgProvider, TopupStatus } from './wallet'
 import type { OrderStatus } from './order'
 
 /** BE PaymentStatus */
@@ -81,6 +81,58 @@ export type AdminTopup = {
 
 export const getAdminTopups = (query: AdminPaymentQuery = {}) =>
   api<PageResponse<AdminTopup>>('/api/v1/admin/topups', { query })
+
+// ── 충전 수동 확인 (대사가 자동으로 정할 수 없는 충전 취소 건, BE PR #458) ──
+
+/** 수동 확인 사유 */
+export type TopupManualCheckReason =
+  | 'CANCEL_AMOUNT_MISMATCH' // CANCELING: PG 취소 합계가 이전 취소와도, 이전 + 이번 취소와도 다름
+  | 'PG_PAYMENT_NOT_FOUND' // CANCELING·METHOD_CANCELING: PG에 결제가 없음
+  | 'METHOD_CANCEL_PARTIAL' // METHOD_CANCELING: 일부만 취소돼 전액 취소를 다시 보낼 수 없음
+  | 'METHOD_CANCEL_RETRY_EXHAUSTED' // METHOD_CANCELING: PG 전액 취소를 최대 횟수만큼 시도했지만 취소되지 않음
+
+/** PG 조회 결과. result가 FOUND일 때만 상태·금액이 있다 */
+export type AdminTopupPg = {
+  result: 'FOUND' | 'NOT_FOUND' | 'UNKNOWN' | 'NOT_REQUESTED'
+  status: string | null // APPROVED, CANCELED, PARTIALLY_CANCELED 등
+  pgStatus: string | null // PG가 준 원래 상태값
+  totalAmount: number | null
+  canceledAmount: number | null // PG 취소 금액 합계
+  method: string | null
+  message: string | null // UNKNOWN일 때만 조회하지 못한 원인
+}
+
+/** BE AdminTopupPgPaymentDto. 우리 기록(충전 건)과 그 자리에서 PG에 조회한 결과 */
+export type AdminTopupPgPayment = {
+  topupId: number
+  orderId: string
+  pgProvider: PgProvider
+  status: TopupStatus
+  amount: number
+  remainingAmount: number
+  cancelingAmount: number // PG에 취소를 요청 중인 금액 (CANCELING 동안만 0보다 큼)
+  canceledAmount: number // PG 취소가 확정된 금액 합계
+  cancelAttempts: number
+  manualCheckReason: TopupManualCheckReason | null
+  manualCheckAt: string | null
+  pg: AdminTopupPg
+}
+
+export const getAdminTopupPgPayment = (topupId: number) =>
+  api<AdminTopupPgPayment>(`/api/v1/admin/topups/${topupId}/pg-payment`)
+
+/** 정리 방법. CANCELING은 CONFIRM_CANCEL·RESTORE, METHOD_CANCELING은 CONFIRM_METHOD_CANCEL·RETRY_METHOD_CANCEL만 된다 */
+export type TopupManualResolveAction = 'CONFIRM_CANCEL' | 'RESTORE' | 'CONFIRM_METHOD_CANCEL' | 'RETRY_METHOD_CANCEL'
+
+/** BE AdminTopupManualResolveDto. status는 정리한 뒤 충전 상태 */
+export type AdminTopupManualResolve = { topupId: number; action: TopupManualResolveAction; status: TopupStatus }
+
+/**
+ * 수동 확인 건 정리. 돈이 움직이므로 확인 창을 거친 뒤 부른다.
+ * 409-TOPUP_NOT_MANUAL_CHECK 이미 정리됨 / 409-TOPUP_MANUAL_RESOLVE_NOT_ALLOWED 상태에 맞지 않는 정리
+ */
+export const resolveTopupManualCheck = (topupId: number, action: TopupManualResolveAction) =>
+  api<AdminTopupManualResolve>(`/api/v1/admin/topups/${topupId}/manual-resolve`, { method: 'POST', body: { action } })
 
 /** 결제 결과. 백엔드: OrderPayResponse */
 export type OrderPay = {

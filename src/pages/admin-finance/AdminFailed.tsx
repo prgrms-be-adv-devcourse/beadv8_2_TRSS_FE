@@ -17,6 +17,7 @@ import { useApi } from '../../lib/useApi'
 import DeliveryCompleteModal from '../logistics/DeliveryCompleteModal'
 import { useIsDesktop } from '../../lib/useMedia'
 import { mmddhm } from './format'
+import TopupManualCheckModal from './TopupManualCheckModal'
 import s from './AdminFinance.module.css'
 
 type Kind = 'payment' | 'topup' | 'refund' | 'settlement' | 'delivery'
@@ -36,6 +37,8 @@ export type FailedRow = {
   settlementId?: number
   /** 배송 수동 완료할 배송 ID (배송 추적 실패만) */
   deliveryId?: number
+  /** 수동 확인으로 정리할 충전 건 ID (충전 중 수동 확인 건만) */
+  manualTopupId?: number
 }
 
 /** 서비스 한 곳의 결과. 다른 서비스가 실패해도 이 탭만 오류로 보여요 */
@@ -94,6 +97,15 @@ function badgeOf(item: AdminFailureItem): { type: string; tone: Tone } {
   }
 }
 
+/**
+ * 대사가 자동으로 정할 수 없는 충전 취소 건 (refId = 충전 ID).
+ * CHECK_REQUIRED는 시스템 오류 실패 건 등에도 쓰여서, 취소 중 상태(CANCELING·METHOD_CANCELING)인 것만 고른다
+ */
+const isManualCheckTopup = (item: AdminFailureItem) =>
+  item.type === 'TOPUP_DELAYED' &&
+  item.handlingCode === 'CHECK_REQUIRED' &&
+  (item.reasonCode === 'CANCELING' || item.reasonCode === 'METHOD_CANCELING')
+
 function toRow(item: AdminFailureItem): FailedRow {
   const target = item.targetType === 'SELLER' ? '판매자' : '회원'
   const name = item.targetLabel ?? (item.targetId === null ? '-' : `${target} #${item.targetId}`)
@@ -108,6 +120,7 @@ function toRow(item: AdminFailureItem): FailedRow {
     handle: item.handlingLabel,
     settlementId: item.type === 'SETTLEMENT_MANUAL_REQUIRED' ? item.refId : undefined,
     deliveryId: item.type === 'DELIVERY_TRACKING_FAILED' ? item.refId : undefined,
+    manualTopupId: isManualCheckTopup(item) ? item.refId : undefined,
   }
 }
 
@@ -133,11 +146,12 @@ async function loadFailed(): Promise<Source[]> {
   ])
 }
 
-/** 관리자 · 실패 거래 (A7). 수동 처리는 월 정산 재처리(이동)와 배송 수동 완료만 */
+/** 관리자 · 실패 거래 (A7). 수동 처리는 월 정산 재처리(이동), 배송 수동 완료, 충전 수동 확인 정리 */
 export default function AdminFailed() {
   const desktop = useIsDesktop()
   const [tab, setTab] = useState<Tab>('ALL')
   const [completing, setCompleting] = useState<FailedRow | null>(null)
+  const [checkingTopupId, setCheckingTopupId] = useState<number | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const data = useApi(loadFailed, [])
   const sources = useMemo(() => data.data ?? [], [data.data])
@@ -165,6 +179,10 @@ export default function AdminFailed() {
     ) : r.deliveryId !== undefined ? (
       <Button variant="outline" size="sm" onClick={() => setCompleting(r)}>
         배송 완료 처리
+      </Button>
+    ) : r.manualTopupId !== undefined ? (
+      <Button variant="outline" size="sm" onClick={() => setCheckingTopupId(r.manualTopupId ?? null)}>
+        확인
       </Button>
     ) : null
   const deliveryLabel = (r: FailedRow) => `배송 #${r.deliveryId}`
@@ -257,14 +275,19 @@ export default function AdminFailed() {
                       배송 완료 처리
                     </Button>
                   )}
+                  {r.manualTopupId !== undefined && (
+                    <Button variant="outline" size="sm" onClick={() => setCheckingTopupId(r.manualTopupId ?? null)}>
+                      확인
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>
           </>
         )}
         <p className={s.foot}>
-          수동 처리는 월 정산 재처리와 배송 완료 처리만 할 수 있어요. 배송 완료 처리는 물류 담당자가 송장·택배사 상태를
-          확인한 뒤에 해 주세요. 유형마다 최근 {SIZE}건까지 보여요.
+          수동 처리는 월 정산 재처리, 배송 완료 처리, 충전 수동 확인 정리만 할 수 있어요. 배송 완료 처리는 물류 담당자가
+          송장·택배사 상태를 확인한 뒤에 해 주세요. 유형마다 최근 {SIZE}건까지 보여요.
         </p>
       </div>
       {completing?.deliveryId !== undefined && (
@@ -277,6 +300,17 @@ export default function AdminFailed() {
             setNotice(`${deliveryLabel(completing)}을 배송 완료로 바꿨어요.`)
             setCompleting(null)
             data.reload()
+          }}
+        />
+      )}
+      {checkingTopupId !== null && (
+        <TopupManualCheckModal
+          topupId={checkingTopupId}
+          onClose={() => setCheckingTopupId(null)}
+          onDone={(message) => {
+            setNotice(message)
+            setCheckingTopupId(null)
+            data.reload() // 정리된 건은 목록에서 빠지거나 상태가 바뀐다
           }}
         />
       )}
