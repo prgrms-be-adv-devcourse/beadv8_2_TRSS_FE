@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import BottomBar from '../../components/ui/BottomBar'
 import Button from '../../components/ui/Button'
@@ -30,6 +30,13 @@ export default function ReviewsPage() {
   const { productId: idParam } = useParams()
   const productId = Number(idParam)
   const { loggedIn } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  // 상품 상세에서 들어왔으면 그 기록으로 돌아가요. 상세 주소를 새로 쌓으면 상세의 뒤로가 리뷰로 다시 와요.
+  // 링크로 바로 들어왔으면 리뷰 기록을 상세로 바꿔서, 상세의 뒤로가 리뷰 이전 화면으로 가게 해요.
+  const fromProduct = (location.state as { fromProduct?: boolean } | null)?.fromProduct === true
+  const backToProduct = () =>
+    fromProduct ? navigate(-1) : navigate(`/product/${productId}`, { replace: true })
   const [sort, setSort] = useState<ReviewSort>('LATEST')
 
   const summary = useApi(() => getReviewSummary(productId), [productId])
@@ -85,7 +92,7 @@ export default function ReviewsPage() {
         </BottomBar>
       }
     >
-      <PageHeader back={`/product/${productId}`} title={`리뷰 ${count.toLocaleString('ko-KR')}`} />
+      <PageHeader back={backToProduct} title={`리뷰 ${count.toLocaleString('ko-KR')}`} />
 
       {summary.error && <ErrorView message={summary.error} onRetry={summary.reload} />}
       {s && (

@@ -384,7 +384,7 @@ export default function ProductDetailPage() {
           {product.name}
         </h2>
         <div className={styles.ratingRow}>
-          <Link to={`/product/${product.productId}/reviews`} className={styles.rating}>
+          <Link to={`/product/${product.productId}/reviews`} state={{ fromProduct: true }} className={styles.rating}>
             <Stars value={averageRating} />
             <b>{averageRating.toFixed(1)}</b>
             <span className={styles.ratingCount}>리뷰 {reviewCount.toLocaleString('ko-KR')}</span>
@@ -537,7 +537,7 @@ export default function ProductDetailPage() {
             리뷰 <span className={styles.star}>★</span> {averageRating.toFixed(1)}{' '}
             <span className={styles.rvCount}>({reviewCount})</span>
           </h2>
-          <Link to={`/product/${product.productId}/reviews`}>전체 보기 ›</Link>
+          <Link to={`/product/${product.productId}/reviews`} state={{ fromProduct: true }}>전체 보기 ›</Link>
         </div>
         {reviews.data?.items.map((r) => (
           <article key={r.reviewId} className={styles.review}>
