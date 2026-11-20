@@ -137,6 +137,14 @@ function StateBadge({ status }: { status: MemberStatus }) {
   return status === 'DELETED' ? <Badge>탈퇴</Badge> : <Badge tone="green">활성</Badge>
 }
 
+/** 지갑 금액이 없을 때 예치금 칸 문구. walletState가 없는 이전 응답이면 지금처럼 "-" */
+function walletEmptyLabel(d: AdminMemberDetail) {
+  // 관리자·물류처럼 충전하지 않는 계정도, 지갑이 아직 없는 일반 회원도 있어서 이유는 붙이지 않는다
+  if (d.walletState === 'NOT_CREATED') return '지갑 없음'
+  if (d.walletState === 'UNAVAILABLE') return '불러오지 못했어요'
+  return '-'
+}
+
 /** 회원 상세 (PC 오른쪽 패널 · 모바일 시트 공통 본문) */
 function MemberDetail({ d }: { d: AdminMemberDetail }) {
   const deleted = isDeleted(d)
@@ -147,8 +155,8 @@ function MemberDetail({ d }: { d: AdminMemberDetail }) {
       <InfoRow label="판매자 상태">{d.sellerStatus ? SELLER_STATUS[d.sellerStatus][0] : '-'}</InfoRow>
       <InfoRow label="인플루언서 상태">{d.influencerStatus ? INFLUENCER_STATUS[d.influencerStatus][0] : '-'}</InfoRow>
       <InfoRow label="가입일">{fmtDate(d.createdAt)}</InfoRow>
-      {/* 지갑은 조회하지 못했을 때와 지갑이 없을 때(시드 관리자·물류 담당자 등) 모두 null이라 구분 없이 "-"로 표시한다 */}
-      <InfoRow label="예치금">{d.wallet ? won(d.wallet.balance) : '-'}</InfoRow>
+      {/* 지갑이 없는 회원(시드 관리자·물류 담당자 등)과 결제 서비스 조회 실패를 walletState로 나눠 보여 준다 */}
+      <InfoRow label="예치금">{d.wallet ? won(d.wallet.balance) : walletEmptyLabel(d)}</InfoRow>
       <InfoRow label="구매 확정 대기">{d.wallet ? won(d.wallet.heldAmount) : '-'}</InfoRow>
       {/* 최근 주문은 주문이 없으면 빈 목록, 조회하지 못하면 null로 구분되어 온다 */}
       <div className={s.panelSection}>

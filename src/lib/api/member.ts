@@ -218,6 +218,9 @@ export type AdminMember = {
   influencerStatus: InfluencerStatus | null
 }
 
+/** 관리자 회원 상세의 지갑 상태 */
+export type AdminWalletState = 'CREATED' | 'NOT_CREATED' | 'UNAVAILABLE'
+
 /** 관리자 회원 상세 */
 export type AdminMemberDetail = {
   memberId: number
@@ -232,7 +235,12 @@ export type AdminMemberDetail = {
   sellerStatus: SellerStatus | null
   /** 인플루언서 신청 이력이 없으면 null */
   influencerStatus: InfluencerStatus | null
-  /** 결제 서비스를 조회하지 못했거나 지갑이 없으면 null (두 경우를 구분하지 않음) */
+  /**
+   * 지갑 상태 (BE PR #471). CREATED 지갑 있음 / NOT_CREATED 지갑 없음(충전한 적 없음) / UNAVAILABLE 결제 서비스 조회 실패.
+   * 이전 응답에는 없을 수 있다
+   */
+  walletState?: AdminWalletState
+  /** walletState가 CREATED일 때만 채워지고, 그 외에는 null */
   wallet: { balance: number; heldAmount: number } | null
   /** 최신순, 주문이 없으면 빈 목록. 주문을 조회하지 못하면 null */
   recentOrders: { orderId: number; status: string; totalAmount: number; orderedAt: string }[] | null
