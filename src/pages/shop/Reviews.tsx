@@ -149,7 +149,7 @@ export default function ReviewsPage() {
             </div>
             {mine.data?.has(r.reviewId) && (
               <div className={styles.mine}>
-                <span>내가 쓴 리뷰 · 고칠 수 없고 삭제만 돼요</span>
+                <span>내가 쓴 리뷰</span>
                 <button type="button" onClick={() => setRemoving(r)}>
                   삭제
                 </button>
