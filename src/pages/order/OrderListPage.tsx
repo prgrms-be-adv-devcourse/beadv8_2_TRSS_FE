@@ -4,6 +4,7 @@ import AppFrame from '../../components/ui/AppFrame'
 import Button from '../../components/ui/Button'
 import { Chips, Empty, ErrorView, Loading, Segment, Thumb, won } from '../../components/ui/Misc'
 import PageHeader from '../../components/ui/PageHeader'
+import { FROM_LIST_STATE } from '../../lib/useBackTo'
 import { confirmOrder, isPayable, type OrderStatus } from '../../lib/api/order'
 import { orderNotice } from '../../lib/notices/order'
 import { ORDER_STATUS, autoConfirmDate, isoDate, mmdd, mmss } from '../../lib/orderStatus'
@@ -171,13 +172,13 @@ function OrderCards({ filter, months }: { filter: Filter; months: number }) {
           <article key={o.orderId} className={styles.card}>
             <div className={styles.cardHead}>
               <span>{ymd(o.orderedAt)}</span>
-              <Link to={url}>상세 ›</Link>
+              <Link to={url} state={FROM_LIST_STATE}>상세 ›</Link>
             </div>
             <p className={`${styles.status} ${o.status === 'PAID' ? styles.statusGreen : ''}`}>
               {label}
               {note && <span className={note.warn ? styles.warn : styles.note}>{note.text}</span>}
             </p>
-            <Link to={url} className={styles.product}>
+            <Link to={url} state={FROM_LIST_STATE} className={styles.product}>
               <Thumb
                 src={o.thumbnailUrl || productImage(o.representativeProductName)}
                 width={60}
@@ -196,7 +197,7 @@ function OrderCards({ filter, months }: { filter: Filter; months: number }) {
             )}
             {o.status === 'PAID' && (
               <div className={styles.actions}>
-                <Button variant="outline" to={url}>
+                <Button variant="outline" to={url} state={FROM_LIST_STATE}>
                   배송 조회
                 </Button>
                 <Button variant="soft" onClick={() => askConfirm(o)} disabled={busy}>

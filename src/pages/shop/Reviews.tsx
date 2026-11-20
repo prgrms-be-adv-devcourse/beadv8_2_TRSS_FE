@@ -7,6 +7,7 @@ import PageHeader from '../../components/ui/PageHeader'
 import { Empty, ErrorView, Loading } from '../../components/ui/Misc'
 import { Modal } from '../../components/ui/Overlay'
 import { errorMessage } from '../../lib/api'
+import { useBackTo } from '../../lib/useBackTo'
 import {
   REVIEW_SORT_LABEL,
   deleteReview,
@@ -30,6 +31,7 @@ export default function ReviewsPage() {
   const { productId: idParam } = useParams()
   const productId = Number(idParam)
   const { loggedIn } = useAuth()
+  const backToProduct = useBackTo(`/product/${productId}`)
   const [sort, setSort] = useState<ReviewSort>('LATEST')
 
   const summary = useApi(() => getReviewSummary(productId), [productId])
@@ -85,7 +87,7 @@ export default function ReviewsPage() {
         </BottomBar>
       }
     >
-      <PageHeader back={`/product/${productId}`} title={`리뷰 ${count.toLocaleString('ko-KR')}`} />
+      <PageHeader back={backToProduct} title={`리뷰 ${count.toLocaleString('ko-KR')}`} />
 
       {summary.error && <ErrorView message={summary.error} onRetry={summary.reload} />}
       {s && (
@@ -149,7 +151,7 @@ export default function ReviewsPage() {
             </div>
             {mine.data?.has(r.reviewId) && (
               <div className={styles.mine}>
-                <span>내가 쓴 리뷰 · 고칠 수 없고 삭제만 돼요</span>
+                <span>내가 쓴 리뷰</span>
                 <button type="button" onClick={() => setRemoving(r)}>
                   삭제
                 </button>

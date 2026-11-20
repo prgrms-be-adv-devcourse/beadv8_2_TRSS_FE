@@ -5,8 +5,8 @@ import styles from './PageHeader.module.css'
 
 type Props = {
   title: ReactNode
-  /** 뒤로 버튼. true면 브라우저 뒤로, 문자열이면 그 주소로 */
-  back?: boolean | string
+  /** 뒤로 버튼. true면 브라우저 뒤로, 문자열이면 그 주소로, 함수면 그 함수를 불러요 */
+  back?: boolean | string | (() => void)
   /** 제목 앞 작은 배지 (판매자 · 관리자 · 물류) */
   badge?: ReactNode
   /** 오른쪽 아이콘·버튼 */
@@ -22,7 +22,8 @@ type Props = {
 export default function PageHeader({ title, back, badge, right, dark, className, home = !!back }: Props) {
   const navigate = useNavigate()
   const goBack = () => {
-    if (typeof back === 'string') navigate(back)
+    if (typeof back === 'function') back()
+    else if (typeof back === 'string') navigate(back)
     else if (window.history.length > 1) navigate(-1)
     else navigate('/')
   }

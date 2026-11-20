@@ -5,6 +5,7 @@ import BottomBar from '../../components/ui/BottomBar'
 import Button from '../../components/ui/Button'
 import CartHeaderIcon from '../../components/ui/CartHeaderIcon'
 import PageHeader from '../../components/ui/PageHeader'
+import { FROM_LIST_STATE } from '../../lib/useBackTo'
 import { Empty, ErrorView, Loading, Thumb, won } from '../../components/ui/Misc'
 import { errorMessage } from '../../lib/api'
 import { addCartItem, getCart } from '../../lib/api/cart'
@@ -384,7 +385,7 @@ export default function ProductDetailPage() {
           {product.name}
         </h2>
         <div className={styles.ratingRow}>
-          <Link to={`/product/${product.productId}/reviews`} className={styles.rating}>
+          <Link to={`/product/${product.productId}/reviews`} state={FROM_LIST_STATE} className={styles.rating}>
             <Stars value={averageRating} />
             <b>{averageRating.toFixed(1)}</b>
             <span className={styles.ratingCount}>리뷰 {reviewCount.toLocaleString('ko-KR')}</span>
@@ -537,7 +538,7 @@ export default function ProductDetailPage() {
             리뷰 <span className={styles.star}>★</span> {averageRating.toFixed(1)}{' '}
             <span className={styles.rvCount}>({reviewCount})</span>
           </h2>
-          <Link to={`/product/${product.productId}/reviews`}>전체 보기 ›</Link>
+          <Link to={`/product/${product.productId}/reviews`} state={FROM_LIST_STATE}>전체 보기 ›</Link>
         </div>
         {reviews.data?.items.map((r) => (
           <article key={r.reviewId} className={styles.review}>
