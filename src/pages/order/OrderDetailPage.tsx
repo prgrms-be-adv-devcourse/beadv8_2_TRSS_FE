@@ -7,6 +7,7 @@ import Button from '../../components/ui/Button'
 import Icon from '../../components/ui/Icon'
 import { ErrorView, Loading, Thumb, won } from '../../components/ui/Misc'
 import PageHeader from '../../components/ui/PageHeader'
+import { useBackTo } from '../../lib/useBackTo'
 import { cancelOrder, confirmOrder, isPayable } from '../../lib/api/order'
 import { getRefund, payRefundPickupFee, type Refund } from '../../lib/api/payment'
 import { RETURN_REASON_LABEL, type RefundStatus } from '../../lib/api/returns'
@@ -154,6 +155,7 @@ function paymentRows(o: OrderDetailX) {
 /** 주문 상세 · 배송 조회 (시안 ⑧ OrderDetail) */
 export default function OrderDetailPage() {
   const orderId = Number(useParams().orderId) || 0
+  const backToList = useBackTo('/orders')
   const order = useApi(() => getOrderDetail(orderId), [orderId])
   const o = order.data
   const remaining = useRemaining(o)
@@ -293,7 +295,7 @@ export default function OrderDetailPage() {
 
   return (
     <AppFrame bottom={bottom}>
-      <PageHeader title="주문 상세" back="/orders" />
+      <PageHeader title="주문 상세" back={backToList} />
       {order.loading && !o && <Loading label="주문을 불러오고 있어요" />}
       {order.error && !o && <ErrorView message={order.error} onRetry={order.reload} />}
       {o && (
