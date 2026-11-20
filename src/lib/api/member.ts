@@ -199,8 +199,13 @@ export function unsanctionSeller(sellerId: number, reason: string) {
 export type MemberStatus = 'ACTIVE' | 'DELETED' // DELETED: 탈퇴(개인정보 비식별화)
 
 /** 회원 유형. 판매자(SELLER)는 역할이 아니라 판매자 상태가 판매 중(APPROVED)인 회원이다 */
-export type MemberType = 'USER' | 'SELLER' | 'ADMIN'
-export const MEMBER_TYPE_LABEL: Record<MemberType, string> = { USER: '일반 회원', SELLER: '판매자', ADMIN: '관리자' }
+export type MemberType = 'USER' | 'SELLER' | 'ADMIN' | 'LOGISTICS'
+export const MEMBER_TYPE_LABEL: Record<MemberType, string> = {
+  USER: '일반 회원',
+  SELLER: '판매자',
+  ADMIN: '관리자',
+  LOGISTICS: '물류 담당자',
+}
 
 /** 관리자 회원 목록 항목 */
 export type AdminMember = {

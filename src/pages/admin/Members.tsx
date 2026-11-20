@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import ConsoleShell from '../../components/ui/ConsoleShell'
-import { Badge, Empty, ErrorView, Loading, won } from '../../components/ui/Misc'
+import { Badge, Empty, ErrorView, Loading, won, type Tone } from '../../components/ui/Misc'
 import { Sheet } from '../../components/ui/Overlay'
 import Icon from '../../components/ui/Icon'
 import c from '../../components/ui/console.module.css'
@@ -114,6 +114,7 @@ function TypeSelect({ v, className }: { v: View; className?: string }) {
       <option value="USER">일반 회원</option>
       <option value="SELLER">판매자</option>
       <option value="ADMIN">관리자</option>
+      <option value="LOGISTICS">물류 담당자</option>
     </select>
   )
 }
@@ -132,6 +133,9 @@ function StatusSelect({ v, className }: { v: View; className?: string }) {
     </select>
   )
 }
+
+/** 모바일 목록 이름 옆 회원 유형 배지 색 (일반 회원은 배지 없음) */
+const MEMBER_TYPE_TONE: Partial<Record<MemberType, Tone>> = { SELLER: 'green', ADMIN: 'dark', LOGISTICS: 'blue' }
 
 function StateBadge({ status }: { status: MemberStatus }) {
   return status === 'DELETED' ? <Badge>탈퇴</Badge> : <Badge tone="green">활성</Badge>
@@ -306,7 +310,9 @@ function MobileMembers({ v }: { v: View }) {
                 <span className={s.mItemTitle}>
                   <span>{displayName(m)}</span>
                   {m.memberType !== 'USER' && (
-                    <Badge tone={m.memberType === 'ADMIN' ? 'dark' : 'green'}>{MEMBER_TYPE_LABEL[m.memberType]}</Badge>
+                    <Badge tone={MEMBER_TYPE_TONE[m.memberType] ?? 'neutral'}>
+                      {MEMBER_TYPE_LABEL[m.memberType] ?? m.memberType}
+                    </Badge>
                   )}
                 </span>
                 <span className={s.mItemMeta}>
