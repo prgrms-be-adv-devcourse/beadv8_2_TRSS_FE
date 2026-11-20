@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import AppFrame from '../../components/ui/AppFrame'
 import BottomBar from '../../components/ui/BottomBar'
@@ -51,6 +51,95 @@ const scrollToSection = (id: string) => (e: MouseEvent<HTMLAnchorElement>) => {
 }
 
 /** ④ 상품 상세 */
+/** 상품 정보를 이 높이(px)까지만 보여 주고 접어요. 상세 이미지가 길어서 줄 수가 아니라 높이로 정해요. */
+const INFO_COLLAPSED_HEIGHT = 800
+/** 접힌 높이보다 이만큼은 더 길어야 접어요. 조금만 넘는데 더보기를 누르게 하지 않으려고요. */
+const INFO_COLLAPSE_SLACK = 200
+/** 상세 이미지 중 처음 몇 장은 바로 불러와요. 늦게 불러와지면 접을지 말지가 나중에 바뀌어서 화면이 튀어요. */
+const INFO_EAGER_IMAGES = 2
+
+/**
+ * 상품 정보 (설명 · 상세 이미지 · 전성분)
+ * - 전성분은 뷰티 상품에 판매자가 넣었을 때만 와요 (그 밖에는 null).
+ * - 내용이 길면 INFO_COLLAPSED_HEIGHT까지만 보여 주고 "상품 정보 더보기"로 펼쳐요.
+ *   이미지가 불러와지며 높이가 바뀌므로 ResizeObserver로 다시 재요.
+ * - 접혀 있어도 내용은 DOM에 그대로 있어서 스크린 리더는 전부 읽을 수 있어요.
+ */
+function ProductInfo({
+  description,
+  imageUrls,
+  ingredientsText,
+}: {
+  description: string
+  imageUrls: string[]
+  ingredientsText: string | null
+}) {
+  const sectionRef = useRef<HTMLElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const [tall, setTall] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    const body = bodyRef.current
+    if (!body) return
+    const measure = () => setTall(body.scrollHeight > INFO_COLLAPSED_HEIGHT + INFO_COLLAPSE_SLACK)
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    observer.observe(body)
+    return () => observer.disconnect()
+  }, [])
+
+  const collapsed = tall && !open
+  const toggle = () => {
+    // 접을 때는 상품 정보 맨 위로 돌아가요. 그대로 두면 리뷰 한가운데에 남아 길을 잃어요.
+    if (open) sectionRef.current?.scrollIntoView({ block: 'start' })
+    setOpen((v) => !v)
+  }
+
+  return (
+    <section ref={sectionRef} id="info" aria-labelledby="pi" className={styles.info}>
+      <div
+        id="info-body"
+        className={`${styles.infoClip} ${collapsed ? styles.infoCollapsed : ''}`}
+        style={collapsed ? { maxHeight: INFO_COLLAPSED_HEIGHT } : undefined}
+      >
+        <div ref={bodyRef}>
+          <h2 id="pi">상품 설명</h2>
+          <p className={styles.desc}>{description}</p>
+          {imageUrls.map((src, i) => (
+            <img
+              key={src}
+              src={src}
+              alt=""
+              className={styles.descImg}
+              loading={i < INFO_EAGER_IMAGES ? 'eager' : 'lazy'}
+            />
+          ))}
+          {ingredientsText && (
+            <div className={styles.ingredients}>
+              <h3>전성분</h3>
+              <p>{ingredientsText}</p>
+            </div>
+          )}
+        </div>
+      </div>
+      {tall && (
+        <button
+          type="button"
+          className={styles.infoMore}
+          aria-expanded={open}
+          aria-controls="info-body"
+          onClick={toggle}
+        >
+          {open ? '상품 정보 접기' : '상품 정보 더보기'}
+          <Icon name="chevronDown" size={16} className={open ? styles.infoMoreUp : undefined} />
+        </button>
+      )}
+    </section>
+  )
+}
+
 export default function ProductDetailPage() {
   const { productId: idParam } = useParams()
   const productId = Number(idParam)
@@ -436,13 +525,11 @@ export default function ProductDetailPage() {
         </a>
       </nav>
 
-      <section id="info" aria-labelledby="pi" className={styles.info}>
-        <h2 id="pi">상품 설명</h2>
-        <p className={styles.desc}>{product.description}</p>
-        {product.imageUrls.map((src) => (
-          <img key={src} src={src} alt="" className={styles.descImg} loading="lazy" />
-        ))}
-      </section>
+      <ProductInfo
+        description={product.description}
+        imageUrls={product.imageUrls}
+        ingredientsText={product.ingredientsText}
+      />
 
       <section id="reviews" aria-labelledby="rv" className={styles.reviews}>
         <div className={styles.rvHead}>

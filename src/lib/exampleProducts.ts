@@ -97,6 +97,10 @@ export function searchExampleProducts({
   }
 }
 
+/** 예시 뷰티 상품의 전성분 (판매자가 용기에 적힌 그대로 넣는 원문 형태) */
+const EXAMPLE_INGREDIENTS =
+  '정제수, 병풀추출물, 글리세린, 부틸렌글라이콜, 나이아신아마이드, 판테놀, 세라마이드엔피, 마데카소사이드, 카보머, 트로메타민, 알란토인, 1,2-헥산다이올, 에틸헥실글리세린'
+
 /** GET /api/v1/products/{productId} 와 같은 모양의 예시 상세. 없는 ID면 null(404와 같음)이에요. */
 export function getExampleProduct(productId: number): ProductDetail | null {
   const p = EXAMPLE_PRODUCTS.find((x) => x.productId === productId)
@@ -137,7 +141,7 @@ export function getExampleProduct(productId: number): ProductDetail | null {
     wishCount: 0,
     reviewCount: 0,
     averageRating: 0,
-    ingredientsText: null,
+    ingredientsText: group.name === '뷰티' ? EXAMPLE_INGREDIENTS : null,
   }
 }
 
