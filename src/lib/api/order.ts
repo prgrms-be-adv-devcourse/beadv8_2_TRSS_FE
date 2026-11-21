@@ -200,6 +200,8 @@ export type SellerOrderItem = {
   /** 금액 (단가 × 수량) */
   lineAmount: number
   status: SellerOrderStatus
+  /** 상품의 현재 대표 이미지. 없으면 null (BE 반영 전 서버는 보내지 않아요) */
+  thumbnailUrl?: string | null
 }
 
 export type SellerOrderItemQuery = PageQuery & {

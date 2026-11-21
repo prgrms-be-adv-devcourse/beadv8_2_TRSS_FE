@@ -123,8 +123,7 @@ export default function SellerOrdersPage() {
               <span className={c.num}>{fmtMDHM(it.orderedAt)}</span>
               <span className={`${c.num} ${c.ellipsis}`}>{it.orderNumber}</span>
               <span className={s.prod}>
-                {/* TODO(API 미구현): 판매자 주문 항목 응답에 상품 이미지가 없어 자리표시로 보여요 */}
-                <Thumb width={36} height={40} radius={6} />
+                <Thumb src={it.thumbnailUrl} width={36} height={40} radius={6} />
                 <span className={s.prodText}>
                   <Link to={`/product/${it.productId}`} className={`${c.ellipsis} ${s.ink}`}>
                     <b>{it.productName}</b>
@@ -158,7 +157,7 @@ export default function SellerOrdersPage() {
                 <Badge tone={tone}>{label}</Badge>
               </div>
               <div className={s.prod}>
-                <Thumb width={56} height={60} />
+                <Thumb src={it.thumbnailUrl} width={56} height={60} />
                 <div className={s.prodText}>
                   <Link to={`/product/${it.productId}`} className={s.ink}>
                     <b className={c.ellipsis}>{it.productName}</b>
